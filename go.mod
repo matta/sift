@@ -1,6 +1,6 @@
 module example/user/sift
 
-go 1.21.4
+go 1.21.5
 
 require (
 	github.com/gdamore/encoding v1.0.0 // indirect
