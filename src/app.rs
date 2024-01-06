@@ -3,11 +3,35 @@ use std::fs::File;
 use anyhow::Result;
 use ratatui::widgets::ListState;
 use serde::{Deserialize, Serialize};
+use tui_textarea::TextArea;
 
 #[derive(Default)]
 pub(crate) struct App {
     pub should_quit: bool,
+    pub state: State,
+}
+
+#[derive(Default, Serialize, Deserialize)]
+pub(crate) struct State {
     pub list: TodoList,
+    pub screen: Screen,
+}
+
+#[derive(Default, Serialize, Deserialize)]
+pub(crate) enum Screen {
+    #[default]
+    Main,
+    Edit(EditState),
+}
+
+#[derive(Serialize, Deserialize)]
+pub(crate) struct EditState {
+    pub index: usize,
+    #[serde(skip)]
+    // TODO: in upstream make the 'static workaround used here more
+    // discoverable.  See
+    // https://github.com/rhysd/tui-textarea/issues/46
+    pub textarea: TextArea<'static>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -111,15 +135,15 @@ impl App {
 
     pub fn save(self: &App, filename: &str) -> Result<()> {
         let file = File::create(filename)?;
-        serde_json::to_writer_pretty(file, &self.list)?;
+        serde_json::to_writer_pretty(file, &self.state)?;
         Ok(())
     }
 
     pub fn load(filename: &str) -> Result<App> {
         let file = File::open(filename)?;
-        let list = serde_json::from_reader(file)?;
+        let state = serde_json::from_reader(file)?;
         Ok(App {
-            list,
+            state,
             should_quit: false,
         })
     }
