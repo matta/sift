@@ -13,8 +13,10 @@ pub fn update(app: &mut App, key_event: KeyEvent) {
             }
         }
 
-        KeyCode::Right | KeyCode::Char('j') => app.counter += 1,
-        KeyCode::Left | KeyCode::Char('k') => app.counter -= 1,
+        KeyCode::Left | KeyCode::Char('h') => app.list.unselect(),
+        KeyCode::Down | KeyCode::Char('j') => app.list.next(),
+        KeyCode::Up | KeyCode::Char('k') => app.list.previous(),
+
         _ => {}
     };
 }
