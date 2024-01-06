@@ -2,7 +2,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use crate::app::App;
 
-pub fn update(app: &mut App, key_event: KeyEvent) {
+pub(crate) fn update(app: &mut App, key_event: KeyEvent) {
     match key_event.code {
         KeyCode::Esc | KeyCode::Char('q') => {
             app.should_quit = true;
@@ -12,6 +12,8 @@ pub fn update(app: &mut App, key_event: KeyEvent) {
                 app.should_quit = true;
             }
         }
+
+        KeyCode::Char(' ') => app.list.toggle(),
 
         KeyCode::Left | KeyCode::Char('h') => app.list.unselect(),
         KeyCode::Down | KeyCode::Char('j') => app.list.next(),

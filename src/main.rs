@@ -21,7 +21,11 @@ use update::update;
 
 fn main() -> Result<()> {
     // Create an application.
-    let mut app = App::new();
+    let mut app = if let Ok(app) = App::load("sift.json") {
+        app
+    } else {
+        App::new()
+    };
 
     // Initialize the terminal user interface.
     let backend = CrosstermBackend::new(std::io::stderr());
@@ -45,5 +49,8 @@ fn main() -> Result<()> {
 
     // Exit the user interface.
     tui.exit()?;
+
+    app.save("sift.json")?;
+
     Ok(())
 }

@@ -14,7 +14,7 @@ use crate::{app::App, event::EventHandler, ui};
 ///
 /// It is responsible for setting up the terminal,
 /// initializing the interface and handling the draw events.
-pub struct Tui {
+pub(crate) struct Tui {
     /// Interface to the Terminal.
     terminal: CrosstermTerminal,
     /// Terminal event handler.
@@ -47,10 +47,7 @@ impl Tui {
         Ok(())
     }
 
-    /// [`Draw`] the terminal interface by [`rendering`] the widgets.
-    ///
-    /// [`Draw`]: tui::Terminal::draw
-    /// [`rendering`]: crate::ui:render
+    /// Draw the terminal interface by rendering the widgets.
     pub fn draw(&mut self, app: &mut App) -> Result<()> {
         self.terminal.draw(|frame| ui::render(app, frame))?;
         Ok(())
