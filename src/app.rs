@@ -25,8 +25,8 @@ pub(crate) struct Todo {
 
 /// Bridges [ListState] to a serializable struct.
 ///
-/// The `ratatui` `ListState` struct is not serializable.
-/// This struct is structually identialto `ListState` and is serializable.
+/// The `ratatui` `ListState` struct is not serializable.  This struct is
+/// structurally identical to `ListState` and is serializable.
 ///
 /// # Example
 ///
@@ -34,7 +34,7 @@ pub(crate) struct Todo {
 ///
 /// ```
 /// struct MyStruct {
-///     #[serde(with "SerializableListState")]    
+///     #[serde(with "SerializableListState")]
 ///     state: ListState
 /// }
 #[derive(Serialize, Deserialize)]
