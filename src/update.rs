@@ -33,6 +33,9 @@ pub(crate) fn update(app: &mut App, key_event: KeyEvent) {
             KeyCode::Char('a') => {
                 add(app);
             }
+            KeyCode::Char('D') => {
+                delete(app);
+            }
             _ => {}
         },
         Screen::Edit(edit_state) => match key_event.code {
@@ -53,6 +56,22 @@ pub(crate) fn update(app: &mut App, key_event: KeyEvent) {
             }
         },
     }
+}
+
+fn delete(app: &mut App) {
+    let list = &mut app.state.list;
+    if let Some(index) = list.state.selected() {
+        // Decrement the selected items by the number of todo
+        // items that will be deleted.
+        let count = list
+            .items
+            .iter()
+            .enumerate()
+            .filter(|(i, todo)| *i < index && todo.done)
+            .count();
+        *list.state.selected_mut() = Some(index - count);
+    }
+    list.items.retain(|todo| !todo.done);
 }
 
 fn add(app: &mut App) {
