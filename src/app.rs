@@ -84,7 +84,7 @@ impl Default for TodoList {
     fn default() -> Self {
         TodoList {
             state: ListState::default(),
-            items: (1..=100)
+            items: (1..=10)
                 .map(|i| Todo {
                     title: format!("Item {}", i),
                     done: false,
