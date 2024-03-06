@@ -2,7 +2,7 @@ use std::fs::File;
 
 use anyhow::Result;
 use ratatui::widgets::ListState;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use tui_textarea::TextArea;
 
 #[derive(Default)]
@@ -41,10 +41,37 @@ pub(crate) struct TodoList {
     pub items: Vec<Todo>,
 }
 
+pub(crate) struct SerializableNaiveDate(chrono::naive::NaiveDate);
+
+impl SerializableNaiveDate {
+    pub fn from_naive_date(d: chrono::naive::NaiveDate) -> Self {
+        SerializableNaiveDate(d)
+    }
+}
+
+impl Serialize for SerializableNaiveDate {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&self.0.format("%F").to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for SerializableNaiveDate {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        let d = chrono::naive::NaiveDate::parse_from_str(&s, "%F")
+            .map_err(|e| serde::de::Error::custom(format!("{}", e)))?;
+        Ok(SerializableNaiveDate(d))
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub(crate) struct Todo {
     pub title: String,
     pub done: bool,
+    pub snoozed: Option<SerializableNaiveDate>,
 }
 
 /// Bridges [ListState] to a serializable struct.
@@ -88,6 +115,7 @@ impl Default for TodoList {
                 .map(|i| Todo {
                     title: format!("Item {}", i),
                     done: false,
+                    snoozed: None,
                 })
                 .collect(),
         }

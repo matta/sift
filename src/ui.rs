@@ -20,6 +20,12 @@ pub(crate) fn render(app: &mut App, f: &mut Frame) {
 }
 
 fn render_todo(s: &crate::app::Todo) -> ListItem<'_> {
-    let check = if s.done { 'x' } else { ' ' };
+    let check = if s.done {
+        'x'
+    } else if s.snoozed.is_some() {
+        's'
+    } else {
+        ' '
+    };
     ListItem::new(format!("[{}] {}", check, s.title.as_str()))
 }

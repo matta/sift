@@ -1,8 +1,9 @@
+use chrono::Datelike;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::widgets::{Block, Borders};
 use tui_textarea::TextArea;
 
-use crate::app::{App, EditState, Screen, Todo};
+use crate::app::{App, EditState, Screen, SerializableNaiveDate, Todo};
 
 pub(crate) fn update(app: &mut App, key_event: KeyEvent) {
     match &mut app.state.screen {
@@ -20,6 +21,9 @@ pub(crate) fn update(app: &mut App, key_event: KeyEvent) {
             }
             KeyCode::Char('e') => {
                 edit(app);
+            }
+            KeyCode::Char('s') => {
+                snooze(app);
             }
             KeyCode::Left | KeyCode::Char('h') => {
                 app.state.list.unselect();
@@ -74,6 +78,25 @@ fn delete(app: &mut App) {
     list.items.retain(|todo| !todo.done);
 }
 
+fn snooze(app: &mut App) {
+    let list = &mut app.state.list;
+    if let Some(index) = list.state.selected() {
+        let todo = list.items.get_mut(index).unwrap();
+        todo.snoozed = if todo.snoozed.is_some() {
+            None
+        } else {
+            let next_week = next_week();
+            Some(SerializableNaiveDate::from_naive_date(next_week))
+        };
+    }
+}
+
+fn next_week() -> chrono::NaiveDate {
+    let now = chrono::Local::now();
+    let today = chrono::NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap();
+    today + chrono::TimeDelta::try_weeks(1).unwrap()
+}
+
 fn add(app: &mut App) {
     let list = &mut app.state.list;
     let index = list.state.selected().unwrap_or(0);
@@ -83,6 +106,7 @@ fn add(app: &mut App) {
         Todo {
             title: String::new(),
             done: false,
+            snoozed: None,
         },
     );
     edit(app);
