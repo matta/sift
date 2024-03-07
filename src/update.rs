@@ -89,6 +89,8 @@ fn snooze(app: &mut App) {
             Some(SerializableNaiveDate::from_naive_date(next_week))
         };
     }
+    // Order snoozed items after non-snoozed items.
+    list.items.sort_by_key(|item| item.snoozed.is_some());
 }
 
 fn next_week() -> chrono::NaiveDate {
