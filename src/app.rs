@@ -3,7 +3,7 @@ use std::fs::File;
 use anyhow::Result;
 use ratatui::widgets::ListState;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use tui_textarea::TextArea;
+use tui_prompts::TextState;
 
 #[derive(Default)]
 pub(crate) struct App {
@@ -31,7 +31,7 @@ pub(crate) struct EditState {
     // TODO: in upstream make the 'static workaround used here more
     // discoverable.  See
     // https://github.com/rhysd/tui-textarea/issues/46
-    pub textarea: TextArea<'static>,
+    pub text_state: TextState<'static>,
 }
 
 #[derive(Serialize, Deserialize)]

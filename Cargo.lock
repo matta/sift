@@ -418,7 +418,7 @@ dependencies = [
  "ratatui",
  "serde",
  "serde_json",
- "tui-textarea",
+ "tui-prompts",
 ]
 
 [[package]]
@@ -518,14 +518,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "tui-textarea"
-version = "0.4.0"
+name = "tui-prompts"
+version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3e38ced1f941a9cfc923fbf2fe6858443c42cc5220bfd35bdd3648371e7bd8e"
+checksum = "54a38625ddb7cc1867a181201d54b93afe516e771cd5967f38a61cb0209b21fb"
 dependencies = [
  "crossterm",
+ "itertools",
  "ratatui",
- "unicode-width",
 ]
 
 [[package]]

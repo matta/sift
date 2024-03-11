@@ -1,7 +1,10 @@
+use std::borrow::Cow;
+
 use chrono::Datelike;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use ratatui::widgets::{Block, Borders};
-use tui_textarea::TextArea;
+use tui_prompts::FocusState;
+use tui_prompts::State as _;
+use tui_prompts::TextState;
 
 use crate::app::{App, EditState, Screen, SerializableNaiveDate, Todo};
 
@@ -42,23 +45,22 @@ pub(crate) fn update(app: &mut App, key_event: KeyEvent) {
             }
             _ => {}
         },
-        Screen::Edit(edit_state) => match key_event.code {
-            KeyCode::Esc => {
-                app.state.screen = Screen::Main;
+        Screen::Edit(edit_state) => {
+            let text_state = &mut edit_state.text_state;
+            assert!(text_state.is_focused());
+            text_state.handle_key_event(key_event);
+            match text_state.status() {
+                tui_prompts::Status::Pending => {}
+                tui_prompts::Status::Aborted => {
+                    // TODO: When aborting a new item, delete it.
+                    app.state.screen = Screen::Main;
+                }
+                tui_prompts::Status::Done => {
+                    app.state.list.items[edit_state.index].title = text_state.value().into();
+                    app.state.screen = Screen::Main;
+                }
             }
-            KeyCode::Char('s') if key_event.modifiers == KeyModifiers::CONTROL => {
-                app.state.list.items[edit_state.index].title = edit_state
-                    .textarea
-                    .lines()
-                    .iter()
-                    .cloned()
-                    .collect::<String>();
-                app.state.screen = Screen::Main;
-            }
-            _ => {
-                edit_state.textarea.input(key_event);
-            }
-        },
+        }
     }
 }
 
@@ -117,9 +119,10 @@ fn add(app: &mut App) {
 fn edit(app: &mut App) {
     let list = &mut app.state.list;
     if let Some(index) = list.state.selected() {
-        let mut textarea: TextArea<'static> = list.items[index].title.lines().into();
-        textarea.set_block(Block::default().borders(Borders::ALL).title("Edit"));
-        let edit_state = EditState { index, textarea };
+        let text_state = TextState::new()
+            .with_value(Cow::Owned(list.items[index].title.clone()))
+            .with_focus(FocusState::Focused);
+        let edit_state = EditState { index, text_state };
         app.state.screen = Screen::Edit(edit_state);
     }
 }
