@@ -1,6 +1,7 @@
 use std::fs::File;
 
 use anyhow::Result;
+use autosurgeon::{reconcile::NoKey, HydrateError, Reconciler};
 use ratatui::widgets::ListState;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use tui_prompts::TextState;
@@ -41,6 +42,7 @@ pub(crate) struct TodoList {
     pub items: Vec<Todo>,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct SerializableNaiveDate(chrono::naive::NaiveDate);
 
 impl SerializableNaiveDate {
@@ -52,6 +54,28 @@ impl SerializableNaiveDate {
 impl Serialize for SerializableNaiveDate {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_str(&self.0.format("%F").to_string())
+    }
+}
+
+impl autosurgeon::Hydrate for SerializableNaiveDate {
+    fn hydrate_string(s: &str) -> Result<Self, HydrateError> {
+        let d = chrono::naive::NaiveDate::parse_from_str(s, "%F").map_err(
+            |e: chrono::ParseError| {
+                HydrateError::unexpected(
+                    "a valid date in YYYY-MM-DD format",
+                    format!("an invalid date string \"{}\": {}", s, e),
+                )
+            },
+        )?;
+        Ok(SerializableNaiveDate(d))
+    }
+}
+
+impl autosurgeon::Reconcile for SerializableNaiveDate {
+    type Key<'a> = NoKey;
+
+    fn reconcile<R: Reconciler>(&self, mut reconciler: R) -> Result<(), R::Error> {
+        reconciler.str(&self.0.format("%F").to_string())
     }
 }
 

@@ -10,6 +10,9 @@ pub mod ui;
 /// Terminal user interface.
 pub mod tui;
 
+/// Persistence layer
+pub mod persist;
+
 /// Application updater.
 pub mod update;
 use anyhow::Result;
