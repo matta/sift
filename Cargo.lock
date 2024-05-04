@@ -888,9 +888,9 @@ dependencies = [
 
 [[package]]
 name = "tui-prompts"
-version = "0.3.8"
+version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24b83b48e255f374d99cf78dc97455db9454a39b5cca103e26e5f9c930210c06"
+checksum = "581e0457c7a9f81db70431d3b6c82f8589bb556a722e414ca17d55367ce77c9d"
 dependencies = [
  "crossterm",
  "itertools",
