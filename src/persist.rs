@@ -2,16 +2,17 @@ use autosurgeon;
 use chrono::NaiveDate;
 
 #[derive(Debug, Clone, PartialEq, autosurgeon::Reconcile, autosurgeon::Hydrate)]
-struct Task {
+pub(crate) struct Task {
     pub title: String,
-    pub description: String,
+    #[autosurgeon(with = "option_naive_date")]
+    pub snoozed: Option<NaiveDate>,
     #[autosurgeon(with = "option_naive_date")]
     pub due_date: Option<NaiveDate>,
     pub completed: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, autosurgeon::Reconcile, autosurgeon::Hydrate)]
-struct TodoList {
+pub(crate) struct TodoList {
     pub tasks: Vec<Task>,
 }
 
@@ -26,7 +27,7 @@ mod option_naive_date {
 
     /// Create a new `Option<NaiveDate>` value from a, possibly missing,
     /// string in an automerge document.
-    /// 
+    ///
     /// May return an error if the string is not in the format YYYY-MM-DD
     /// or not a valid date.
     pub(super) fn hydrate<D: ReadDoc>(
@@ -74,13 +75,13 @@ mod tests {
             tasks: vec![
                 Task {
                     title: "first title".to_string(),
-                    description: "first description".to_string(),
+                    snoozed: None,
                     due_date: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
                     completed: false,
                 },
                 Task {
                     title: "first title".to_string(),
-                    description: "first description".to_string(),
+                    snoozed: Some(NaiveDate::from_ymd_opt(2022, 5, 7).unwrap()),
                     due_date: None,
                     completed: false,
                 },
@@ -96,13 +97,13 @@ mod tests {
                 "tasks" => {list![
                     {map! {
                         "title" => {"first title"},
-                        "description" => {"first description"},
+                        "snoozed" => {ScalarValue::Null},
                         "due_date" => {"2022-01-01"},
                         "completed" => {false},
                     }},
                     {map! {
                         "title" => {"first title"},
-                        "description" => {"first description"},
+                        "snoozed" => {"2022-05-07"},
                         "due_date" => {ScalarValue::Null},
                         "completed" => {false},
                     }},

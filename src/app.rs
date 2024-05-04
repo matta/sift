@@ -1,9 +1,10 @@
 use std::fs::File;
 
 use anyhow::Result;
-use autosurgeon::{reconcile::NoKey, Reconciler};
 use ratatui::widgets::ListState;
 use tui_prompts::TextState;
+
+use crate::persist::Task;
 
 #[derive(Default)]
 pub(crate) struct App {
@@ -34,30 +35,7 @@ pub(crate) struct EditState {
 
 pub(crate) struct TodoList {
     pub state: ListState,
-    pub items: Vec<Todo>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub(crate) struct SerializableNaiveDate(chrono::naive::NaiveDate);
-
-impl SerializableNaiveDate {
-    pub fn from_naive_date(d: chrono::naive::NaiveDate) -> Self {
-        SerializableNaiveDate(d)
-    }
-}
-
-impl autosurgeon::Reconcile for SerializableNaiveDate {
-    type Key<'a> = NoKey;
-
-    fn reconcile<R: Reconciler>(&self, mut reconciler: R) -> Result<(), R::Error> {
-        reconciler.str(&self.0.format("%F").to_string())
-    }
-}
-
-pub(crate) struct Todo {
-    pub title: String,
-    pub done: bool,
-    pub snoozed: Option<SerializableNaiveDate>,
+    pub items: Vec<Task>,
 }
 
 /// Bridges [ListState] to a serializable struct.
@@ -94,10 +72,11 @@ impl Default for TodoList {
         TodoList {
             state: ListState::default(),
             items: (1..=10)
-                .map(|i| Todo {
+                .map(|i| Task {
                     title: format!("Item {}", i),
-                    done: false,
                     snoozed: None,
+                    due_date: None,
+                    completed: false,
                 })
                 .collect(),
         }
@@ -133,7 +112,7 @@ impl TodoList {
 
     pub(crate) fn toggle(&mut self) {
         if let Some(i) = self.state.selected() {
-            self.items[i].done = !self.items[i].done;
+            self.items[i].completed = !self.items[i].completed;
         }
     }
 }
@@ -145,12 +124,14 @@ impl App {
 
     pub fn save(self: &App, filename: &str) -> Result<()> {
         let file = File::create(filename)?;
+        // serde_json::to_writer_pretty(file, &self.state)?;
         todo!("save to file")
     }
 
     pub fn load(filename: &str) -> Result<App> {
         let file = File::open(filename)?;
         todo!("load from file")
+        // let state = serde_json::from_reader(file)?;
         // Ok(App {
         //     state,
         //     should_quit: false,

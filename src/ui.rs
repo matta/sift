@@ -11,7 +11,7 @@ use crate::app::{App, Screen};
 pub(crate) fn render(app: &mut App, f: &mut Frame) {
     match &mut app.state.screen {
         Screen::Main => {
-            let items: Vec<_> = app.state.list.items.iter().map(render_todo).collect();
+            let items: Vec<_> = app.state.list.items.iter().map(render_task).collect();
             let items = List::new(items)
                 .block(Block::default().borders(Borders::ALL).title("List"))
                 .highlight_symbol("> ");
@@ -28,11 +28,9 @@ pub(crate) fn render(app: &mut App, f: &mut Frame) {
     }
 }
 
-fn render_todo(s: &crate::app::Todo) -> ListItem<'_> {
-    let check = if s.done {
+fn render_task(s: &crate::persist::Task) -> ListItem<'_> {
+    let check = if s.completed {
         'x'
-    } else if s.snoozed.is_some() {
-        's'
     } else {
         ' '
     };

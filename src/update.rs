@@ -6,7 +6,8 @@ use tui_prompts::FocusState;
 use tui_prompts::State as _;
 use tui_prompts::TextState;
 
-use crate::app::{App, EditState, Screen, SerializableNaiveDate, Todo};
+use crate::app::{App, EditState, Screen};
+use crate::persist::Task;
 
 pub(crate) fn update(app: &mut App, key_event: KeyEvent) {
     match &mut app.state.screen {
@@ -73,11 +74,11 @@ fn delete(app: &mut App) {
             .items
             .iter()
             .enumerate()
-            .filter(|(i, todo)| *i < index && todo.done)
+            .filter(|(i, todo)| *i < index && todo.completed)
             .count();
         *list.state.selected_mut() = Some(index - count);
     }
-    list.items.retain(|todo| !todo.done);
+    list.items.retain(|todo| !todo.completed);
 }
 
 fn snooze(app: &mut App) {
@@ -88,7 +89,7 @@ fn snooze(app: &mut App) {
             None
         } else {
             let next_week = next_week();
-            Some(SerializableNaiveDate::from_naive_date(next_week))
+            Some(next_week)
         };
     }
     // Order snoozed items after non-snoozed items.
@@ -107,10 +108,11 @@ fn add(app: &mut App) {
     *list.state.selected_mut() = Some(index);
     list.items.insert(
         index,
-        Todo {
+        Task {
             title: String::new(),
-            done: false,
+            completed: false,
             snoozed: None,
+            due_date: None,
         },
     );
     edit(app);
