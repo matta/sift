@@ -1,9 +1,8 @@
 use std::fs::File;
 
 use anyhow::Result;
-use autosurgeon::{reconcile::NoKey, HydrateError, Reconciler};
+use autosurgeon::{reconcile::NoKey, Reconciler};
 use ratatui::widgets::ListState;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use tui_prompts::TextState;
 
 #[derive(Default)]
@@ -12,32 +11,28 @@ pub(crate) struct App {
     pub state: State,
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default)]
 pub(crate) struct State {
     pub list: TodoList,
     pub screen: Screen,
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default)]
 pub(crate) enum Screen {
     #[default]
     Main,
     Edit(EditState),
 }
 
-#[derive(Serialize, Deserialize)]
 pub(crate) struct EditState {
     pub index: usize,
-    #[serde(skip)]
     // TODO: in upstream make the 'static workaround used here more
     // discoverable.  See
     // https://github.com/rhysd/tui-textarea/issues/46
     pub text_state: TextState<'static>,
 }
 
-#[derive(Serialize, Deserialize)]
 pub(crate) struct TodoList {
-    #[serde(with = "SerializableListState")]
     pub state: ListState,
     pub items: Vec<Todo>,
 }
@@ -51,26 +46,6 @@ impl SerializableNaiveDate {
     }
 }
 
-impl Serialize for SerializableNaiveDate {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(&self.0.format("%F").to_string())
-    }
-}
-
-impl autosurgeon::Hydrate for SerializableNaiveDate {
-    fn hydrate_string(s: &str) -> Result<Self, HydrateError> {
-        let d = chrono::naive::NaiveDate::parse_from_str(s, "%F").map_err(
-            |e: chrono::ParseError| {
-                HydrateError::unexpected(
-                    "a valid date in YYYY-MM-DD format",
-                    format!("an invalid date string \"{}\": {}", s, e),
-                )
-            },
-        )?;
-        Ok(SerializableNaiveDate(d))
-    }
-}
-
 impl autosurgeon::Reconcile for SerializableNaiveDate {
     type Key<'a> = NoKey;
 
@@ -79,19 +54,6 @@ impl autosurgeon::Reconcile for SerializableNaiveDate {
     }
 }
 
-impl<'de> Deserialize<'de> for SerializableNaiveDate {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        let d = chrono::naive::NaiveDate::parse_from_str(&s, "%F")
-            .map_err(|e| serde::de::Error::custom(format!("{}", e)))?;
-        Ok(SerializableNaiveDate(d))
-    }
-}
-
-#[derive(Serialize, Deserialize)]
 pub(crate) struct Todo {
     pub title: String,
     pub done: bool,
@@ -112,12 +74,8 @@ pub(crate) struct Todo {
 ///     #[serde(with "SerializableListState")]
 ///     state: ListState
 /// }
-#[derive(Serialize, Deserialize)]
-#[serde(remote = "ListState")]
 struct SerializableListState {
-    #[serde(getter = "ListState::offset")]
     offset: usize,
-    #[serde(getter = "ListState::selected")]
     selected: Option<usize>,
 }
 
@@ -187,16 +145,15 @@ impl App {
 
     pub fn save(self: &App, filename: &str) -> Result<()> {
         let file = File::create(filename)?;
-        serde_json::to_writer_pretty(file, &self.state)?;
-        Ok(())
+        todo!("save to file")
     }
 
     pub fn load(filename: &str) -> Result<App> {
         let file = File::open(filename)?;
-        let state = serde_json::from_reader(file)?;
-        Ok(App {
-            state,
-            should_quit: false,
-        })
+        todo!("load from file")
+        // Ok(App {
+        //     state,
+        //     should_quit: false,
+        // })
     }
 }

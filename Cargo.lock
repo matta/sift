@@ -117,7 +117,7 @@ checksum = "fc29f8d0e1a775161058f84a0c79d95cdaae4a7981822a5924bbab73dbc76c93"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.52",
+ "syn",
  "thiserror",
 ]
 
@@ -703,8 +703,6 @@ dependencies = [
  "chrono",
  "crossterm",
  "ratatui",
- "serde",
- "serde_json",
  "tui-prompts",
 ]
 
@@ -839,7 +837,7 @@ checksum = "c61f3ba182994efc43764a46c018c347bc492c79f024e705f46567b418f6d4f7"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.52",
+ "syn",
 ]
 
 [[package]]
@@ -876,7 +874,7 @@ checksum = "34704c8d6ebcbc939824180af020566b01a7c01f80641264eba0999f6c2b6be7"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.52",
+ "syn",
 ]
 
 [[package]]
