@@ -1,10 +1,11 @@
-use std::fs::File;
+use std::{fs::File, io::{Read, Write}};
 
 use anyhow::Result;
+use automerge::Automerge;
 use ratatui::widgets::ListState;
 use tui_prompts::TextState;
 
-use crate::persist::Task;
+use crate::persist::{Task, TaskList};
 
 #[derive(Default)]
 pub(crate) struct App {
@@ -35,7 +36,7 @@ pub(crate) struct EditState {
 
 pub(crate) struct TodoList {
     pub state: ListState,
-    pub items: Vec<Task>,
+    pub tasks: TaskList,
 }
 
 /// Bridges [ListState] to a serializable struct.
@@ -71,14 +72,16 @@ impl Default for TodoList {
     fn default() -> Self {
         TodoList {
             state: ListState::default(),
-            items: (1..=10)
+            tasks: TaskList {
+                tasks: (1..=10)
                 .map(|i| Task {
                     title: format!("Item {}", i),
                     snoozed: None,
                     due_date: None,
                     completed: false,
                 })
-                .collect(),
+                .collect() 
+            }
         }
     }
 }
@@ -86,7 +89,7 @@ impl Default for TodoList {
 impl TodoList {
     pub(crate) fn next(&mut self) {
         let i = if let Some(i) = self.state.selected() {
-            (i + 1) % self.items.len()
+            (i + 1) % self.tasks.tasks.len()
         } else {
             0
         };
@@ -96,7 +99,7 @@ impl TodoList {
     pub(crate) fn previous(&mut self) {
         let i = if let Some(i) = self.state.selected() {
             if i == 0 {
-                self.items.len() - 1
+                self.tasks.tasks.len() - 1
             } else {
                 i - 1
             }
@@ -112,7 +115,7 @@ impl TodoList {
 
     pub(crate) fn toggle(&mut self) {
         if let Some(i) = self.state.selected() {
-            self.items[i].completed = !self.items[i].completed;
+            self.tasks.tasks[i].completed = !self.tasks.tasks[i].completed;
         }
     }
 }
@@ -123,18 +126,33 @@ impl App {
     }
 
     pub fn save(self: &App, filename: &str) -> Result<()> {
-        let file = File::create(filename)?;
-        // serde_json::to_writer_pretty(file, &self.state)?;
-        todo!("save to file")
+        let mut file = File::create(filename)?;
+        let mut doc = automerge::AutoCommit::new();
+        autosurgeon::reconcile(&mut doc, &self.state.list.tasks)?;
+        let binary = doc.save();
+        file.write_all(&binary)?;
+        Ok(())
     }
 
     pub fn load(filename: &str) -> Result<App> {
-        let file = File::open(filename)?;
-        todo!("load from file")
-        // let state = serde_json::from_reader(file)?;
-        // Ok(App {
-        //     state,
-        //     should_quit: false,
-        // })
+        println!("opening {}", filename);
+        let mut file = File::open(filename)?;
+
+        let mut binary = Vec::new();
+        file.read_to_end(&mut binary)?;
+
+        let doc = Automerge::load(&binary)?;
+        let tasks: TaskList = autosurgeon::hydrate(&doc)?;
+
+        Ok(App {
+            state: State {
+                list: TodoList {
+                    tasks,
+                    state: ListState::default(),
+                },
+                screen: Screen::Main,
+            },
+            should_quit: false,
+        })
     }
 }

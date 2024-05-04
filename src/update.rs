@@ -57,7 +57,7 @@ pub(crate) fn update(app: &mut App, key_event: KeyEvent) {
                     app.state.screen = Screen::Main;
                 }
                 tui_prompts::Status::Done => {
-                    app.state.list.items[edit_state.index].title = text_state.value().into();
+                    app.state.list.tasks.tasks[edit_state.index].title = text_state.value().into();
                     app.state.screen = Screen::Main;
                 }
             }
@@ -71,20 +71,21 @@ fn delete(app: &mut App) {
         // Decrement the selected items by the number of todo
         // items that will be deleted.
         let count = list
-            .items
+            .tasks
+            .tasks
             .iter()
             .enumerate()
             .filter(|(i, todo)| *i < index && todo.completed)
             .count();
         *list.state.selected_mut() = Some(index - count);
     }
-    list.items.retain(|todo| !todo.completed);
+    list.tasks.tasks.retain(|todo| !todo.completed);
 }
 
 fn snooze(app: &mut App) {
     let list = &mut app.state.list;
     if let Some(index) = list.state.selected() {
-        let todo = list.items.get_mut(index).unwrap();
+        let todo = list.tasks.tasks.get_mut(index).unwrap();
         todo.snoozed = if todo.snoozed.is_some() {
             None
         } else {
@@ -93,7 +94,7 @@ fn snooze(app: &mut App) {
         };
     }
     // Order snoozed items after non-snoozed items.
-    list.items.sort_by_key(|item| item.snoozed.is_some());
+    list.tasks.tasks.sort_by_key(|item| item.snoozed.is_some());
 }
 
 fn next_week() -> chrono::NaiveDate {
@@ -106,7 +107,7 @@ fn add(app: &mut App) {
     let list = &mut app.state.list;
     let index = list.state.selected().unwrap_or(0);
     *list.state.selected_mut() = Some(index);
-    list.items.insert(
+    list.tasks.tasks.insert(
         index,
         Task {
             title: String::new(),
@@ -122,7 +123,7 @@ fn edit(app: &mut App) {
     let list = &mut app.state.list;
     if let Some(index) = list.state.selected() {
         let text_state = TextState::new()
-            .with_value(Cow::Owned(list.items[index].title.clone()))
+            .with_value(Cow::Owned(list.tasks.tasks[index].title.clone()))
             .with_focus(FocusState::Focused);
         let edit_state = EditState { index, text_state };
         app.state.screen = Screen::Edit(edit_state);

@@ -23,8 +23,9 @@ use tui::Tui;
 use update::update;
 
 fn main() -> Result<()> {
+    let save_name = "sift.sift";
     // Create an application.
-    let mut app = if let Ok(app) = App::load("sift.json") {
+    let mut app = if let Ok(app) = App::load(save_name) {
         app
     } else {
         App::new()
@@ -53,7 +54,7 @@ fn main() -> Result<()> {
     // Exit the user interface.
     tui.exit()?;
 
-    app.save("sift.json")?;
+    app.save(save_name)?;
 
     Ok(())
 }

@@ -12,7 +12,7 @@ pub(crate) struct Task {
 }
 
 #[derive(Debug, Clone, PartialEq, autosurgeon::Reconcile, autosurgeon::Hydrate)]
-pub(crate) struct TodoList {
+pub(crate) struct TaskList {
     pub tasks: Vec<Task>,
 }
 
@@ -71,7 +71,7 @@ mod tests {
 
     #[test]
     fn test() {
-        let todo_list = TodoList {
+        let todo_list = TaskList {
             tasks: vec![
                 Task {
                     title: "first title".to_string(),
@@ -111,7 +111,7 @@ mod tests {
             }
         );
 
-        let todo_list2: TodoList = autosurgeon::hydrate(&doc).unwrap();
+        let todo_list2: TaskList = autosurgeon::hydrate(&doc).unwrap();
         assert_eq!(todo_list, todo_list2);
     }
 }
