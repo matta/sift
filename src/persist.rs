@@ -1,3 +1,4 @@
+use automerge::Automerge;
 use autosurgeon;
 use chrono::NaiveDate;
 
@@ -60,6 +61,18 @@ mod option_naive_date {
             Some(d) => reconciler.str(d.format("%F").to_string()),
         }
     }
+}
+
+pub(crate) fn encode_document(tasks: &TaskList) -> Result<Vec<u8>, anyhow::Error> {
+    let mut doc = automerge::AutoCommit::new();
+    autosurgeon::reconcile(&mut doc, tasks)?;
+    Ok(doc.save())
+}
+
+pub(crate) fn decode_document(binary: Vec<u8>) -> Result<TaskList, anyhow::Error> {
+    let doc = Automerge::load(&binary)?;
+    let tasks: TaskList = autosurgeon::hydrate(&doc)?;
+    Ok(tasks)
 }
 
 #[cfg(test)]

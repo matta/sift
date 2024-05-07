@@ -1,11 +1,10 @@
 use std::{fs::File, io::{Read, Write}};
 
 use anyhow::Result;
-use automerge::Automerge;
 use ratatui::widgets::ListState;
 use tui_prompts::TextState;
 
-use crate::persist::{Task, TaskList};
+use crate::persist::{Task, TaskList, encode_document, decode_document};
 
 #[derive(Default)]
 pub(crate) struct App {
@@ -80,7 +79,7 @@ impl Default for TodoList {
                     due_date: None,
                     completed: false,
                 })
-                .collect() 
+                .collect()
             }
         }
     }
@@ -126,23 +125,20 @@ impl App {
     }
 
     pub fn save(self: &App, filename: &str) -> Result<()> {
+        let binary = encode_document(&self.state.list.tasks)?;
         let mut file = File::create(filename)?;
-        let mut doc = automerge::AutoCommit::new();
-        autosurgeon::reconcile(&mut doc, &self.state.list.tasks)?;
-        let binary = doc.save();
         file.write_all(&binary)?;
+        file.sync_all()?;
         Ok(())
     }
 
     pub fn load(filename: &str) -> Result<App> {
-        println!("opening {}", filename);
         let mut file = File::open(filename)?;
 
         let mut binary = Vec::new();
         file.read_to_end(&mut binary)?;
 
-        let doc = Automerge::load(&binary)?;
-        let tasks: TaskList = autosurgeon::hydrate(&doc)?;
+        let tasks = decode_document(binary)?;
 
         Ok(App {
             state: State {
