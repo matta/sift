@@ -1,9 +1,23 @@
 use automerge::Automerge;
-use autosurgeon;
 use chrono::NaiveDate;
 
-#[derive(Debug, Clone, PartialEq, autosurgeon::Reconcile, autosurgeon::Hydrate)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Task {
+    pub title: String,
+    pub snoozed: Option<NaiveDate>,
+    pub due_date: Option<NaiveDate>,
+    pub completed: bool,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct TaskList {
+    pub tasks: Vec<Task>,
+}
+
+// SerializableTask is a Task that can be stored and retrieved from an
+// Automerge document.
+#[derive(Debug, Clone, PartialEq, autosurgeon::Reconcile, autosurgeon::Hydrate)]
+pub(crate) struct SerializableTask {
     pub title: String,
     #[autosurgeon(with = "option_naive_date")]
     pub snoozed: Option<NaiveDate>,
@@ -12,14 +26,59 @@ pub(crate) struct Task {
     pub completed: bool,
 }
 
+// SerializableTaskList is a TaskList that can be stored and retrieved from
+// an Automerge document.
 #[derive(Debug, Clone, PartialEq, autosurgeon::Reconcile, autosurgeon::Hydrate)]
-pub(crate) struct TaskList {
-    pub tasks: Vec<Task>,
+pub(crate) struct SerializableTaskList {
+    pub tasks: Vec<SerializableTask>,
+}
+
+// A SerializableTask can be created from a Task.
+impl From<Task> for SerializableTask {
+    fn from(value: Task) -> Self {
+        Self {
+            title: value.title,
+            snoozed: value.snoozed,
+            due_date: value.due_date,
+            completed: value.completed,
+        }
+    }
+}
+
+// A SerializableTaskList can be created from a TaskList.
+impl From<TaskList> for SerializableTaskList {
+    fn from(value: TaskList) -> Self {
+        Self {
+            tasks: value.tasks.into_iter().map(|t| t.into()).collect(),
+        }
+    }
+}
+
+// A Task can be created from a SerializableTask.
+impl From<SerializableTask> for Task {
+    fn from(value: SerializableTask) -> Self {
+        Self {
+            title: value.title,
+            snoozed: value.snoozed,
+            due_date: value.due_date,
+            completed: value.completed,
+        }
+    }
+}
+
+// A TaskList can be created from a SerializableTaskList.
+impl From<SerializableTaskList> for TaskList {
+    fn from(value: SerializableTaskList) -> Self {
+        Self {
+            // Convert each SerializableTask in the list into a Task.
+            tasks: value.tasks.into_iter().map(|t| t.into()).collect()
+        }
+    }
 }
 
 /// Reconcile an `Option<NaiveDate>` value with an optional string in
 /// an automerge document.
-///
+///a
 /// This helper module is used with the #[autosurgeon(with = "option_naive_date")]
 /// syntax.
 mod option_naive_date {
@@ -65,13 +124,15 @@ mod option_naive_date {
 
 pub(crate) fn encode_document(tasks: &TaskList) -> Result<Vec<u8>, anyhow::Error> {
     let mut doc = automerge::AutoCommit::new();
+    let tasks: SerializableTaskList = tasks.clone().into();
     autosurgeon::reconcile(&mut doc, tasks)?;
     Ok(doc.save())
 }
 
 pub(crate) fn decode_document(binary: Vec<u8>) -> Result<TaskList, anyhow::Error> {
     let doc = Automerge::load(&binary)?;
-    let tasks: TaskList = autosurgeon::hydrate(&doc)?;
+    let tasks: SerializableTaskList = autosurgeon::hydrate(&doc)?;
+    let tasks: TaskList = tasks.into();
     Ok(tasks)
 }
 
@@ -102,7 +163,10 @@ mod tests {
         };
 
         let mut doc = automerge::AutoCommit::new();
-        autosurgeon::reconcile(&mut doc, &todo_list).unwrap();
+        {
+            let value: SerializableTaskList = todo_list.clone().into();
+            autosurgeon::reconcile(&mut doc, &value).unwrap();
+        }
 
         assert_doc!(
             doc.document(),
@@ -124,7 +188,8 @@ mod tests {
             }
         );
 
-        let todo_list2: TaskList = autosurgeon::hydrate(&doc).unwrap();
+        let todo_list2: SerializableTaskList = autosurgeon::hydrate(&doc).unwrap();
+        let todo_list2: TaskList = todo_list2.into();
         assert_eq!(todo_list, todo_list2);
     }
 }
