@@ -1,17 +1,21 @@
+use std::collections::BTreeMap;
+
 use automerge::Automerge;
 use chrono::NaiveDate;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Task {
+    pub id: Uuid,
     pub title: String,
     pub snoozed: Option<NaiveDate>,
     pub due_date: Option<NaiveDate>,
     pub completed: bool,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub(crate) struct TaskList {
-    pub tasks: Vec<Task>,
+    pub tasks: BTreeMap<Uuid, Task>,
 }
 
 // SerializableTask is a Task that can be stored and retrieved from an
@@ -30,7 +34,7 @@ pub(crate) struct SerializableTask {
 // an Automerge document.
 #[derive(Debug, Clone, PartialEq, autosurgeon::Reconcile, autosurgeon::Hydrate)]
 pub(crate) struct SerializableTaskList {
-    pub tasks: Vec<SerializableTask>,
+    pub tasks: BTreeMap<String, SerializableTask>,
 }
 
 // A SerializableTask can be created from a Task.
@@ -47,21 +51,14 @@ impl From<Task> for SerializableTask {
 
 // A SerializableTaskList can be created from a TaskList.
 impl From<TaskList> for SerializableTaskList {
-    fn from(value: TaskList) -> Self {
-        Self {
-            tasks: value.tasks.into_iter().map(|t| t.into()).collect(),
+    fn from(task_list: TaskList) -> Self {
+        let mut converted_tasks: BTreeMap<String, SerializableTask> = BTreeMap::new();
+        for (id, task) in task_list.tasks.into_iter() {
+            assert_eq!(id, task.id);
+            converted_tasks.insert(id.to_string(), task.into());
         }
-    }
-}
-
-// A Task can be created from a SerializableTask.
-impl From<SerializableTask> for Task {
-    fn from(value: SerializableTask) -> Self {
         Self {
-            title: value.title,
-            snoozed: value.snoozed,
-            due_date: value.due_date,
-            completed: value.completed,
+            tasks: converted_tasks,
         }
     }
 }
@@ -69,10 +66,18 @@ impl From<SerializableTask> for Task {
 // A TaskList can be created from a SerializableTaskList.
 impl From<SerializableTaskList> for TaskList {
     fn from(value: SerializableTaskList) -> Self {
-        Self {
-            // Convert each SerializableTask in the list into a Task.
-            tasks: value.tasks.into_iter().map(|t| t.into()).collect()
+        let mut result = TaskList::default();
+        for (id, serializable_task) in value.tasks.into_iter() {
+            let task: Task = Task {
+                id: Uuid::parse_str(&id).unwrap(),
+                title: serializable_task.title,
+                snoozed: serializable_task.snoozed,
+                due_date: serializable_task.due_date,
+                completed: serializable_task.completed,
+            };
+            result.tasks.insert(task.id, task);
         }
+        result
     }
 }
 
@@ -139,27 +144,48 @@ pub(crate) fn decode_document(binary: Vec<u8>) -> Result<TaskList, anyhow::Error
 #[cfg(test)]
 mod tests {
     use automerge::ScalarValue;
-    use automerge_test::{assert_doc, list, map};
+    use automerge_test::{assert_doc, map};
 
     use super::*;
 
+    // #[test]
+    // fn test_automerge() {
+    //     let mut doc = new_doc();
+
+    //     let contacts = doc.put_object(automerge::ROOT,
+    //         "contacts",
+    //         ObjType::List
+    //     ).unwrap();
+
+    //     let got = doc.get(automerge::ROOT, "contacts").unwrap();
+    //     match got {
+    //         Some((automerge::Value::Object(ObjType::List), id)) => {
+    //             assert_eq!(id, contacts);
+    //         },
+    //         _ => panic!("expected a list"),
+    //     }
+    // }
+
     #[test]
     fn test() {
+        let tasks = vec![
+            Task {
+                id: Uuid::new_v4(),
+                title: "first title".to_string(),
+                snoozed: None,
+                due_date: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
+                completed: false,
+            },
+            Task {
+                id: Uuid::new_v4(),
+                title: "second title".to_string(),
+                snoozed: Some(NaiveDate::from_ymd_opt(2022, 5, 7).unwrap()),
+                due_date: None,
+                completed: false,
+            },
+        ];
         let todo_list = TaskList {
-            tasks: vec![
-                Task {
-                    title: "first title".to_string(),
-                    snoozed: None,
-                    due_date: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
-                    completed: false,
-                },
-                Task {
-                    title: "first title".to_string(),
-                    snoozed: Some(NaiveDate::from_ymd_opt(2022, 5, 7).unwrap()),
-                    due_date: None,
-                    completed: false,
-                },
-            ],
+            tasks: tasks.iter().map(|task| (task.id, task.clone())).collect(),
         };
 
         let mut doc = automerge::AutoCommit::new();
@@ -171,20 +197,26 @@ mod tests {
         assert_doc!(
             doc.document(),
             map! {
-                "tasks" => {list![
-                    {map! {
-                        "title" => {"first title"},
-                        "snoozed" => {ScalarValue::Null},
-                        "due_date" => {"2022-01-01"},
-                        "completed" => {false},
-                    }},
-                    {map! {
-                        "title" => {"first title"},
-                        "snoozed" => {"2022-05-07"},
-                        "due_date" => {ScalarValue::Null},
-                        "completed" => {false},
-                    }},
-                ]},
+                "tasks" => {
+                    map!{
+                        tasks[0].id => {
+                            map!{
+                                "title" => {"first title"},
+                                "snoozed" => {ScalarValue::Null},
+                                "due_date" => {"2022-01-01"},
+                                "completed" => {false},
+                            }
+                        },
+                        tasks[1].id => {
+                            map!{
+                                "title" => {"second title"},
+                                "snoozed" => {"2022-05-07"},
+                                "due_date" => {ScalarValue::Null},
+                                "completed" => {false},
+                            }
+                        }
+                    }
+                },
             }
         );
 

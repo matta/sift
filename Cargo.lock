@@ -698,6 +698,7 @@ dependencies = [
  "crossterm",
  "ratatui",
  "tui-prompts",
+ "uuid",
 ]
 
 [[package]]

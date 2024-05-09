@@ -1,10 +1,13 @@
-use std::{fs::File, io::{Read, Write}};
+use std::{
+    fs::File,
+    io::{Read, Write},
+};
 
 use anyhow::Result;
 use ratatui::widgets::ListState;
 use tui_prompts::TextState;
 
-use crate::persist::{Task, TaskList, encode_document, decode_document};
+use crate::persist::{decode_document, encode_document, Task, TaskList};
 
 #[derive(Default)]
 pub(crate) struct App {
@@ -73,14 +76,16 @@ impl Default for TodoList {
             state: ListState::default(),
             tasks: TaskList {
                 tasks: (1..=10)
-                .map(|i| Task {
-                    title: format!("Item {}", i),
-                    snoozed: None,
-                    due_date: None,
-                    completed: false,
-                })
-                .collect()
-            }
+                    .map(|i| Task {
+                        id: uuid::Uuid::new_v4(),
+                        title: format!("Item {}", i),
+                        snoozed: None,
+                        due_date: None,
+                        completed: false,
+                    })
+                    .map(|task| (task.id, task))
+                    .collect(),
+            },
         }
     }
 }
@@ -114,7 +119,8 @@ impl TodoList {
 
     pub(crate) fn toggle(&mut self) {
         if let Some(i) = self.state.selected() {
-            self.tasks.tasks[i].completed = !self.tasks.tasks[i].completed;
+            let task = self.tasks.tasks.iter_mut().nth(i).unwrap().1;
+            task.completed = !task.completed;
         }
     }
 }
