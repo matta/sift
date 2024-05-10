@@ -10,36 +10,24 @@ pub(crate) fn midpoint(left: &str, right: &str) -> String {
         return mid;
     }
 
+    let mut left = left.iter().copied().chain(std::iter::repeat(b'a' - 1));
+    let mut right = right.iter().copied().chain(std::iter::repeat(b'z' + 1));
+
     let mut l = 0;
     let mut r = 0;
-    let mut len = 0;
 
     while l == r {
-        l = if len < left.len() {
-            left[len]
-        } else {
-            b'a' - 1
-        };
-        r = if len < right.len() {
-            right[len]
-        } else {
-            b'z' + 1
-        };
+        l = left.next().unwrap();
+        r = right.next().unwrap();
         if l == r {
             mid.push(l as char);
-            len += 1;
         }
     }
 
     if l == b'a' - 1 {
         while r == b'a' {
             mid.push('a');
-            len += 1;
-            r = if len < right.len() {
-                right[len]
-            } else {
-                b'z' + 1
-            };
+            r = right.next().unwrap();
         }
         if r == b'b' {
             mid.push('a');
@@ -48,18 +36,12 @@ pub(crate) fn midpoint(left: &str, right: &str) -> String {
     } else if l + 1 == r {
         r = b'z' + 1;
         mid.push(l as char);
-        len += 1;
         loop {
-            l = if len < left.len() {
-                left[len]
-            } else {
-                b'a' - 1
-            };
+            l = left.next().unwrap();
             if l != b'z' {
                 break;
             }
             mid.push('z');
-            len += 1;
         }
     }
     mid.push((r - (r - l) / 2) as char);
