@@ -119,7 +119,7 @@ fn add(app: &mut App) {
     // TODO: make insertion at specific indices work again
     // let index = list.state.selected().unwrap_or(0);
     // *list.state.selected_mut() = Some(index);
-    let id = Uuid::new_v4();
+    let id = Task::new_id();
     let task = Task {
         id,
         title: String::new(),

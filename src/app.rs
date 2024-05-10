@@ -76,12 +76,21 @@ impl Default for TodoList {
             state: ListState::default(),
             tasks: TaskList {
                 tasks: (1..=10)
-                    .map(|i| Task {
-                        id: uuid::Uuid::new_v4(),
-                        title: format!("Item {}", i),
-                        snoozed: None,
-                        due_date: None,
-                        completed: false,
+                    .map(|i| {
+                        // TODO: get rid of this sleep hack. At time of writing
+                        // tasks were displayed ordered by their IDs, which
+                        // happen to be prefixed with a timestmap in millisecond
+                        // resolution. To get the default list displaying in
+                        // order we sleep for two milliseconds to ensure each
+                        // has a different timestamp.
+                        std::thread::sleep(std::time::Duration::from_millis(2));
+                        Task {
+                            id: Task::new_id(),
+                            title: format!("Item {}", i),
+                            snoozed: None,
+                            due_date: None,
+                            completed: false,
+                        }
                     })
                     .map(|task| (task.id, task))
                     .collect(),

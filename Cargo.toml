@@ -13,7 +13,12 @@ chrono = "0.4.37"
 crossterm = "0.27.0"
 ratatui = "0.26.2"
 tui-prompts = "0.3.8"
-uuid = "1.8.0"
+
+[dependencies.uuid]
+version = "1.8.0"
+features = [
+    "v7",                # Lets you generate random UUIDs
+]
 
 [dev-dependencies]
 automerge-test = "0.4.3"

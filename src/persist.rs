@@ -13,6 +13,14 @@ pub(crate) struct Task {
     pub completed: bool,
 }
 
+impl Task {
+    pub(crate) fn new_id() -> Uuid {
+        let context = uuid::NoContext;
+        let ts = uuid::Timestamp::now(context);
+        uuid::Uuid::new_v7(ts)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Default)]
 pub(crate) struct TaskList {
     pub tasks: BTreeMap<Uuid, Task>,
@@ -148,36 +156,18 @@ mod tests {
 
     use super::*;
 
-    // #[test]
-    // fn test_automerge() {
-    //     let mut doc = new_doc();
-
-    //     let contacts = doc.put_object(automerge::ROOT,
-    //         "contacts",
-    //         ObjType::List
-    //     ).unwrap();
-
-    //     let got = doc.get(automerge::ROOT, "contacts").unwrap();
-    //     match got {
-    //         Some((automerge::Value::Object(ObjType::List), id)) => {
-    //             assert_eq!(id, contacts);
-    //         },
-    //         _ => panic!("expected a list"),
-    //     }
-    // }
-
     #[test]
     fn test() {
         let tasks = vec![
             Task {
-                id: Uuid::new_v4(),
+                id: Task::new_id(),
                 title: "first title".to_string(),
                 snoozed: None,
                 due_date: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
                 completed: false,
             },
             Task {
-                id: Uuid::new_v4(),
+                id: Task::new_id(),
                 title: "second title".to_string(),
                 snoozed: Some(NaiveDate::from_ymd_opt(2022, 5, 7).unwrap()),
                 due_date: None,
