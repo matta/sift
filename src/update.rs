@@ -5,7 +5,6 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use tui_prompts::FocusState;
 use tui_prompts::State as _;
 use tui_prompts::TextState;
-use uuid::Uuid;
 
 use crate::app::{App, EditState, Screen};
 use crate::persist::Task;
