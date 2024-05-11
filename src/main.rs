@@ -13,9 +13,6 @@ pub mod tui;
 /// Persistence layer
 pub mod persist;
 
-/// String midpoint function.
-pub mod midpoint;
-
 /// Application updater.
 pub mod update;
 use anyhow::Result;

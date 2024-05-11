@@ -22,4 +22,3 @@ features = [
 
 [dev-dependencies]
 automerge-test = "0.4.3"
-proptest = "1.4.0"
