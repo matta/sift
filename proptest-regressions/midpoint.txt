@@ -7,3 +7,4 @@
 cc f6484e099a2df4ad61ca0634522889d6264d2ce4d2af166627e1bd70e32a54a2 # shrinks to left = "𞹔", right = ""
 cc 84b82e73888ad51a04b56fb12bb1494440a650d7f39af910fb2353bab3963e18 # shrinks to left = "", right = "0"
 cc 5259ca26c70828759638d40d728f172e13b631649cf524dd2cb65aea91ea12af # shrinks to left = "®a", right = "0"
+cc 21a0dc5c4bcc3b00bb2f67f0324c202f3f9b95cd365e1994f99f7966b453aec2 # shrinks to a = "", b = "a"

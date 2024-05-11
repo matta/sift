@@ -13,14 +13,16 @@ pub(crate) fn midpoint(left: &str, right: &str) -> String {
     let mut left = left.iter().copied().chain(std::iter::repeat(b'a' - 1));
     let mut right = right.iter().copied().chain(std::iter::repeat(b'z' + 1));
 
-    let mut l = 0;
-    let mut r = 0;
+    let mut l;
+    let mut r;
 
-    while l == r {
+    loop {
         l = left.next().unwrap();
         r = right.next().unwrap();
         if l == r {
             mid.push(l as char);
+        } else {
+            break;
         }
     }
 
