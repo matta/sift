@@ -23,7 +23,7 @@ impl Task {
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub(crate) struct TaskList {
-    pub tasks: BTreeMap<Uuid, Task>,
+    pub tasks: Vec<Task>,
 }
 
 // SerializableTask is a Task that can be stored and retrieved from an
@@ -42,7 +42,8 @@ pub(crate) struct SerializableTask {
 // an Automerge document.
 #[derive(Debug, Clone, PartialEq, autosurgeon::Reconcile, autosurgeon::Hydrate)]
 pub(crate) struct SerializableTaskList {
-    pub tasks: BTreeMap<String, SerializableTask>,
+    pub task_map: BTreeMap<String, SerializableTask>,
+    pub task_order: Vec<String>,
 }
 
 // A SerializableTask can be created from a Task.
@@ -60,13 +61,19 @@ impl From<Task> for SerializableTask {
 // A SerializableTaskList can be created from a TaskList.
 impl From<TaskList> for SerializableTaskList {
     fn from(task_list: TaskList) -> Self {
-        let mut converted_tasks: BTreeMap<String, SerializableTask> = BTreeMap::new();
-        for (id, task) in task_list.tasks.into_iter() {
-            assert_eq!(id, task.id);
-            converted_tasks.insert(id.to_string(), task.into());
-        }
+        let task_order: Vec<String> = task_list
+            .tasks
+            .iter()
+            .map(|task| task.id.to_string())
+            .collect();
+        let task_map: BTreeMap<String, SerializableTask> = task_list
+            .tasks
+            .into_iter()
+            .map(|task| (task.id.to_string(), task.into()))
+            .collect();
         Self {
-            tasks: converted_tasks,
+            task_map,
+            task_order,
         }
     }
 }
@@ -74,18 +81,24 @@ impl From<TaskList> for SerializableTaskList {
 // A TaskList can be created from a SerializableTaskList.
 impl From<SerializableTaskList> for TaskList {
     fn from(value: SerializableTaskList) -> Self {
-        let mut result = TaskList::default();
-        for (id, serializable_task) in value.tasks.into_iter() {
-            let task: Task = Task {
-                id: Uuid::parse_str(&id).unwrap(),
-                title: serializable_task.title,
-                snoozed: serializable_task.snoozed,
-                due_date: serializable_task.due_date,
-                completed: serializable_task.completed,
-            };
-            result.tasks.insert(task.id, task);
-        }
-        result
+        // TODO: this keeps the *last* of any duplicates in the task_order list.
+        // We probably want to keep the first.
+        let tasks: Vec<Task> = value
+            .task_order
+            .iter()
+            .map(|id| {
+                let task = value.task_map.get(id).unwrap();
+                let id = Uuid::parse_str(id).unwrap();
+                Task {
+                    id,
+                    title: task.title.clone(),
+                    snoozed: task.snoozed,
+                    due_date: task.due_date,
+                    completed: task.completed,
+                }
+            })
+            .collect();
+        TaskList { tasks }
     }
 }
 
@@ -152,7 +165,7 @@ pub(crate) fn decode_document(binary: Vec<u8>) -> Result<TaskList, anyhow::Error
 #[cfg(test)]
 mod tests {
     use automerge::ScalarValue;
-    use automerge_test::{assert_doc, map};
+    use automerge_test::{assert_doc, list, map};
 
     use super::*;
 
@@ -174,20 +187,20 @@ mod tests {
                 completed: false,
             },
         ];
-        let todo_list = TaskList {
-            tasks: tasks.iter().map(|task| (task.id, task.clone())).collect(),
+        let task_list = TaskList {
+            tasks: tasks.clone(),
         };
 
         let mut doc = automerge::AutoCommit::new();
         {
-            let value: SerializableTaskList = todo_list.clone().into();
+            let value: SerializableTaskList = task_list.clone().into();
             autosurgeon::reconcile(&mut doc, &value).unwrap();
         }
 
         assert_doc!(
             doc.document(),
             map! {
-                "tasks" => {
+                "task_map" => {
                     map!{
                         tasks[0].id => {
                             map!{
@@ -207,11 +220,18 @@ mod tests {
                         }
                     }
                 },
+                "task_order" => {
+                    list!{
+                        // FIXME: this is too convoluted...
+                        {automerge::ScalarValue::Str(smol_str::SmolStr::new(tasks[0].id.to_string()))},
+                        {automerge::ScalarValue::Str(smol_str::SmolStr::new(tasks[1].id.to_string()))},
+                    }
+                },
             }
         );
 
         let todo_list2: SerializableTaskList = autosurgeon::hydrate(&doc).unwrap();
         let todo_list2: TaskList = todo_list2.into();
-        assert_eq!(todo_list, todo_list2);
+        assert_eq!(task_list, todo_list2);
     }
 }

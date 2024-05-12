@@ -703,6 +703,7 @@ dependencies = [
  "chrono",
  "crossterm",
  "ratatui",
+ "smol_str",
  "tui-prompts",
  "uuid",
 ]

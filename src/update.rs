@@ -57,15 +57,7 @@ pub(crate) fn update(app: &mut App, key_event: KeyEvent) {
                     app.state.screen = Screen::Main;
                 }
                 tui_prompts::Status::Done => {
-                    let task = app
-                        .state
-                        .list
-                        .tasks
-                        .tasks
-                        .iter_mut()
-                        .nth(edit_state.index)
-                        .unwrap()
-                        .1;
+                    let task = &mut app.state.list.tasks.tasks[edit_state.index];
                     task.title = text_state.value().into();
                     app.state.screen = Screen::Main;
                 }
@@ -77,25 +69,25 @@ pub(crate) fn update(app: &mut App, key_event: KeyEvent) {
 fn delete(app: &mut App) {
     let list = &mut app.state.list;
     if let Some(index) = list.state.selected() {
-        // Decrement the selected items by the number of todo
-        // items that will be deleted.
+        // Decrement the selected item index by the number of todo
+        // items up to it that will be deleted.
         let count = list
             .tasks
             .tasks
             .iter()
-            .enumerate()
-            .filter(|(i, (_, todo))| *i < index && todo.completed)
+            .take(index)
+            .filter(|task| task.completed)
             .count();
         *list.state.selected_mut() = Some(index - count);
     }
-    list.tasks.tasks.retain(|_, todo| !todo.completed);
+    list.tasks.tasks.retain(|task| !task.completed);
 }
 
 fn snooze(app: &mut App) {
     let list = &mut app.state.list;
     if let Some(index) = list.state.selected() {
-        let todo = list.tasks.tasks.iter_mut().nth(index).unwrap().1;
-        todo.snoozed = if todo.snoozed.is_some() {
+        let task = &mut list.tasks.tasks[index];
+        task.snoozed = if task.snoozed.is_some() {
             None
         } else {
             let next_week = next_week();
@@ -103,8 +95,9 @@ fn snooze(app: &mut App) {
         };
     }
     // Order snoozed items after non-snoozed items.
-    // TODO: make this work again
-    // list.tasks.tasks.sort_by_key(|item| item.snoozed.is_some());
+    // Boolean false comes before true.
+    // Note: this is a stable sort.
+    list.tasks.tasks.sort_by_key(|task| task.snoozed.is_some());
 }
 
 fn next_week() -> chrono::NaiveDate {
@@ -115,30 +108,25 @@ fn next_week() -> chrono::NaiveDate {
 
 fn add(app: &mut App) {
     let list = &mut app.state.list;
-    // TODO: make insertion at specific indices work again
-    // let index = list.state.selected().unwrap_or(0);
-    // *list.state.selected_mut() = Some(index);
-    let id = Task::new_id();
+
+    let index = list.state.selected().unwrap_or(0);
+    *list.state.selected_mut() = Some(index);
+
     let task = Task {
-        id,
+        id: Task::new_id(),
         title: String::new(),
         completed: false,
         snoozed: None,
         due_date: None,
     };
-    list.tasks.tasks.insert(task.id, task);
-    *list.state.selected_mut() = list
-        .tasks
-        .tasks
-        .iter()
-        .position(|(&this_id, _)| this_id == id);
+    list.tasks.tasks.insert(index, task);
     edit(app);
 }
 
 fn edit(app: &mut App) {
     let list = &mut app.state.list;
     if let Some(index) = list.state.selected() {
-        let task = list.tasks.tasks.iter().nth(index).unwrap().1;
+        let task = &list.tasks.tasks[index];
         let text_state = TextState::new()
             .with_value(Cow::Owned(task.title.clone()))
             .with_focus(FocusState::Focused);

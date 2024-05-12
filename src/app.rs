@@ -72,29 +72,18 @@ impl From<SerializableListState> for ListState {
 
 impl Default for TodoList {
     fn default() -> Self {
+        let tasks = (1..=10)
+            .map(|i| Task {
+                id: Task::new_id(),
+                title: format!("Item {}", i),
+                snoozed: None,
+                due_date: None,
+                completed: false,
+            })
+            .collect::<Vec<_>>();
         TodoList {
             state: ListState::default(),
-            tasks: TaskList {
-                tasks: (1..=10)
-                    .map(|i| {
-                        // TODO: get rid of this sleep hack. At time of writing
-                        // tasks were displayed ordered by their IDs, which
-                        // happen to be prefixed with a timestmap in millisecond
-                        // resolution. To get the default list displaying in
-                        // order we sleep for two milliseconds to ensure each
-                        // has a different timestamp.
-                        std::thread::sleep(std::time::Duration::from_millis(2));
-                        Task {
-                            id: Task::new_id(),
-                            title: format!("Item {}", i),
-                            snoozed: None,
-                            due_date: None,
-                            completed: false,
-                        }
-                    })
-                    .map(|task| (task.id, task))
-                    .collect(),
-            },
+            tasks: TaskList { tasks },
         }
     }
 }
@@ -128,7 +117,7 @@ impl TodoList {
 
     pub(crate) fn toggle(&mut self) {
         if let Some(i) = self.state.selected() {
-            let task = self.tasks.tasks.iter_mut().nth(i).unwrap().1;
+            let task = &mut self.tasks.tasks[i];
             task.completed = !task.completed;
         }
     }
