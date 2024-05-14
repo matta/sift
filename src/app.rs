@@ -41,35 +41,6 @@ pub(crate) struct TodoList {
     pub tasks: TaskList,
 }
 
-/// Bridges [ListState] to a serializable struct.
-///
-/// The `ratatui` `ListState` struct is not serializable.  This struct is
-/// structurally identical to `ListState` and is serializable.
-///
-/// # Example
-///
-/// To make a `ListState` field serializable, declare it like this:
-///
-/// ```
-/// struct MyStruct {
-///     #[serde(with "SerializableListState")]
-///     state: ListState
-/// }
-struct SerializableListState {
-    offset: usize,
-    selected: Option<usize>,
-}
-
-/// Serde deserialization uses this to convert a `SerializableListState` into
-/// a `ListState`.
-impl From<SerializableListState> for ListState {
-    fn from(from: SerializableListState) -> ListState {
-        ListState::default()
-            .with_offset(from.offset)
-            .with_selected(from.selected)
-    }
-}
-
 impl Default for TodoList {
     fn default() -> Self {
         let tasks = (1..=10)
