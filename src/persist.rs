@@ -222,9 +222,11 @@ mod tests {
                 },
                 "task_order" => {
                     list!{
-                        // FIXME: this is too convoluted...
-                        {automerge::ScalarValue::Str(smol_str::SmolStr::new(tasks[0].id.to_string()))},
-                        {automerge::ScalarValue::Str(smol_str::SmolStr::new(tasks[1].id.to_string()))},
+                        // FIXME: this is slightly convoluted. It would be nice
+                        // if the .as_str() was unecessary.
+                        // https://github.com/automerge/automerge/issues/926
+                        {tasks[0].id.to_string().as_str()},
+                        {tasks[1].id.to_string().as_str()},
                     }
                 },
             }
