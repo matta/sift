@@ -1,3 +1,7 @@
+/*!
+Application level glue code
+*/
+
 use std::{
     fs::File,
     io::{Read, Write},

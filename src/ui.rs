@@ -1,3 +1,5 @@
+//! Widget renderer
+
 use std::borrow::Cow;
 
 use ratatui::{

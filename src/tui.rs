@@ -1,3 +1,5 @@
+//! Terminal user interface
+
 use std::{io, panic};
 
 use anyhow::Result;

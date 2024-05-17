@@ -1,3 +1,5 @@
+//! Application updater
+
 use std::borrow::Cow;
 
 use chrono::Datelike;

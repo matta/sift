@@ -1,3 +1,5 @@
+//! Terminal events handler
+
 use std::{
     sync::mpsc,
     thread,

@@ -1,3 +1,5 @@
+//! Persistence layer
+
 use std::collections::BTreeMap;
 
 use automerge::Automerge;
