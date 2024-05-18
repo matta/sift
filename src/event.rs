@@ -22,26 +22,26 @@ pub enum Event {
     Resize(u16, u16),
 }
 
-/// Terminal event handler.
+/// Terminal event source.
 #[derive(Debug)]
-pub struct EventHandler {
-    /// Event sender channel.
-    #[allow(dead_code)]
-    sender: mpsc::Sender<Event>,
+pub struct Reader {
     /// Event receiver channel.
     receiver: mpsc::Receiver<Event>,
-    /// Event handler thread.
     #[allow(dead_code)]
     handler: thread::JoinHandle<()>,
 }
 
-impl EventHandler {
+impl Reader {
     /// Constructs a new instance of [`EventHandler`].
+    ///
+    /// # Panics
+    ///
+    /// Will panic on various I/O errors.
+    #[must_use]
     pub fn new(tick_rate: u64) -> Self {
         let tick_rate = Duration::from_millis(tick_rate);
         let (sender, receiver) = mpsc::channel();
         let handler = {
-            let sender = sender.clone();
             thread::spawn(move || {
                 let mut last_tick = Instant::now();
                 loop {
@@ -62,7 +62,7 @@ impl EventHandler {
                             CrosstermEvent::Resize(w, h) => sender.send(Event::Resize(w, h)),
                             _ => unimplemented!(),
                         }
-                        .expect("failed to send terminal event")
+                        .expect("failed to send terminal event");
                     }
 
                     if last_tick.elapsed() >= tick_rate {
@@ -72,17 +72,18 @@ impl EventHandler {
                 }
             })
         };
-        Self {
-            sender,
-            receiver,
-            handler,
-        }
+        Self { receiver, handler }
     }
 
     /// Receive the next event from the handler thread.
     ///
-    /// This function will always block the current thread if
-    /// there is no data available and it's possible for more data to be sent.
+    /// This function will always block the current thread if there is no data
+    /// available and it's possible for more data to be sent.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error only if the sender thread has finished, which
+    /// currently does not happen.
     pub fn next(&self) -> Result<Event> {
         Ok(self.receiver.recv()?)
     }

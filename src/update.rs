@@ -17,9 +17,7 @@ pub(crate) fn update(app: &mut App, key_event: KeyEvent) {
             KeyCode::Esc | KeyCode::Char('q') => {
                 app.should_quit = true;
             }
-            KeyCode::Char('c') | KeyCode::Char('C')
-                if key_event.modifiers == KeyModifiers::CONTROL =>
-            {
+            KeyCode::Char('c' | 'C') if key_event.modifiers == KeyModifiers::CONTROL => {
                 app.should_quit = true;
             }
             KeyCode::Char(' ') => {

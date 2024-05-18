@@ -117,7 +117,7 @@ impl App {
         let mut binary = Vec::new();
         file.read_to_end(&mut binary)?;
 
-        let tasks = decode_document(binary)?;
+        let tasks = decode_document(&binary)?;
 
         Ok(App {
             state: State {

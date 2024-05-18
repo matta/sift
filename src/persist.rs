@@ -107,7 +107,8 @@ impl From<SerializableTaskList> for TaskList {
 /// Reconcile an `Option<NaiveDate>` value with an optional string in
 /// an automerge document.
 ///a
-/// This helper module is used with the #[autosurgeon(with = "option_naive_date")]
+/// This helper module is used with the
+// `#[autosurgeon(with = "option_naive_date")]`
 /// syntax.
 mod option_naive_date {
     use autosurgeon::{Hydrate, HydrateError, Prop, ReadDoc, Reconciler};
@@ -139,6 +140,7 @@ mod option_naive_date {
 
     // Given an `Option<NaiveDate>` value, write either a none value or
     // a string in the format YYYY-MM-DD.
+    #[allow(clippy::trivially_copy_pass_by_ref)]
     pub(super) fn reconcile<R: Reconciler>(
         date: &Option<NaiveDate>,
         mut reconciler: R,
@@ -157,8 +159,8 @@ pub(crate) fn encode_document(tasks: &TaskList) -> Result<Vec<u8>, anyhow::Error
     Ok(doc.save())
 }
 
-pub(crate) fn decode_document(binary: Vec<u8>) -> Result<TaskList, anyhow::Error> {
-    let doc = Automerge::load(&binary)?;
+pub(crate) fn decode_document(binary: &[u8]) -> Result<TaskList, anyhow::Error> {
+    let doc = Automerge::load(binary)?;
     let tasks: SerializableTaskList = autosurgeon::hydrate(&doc)?;
     let tasks: TaskList = tasks.into();
     Ok(tasks)
