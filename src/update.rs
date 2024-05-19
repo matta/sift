@@ -11,55 +11,69 @@ use tui_prompts::TextState;
 use crate::app::{App, EditState, Screen};
 use crate::persist::Task;
 
-pub(crate) fn update(app: &mut App, key_event: KeyEvent) {
+#[derive(PartialEq, Eq)]
+pub(crate) enum Disposition {
+    Continue,
+    Quit,
+}
+
+pub(crate) fn update(app: &mut App, key_event: KeyEvent) -> Disposition {
     match &mut app.state.screen {
         Screen::Main => match key_event.code {
-            KeyCode::Esc | KeyCode::Char('q') => {
-                app.should_quit = true;
-            }
+            KeyCode::Esc | KeyCode::Char('q') => Disposition::Quit,
             KeyCode::Char('c' | 'C') if key_event.modifiers == KeyModifiers::CONTROL => {
-                app.should_quit = true;
+                Disposition::Quit
             }
             KeyCode::Char(' ') => {
                 app.state.list.toggle();
+                Disposition::Continue
             }
             KeyCode::Char('e') => {
                 edit(app);
+                Disposition::Continue
             }
             KeyCode::Char('s') => {
                 snooze(app);
+                Disposition::Continue
             }
             KeyCode::Left | KeyCode::Char('h') => {
                 app.state.list.unselect();
+                Disposition::Continue
             }
             KeyCode::Down | KeyCode::Char('j') => {
                 app.state.list.next();
+                Disposition::Continue
             }
             KeyCode::Up | KeyCode::Char('k') => {
                 app.state.list.previous();
+                Disposition::Continue
             }
             KeyCode::Char('a') => {
                 add(app);
+                Disposition::Continue
             }
             KeyCode::Char('D') => {
                 delete(app);
+                Disposition::Continue
             }
-            _ => {}
+            _ => Disposition::Continue,
         },
         Screen::Edit(edit_state) => {
             let text_state = &mut edit_state.text_state;
             assert!(text_state.is_focused());
             text_state.handle_key_event(key_event);
             match text_state.status() {
-                tui_prompts::Status::Pending => {}
+                tui_prompts::Status::Pending => Disposition::Continue,
                 tui_prompts::Status::Aborted => {
                     // TODO: When aborting a new item, delete it.
                     app.state.screen = Screen::Main;
+                    Disposition::Continue
                 }
                 tui_prompts::Status::Done => {
                     let task = &mut app.state.list.tasks.tasks[edit_state.index];
                     task.title = text_state.value().into();
                     app.state.screen = Screen::Main;
+                    Disposition::Continue
                 }
             }
         }

@@ -13,9 +13,9 @@ use tui_prompts::TextState;
 
 use crate::persist::{decode_document, encode_document, Task, TaskList};
 
+// TODO: App is just State now, so let's get rid of App
 #[derive(Default)]
 pub(crate) struct App {
-    pub should_quit: bool,
     pub state: State,
 }
 
@@ -127,7 +127,6 @@ impl App {
                 },
                 screen: Screen::Main,
             },
-            should_quit: false,
         })
     }
 }

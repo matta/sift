@@ -35,13 +35,14 @@ fn main() -> Result<()> {
     tui.enter()?;
 
     // Start the main loop.
-    while !app.should_quit {
+    let mut disposition = update::Disposition::Continue;
+    while disposition == update::Disposition::Continue {
         // Render the user interface.
         tui.draw(&mut app)?;
         // Handle events.
-        match tui.event_reader.next()? {
+        disposition = match tui.event_reader.next()? {
             Event::Key(key_event) => update(&mut app, key_event),
-            Event::Tick | Event::Mouse(_) | Event::Resize(_, _) => {}
+            Event::Tick | Event::Mouse(_) | Event::Resize(_, _) => update::Disposition::Continue,
         };
     }
 
