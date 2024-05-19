@@ -10,7 +10,7 @@ use crossterm::{
 
 pub type CrosstermTerminal = ratatui::Terminal<ratatui::backend::CrosstermBackend<std::io::Stderr>>;
 
-use crate::{app::App, ui};
+use crate::{state::App, ui};
 
 /// Representation of a terminal user interface.
 ///

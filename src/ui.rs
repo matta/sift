@@ -8,7 +8,7 @@ use ratatui::{
 };
 use tui_prompts::{State, TextPrompt};
 
-use crate::app::{App, Screen};
+use crate::state::{App, Screen};
 
 pub(crate) fn render(app: &mut App, f: &mut Frame) {
     match &mut app.state.screen {

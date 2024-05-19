@@ -4,17 +4,17 @@ This is a toy todo list application I have written to explore Rust.
 #![warn(clippy::all, clippy::pedantic)]
 #![allow(clippy::uninlined_format_args)]
 
-pub mod app;
 pub mod event;
 pub mod persist;
+pub mod state;
 pub mod tui;
 pub mod ui;
 pub mod update;
 
 use anyhow::Result;
-use app::App;
 use event::Event;
 use ratatui::{backend::CrosstermBackend, Terminal};
+use state::App;
 use tui::Tui;
 use update::update;
 

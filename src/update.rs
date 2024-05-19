@@ -8,8 +8,8 @@ use tui_prompts::FocusState;
 use tui_prompts::State as _;
 use tui_prompts::TextState;
 
-use crate::app::{App, EditState, Screen};
 use crate::persist::Task;
+use crate::state::{App, EditState, Screen};
 
 #[derive(PartialEq, Eq)]
 pub(crate) enum Disposition {
