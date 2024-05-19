@@ -13,12 +13,6 @@ use tui_prompts::TextState;
 
 use crate::persist::{decode_document, encode_document, Task, TaskList};
 
-// TODO: App is just State now, so let's get rid of App
-#[derive(Default)]
-pub(crate) struct App {
-    pub state: State,
-}
-
 #[derive(Default)]
 pub(crate) struct State {
     pub list: TodoList,
@@ -98,20 +92,20 @@ impl TodoList {
     }
 }
 
-impl App {
-    pub fn new() -> Self {
-        App::default()
+impl State {
+    pub fn new() -> State {
+        State::default()
     }
 
-    pub fn save(self: &App, filename: &str) -> Result<()> {
-        let binary = encode_document(&self.state.list.tasks)?;
+    pub fn save(&self, filename: &str) -> Result<()> {
+        let binary = encode_document(&self.list.tasks)?;
         let mut file = File::create(filename)?;
         file.write_all(&binary)?;
         file.sync_all()?;
         Ok(())
     }
 
-    pub fn load(filename: &str) -> Result<App> {
+    pub fn load(filename: &str) -> Result<State> {
         let mut file = File::open(filename)?;
 
         let mut binary = Vec::new();
@@ -119,14 +113,12 @@ impl App {
 
         let tasks = decode_document(&binary)?;
 
-        Ok(App {
-            state: State {
-                list: TodoList {
-                    tasks,
-                    state: ListState::default(),
-                },
-                screen: Screen::Main,
+        Ok(State {
+            list: TodoList {
+                tasks,
+                state: ListState::default(),
             },
+            screen: Screen::Main,
         })
     }
 }

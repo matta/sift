@@ -14,17 +14,16 @@ pub mod update;
 use anyhow::Result;
 use event::Event;
 use ratatui::{backend::CrosstermBackend, Terminal};
-use state::App;
 use tui::Tui;
 use update::update;
 
 fn main() -> Result<()> {
     let save_name = "sift.sift";
     // Create an application.
-    let mut app = if let Ok(app) = App::load(save_name) {
+    let mut state = if let Ok(app) = state::State::load(save_name) {
         app
     } else {
-        App::new()
+        state::State::new()
     };
 
     // Initialize the terminal user interface.
@@ -38,10 +37,10 @@ fn main() -> Result<()> {
     let mut disposition = update::Disposition::Continue;
     while disposition == update::Disposition::Continue {
         // Render the user interface.
-        tui.draw(&mut app)?;
+        tui.draw(&mut state)?;
         // Handle events.
         disposition = match tui.event_reader.next()? {
-            Event::Key(key_event) => update(&mut app, key_event),
+            Event::Key(key_event) => update(&mut state, key_event),
             Event::Tick | Event::Mouse(_) | Event::Resize(_, _) => update::Disposition::Continue,
         };
     }
@@ -49,7 +48,7 @@ fn main() -> Result<()> {
     // Exit the user interface.
     tui.exit()?;
 
-    app.save(save_name)?;
+    state.save(save_name)?;
 
     Ok(())
 }

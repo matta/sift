@@ -9,7 +9,7 @@ use tui_prompts::State as _;
 use tui_prompts::TextState;
 
 use crate::persist::Task;
-use crate::state::{App, EditState, Screen};
+use crate::state;
 
 #[derive(PartialEq, Eq)]
 pub(crate) enum Disposition {
@@ -17,48 +17,48 @@ pub(crate) enum Disposition {
     Quit,
 }
 
-pub(crate) fn update(app: &mut App, key_event: KeyEvent) -> Disposition {
-    match &mut app.state.screen {
-        Screen::Main => match key_event.code {
+pub(crate) fn update(state: &mut state::State, key_event: KeyEvent) -> Disposition {
+    match &mut state.screen {
+        state::Screen::Main => match key_event.code {
             KeyCode::Esc | KeyCode::Char('q') => Disposition::Quit,
             KeyCode::Char('c' | 'C') if key_event.modifiers == KeyModifiers::CONTROL => {
                 Disposition::Quit
             }
             KeyCode::Char(' ') => {
-                app.state.list.toggle();
+                state.list.toggle();
                 Disposition::Continue
             }
             KeyCode::Char('e') => {
-                edit(app);
+                edit(state);
                 Disposition::Continue
             }
             KeyCode::Char('s') => {
-                snooze(app);
+                snooze(state);
                 Disposition::Continue
             }
             KeyCode::Left | KeyCode::Char('h') => {
-                app.state.list.unselect();
+                state.list.unselect();
                 Disposition::Continue
             }
             KeyCode::Down | KeyCode::Char('j') => {
-                app.state.list.next();
+                state.list.next();
                 Disposition::Continue
             }
             KeyCode::Up | KeyCode::Char('k') => {
-                app.state.list.previous();
+                state.list.previous();
                 Disposition::Continue
             }
             KeyCode::Char('a') => {
-                add(app);
+                add(state);
                 Disposition::Continue
             }
             KeyCode::Char('D') => {
-                delete(app);
+                delete(state);
                 Disposition::Continue
             }
             _ => Disposition::Continue,
         },
-        Screen::Edit(edit_state) => {
+        state::Screen::Edit(edit_state) => {
             let text_state = &mut edit_state.text_state;
             assert!(text_state.is_focused());
             text_state.handle_key_event(key_event);
@@ -66,13 +66,13 @@ pub(crate) fn update(app: &mut App, key_event: KeyEvent) -> Disposition {
                 tui_prompts::Status::Pending => Disposition::Continue,
                 tui_prompts::Status::Aborted => {
                     // TODO: When aborting a new item, delete it.
-                    app.state.screen = Screen::Main;
+                    state.screen = state::Screen::Main;
                     Disposition::Continue
                 }
                 tui_prompts::Status::Done => {
-                    let task = &mut app.state.list.tasks.tasks[edit_state.index];
+                    let task = &mut state.list.tasks.tasks[edit_state.index];
                     task.title = text_state.value().into();
-                    app.state.screen = Screen::Main;
+                    state.screen = state::Screen::Main;
                     Disposition::Continue
                 }
             }
@@ -80,8 +80,8 @@ pub(crate) fn update(app: &mut App, key_event: KeyEvent) -> Disposition {
     }
 }
 
-fn delete(app: &mut App) {
-    let list = &mut app.state.list;
+fn delete(state: &mut state::State) {
+    let list = &mut state.list;
     if let Some(index) = list.state.selected() {
         // Decrement the selected item index by the number of todo
         // items up to it that will be deleted.
@@ -97,8 +97,8 @@ fn delete(app: &mut App) {
     list.tasks.tasks.retain(|task| !task.completed);
 }
 
-fn snooze(app: &mut App) {
-    let list = &mut app.state.list;
+fn snooze(state: &mut state::State) {
+    let list = &mut state.list;
     if let Some(index) = list.state.selected() {
         let task = &mut list.tasks.tasks[index];
         task.snoozed = if task.snoozed.is_some() {
@@ -120,8 +120,8 @@ fn next_week() -> chrono::NaiveDate {
     today + chrono::TimeDelta::try_weeks(1).unwrap()
 }
 
-fn add(app: &mut App) {
-    let list = &mut app.state.list;
+fn add(state: &mut state::State) {
+    let list = &mut state.list;
 
     let index = list.state.selected().unwrap_or(0);
     *list.state.selected_mut() = Some(index);
@@ -134,17 +134,17 @@ fn add(app: &mut App) {
         due_date: None,
     };
     list.tasks.tasks.insert(index, task);
-    edit(app);
+    edit(state);
 }
 
-fn edit(app: &mut App) {
-    let list = &mut app.state.list;
+fn edit(state: &mut state::State) {
+    let list = &mut state.list;
     if let Some(index) = list.state.selected() {
         let task = &list.tasks.tasks[index];
         let text_state = TextState::new()
             .with_value(Cow::Owned(task.title.clone()))
             .with_focus(FocusState::Focused);
-        let edit_state = EditState { index, text_state };
-        app.state.screen = Screen::Edit(edit_state);
+        let edit_state = state::EditState { index, text_state };
+        state.screen = state::Screen::Edit(edit_state);
     }
 }
