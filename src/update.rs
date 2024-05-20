@@ -9,7 +9,7 @@ use tui_prompts::State as _;
 use tui_prompts::TextState;
 
 use crate::persist::Task;
-use crate::state;
+use crate::ui_state;
 
 #[derive(PartialEq, Eq)]
 pub(crate) enum Disposition {
@@ -17,9 +17,9 @@ pub(crate) enum Disposition {
     Quit,
 }
 
-pub(crate) fn update(state: &mut state::State, key_event: KeyEvent) -> Disposition {
+pub(crate) fn update(state: &mut ui_state::State, key_event: KeyEvent) -> Disposition {
     match &mut state.current_screen {
-        state::Screen::Main => match key_event.code {
+        ui_state::Screen::Main => match key_event.code {
             KeyCode::Esc | KeyCode::Char('q') => Disposition::Quit,
             KeyCode::Char('c' | 'C') if key_event.modifiers == KeyModifiers::CONTROL => {
                 Disposition::Quit
@@ -58,7 +58,7 @@ pub(crate) fn update(state: &mut state::State, key_event: KeyEvent) -> Dispositi
             }
             _ => Disposition::Continue,
         },
-        state::Screen::Edit(edit_state) => {
+        ui_state::Screen::Edit(edit_state) => {
             let text_state = &mut edit_state.text_state;
             assert!(text_state.is_focused());
             text_state.handle_key_event(key_event);
@@ -66,13 +66,13 @@ pub(crate) fn update(state: &mut state::State, key_event: KeyEvent) -> Dispositi
                 tui_prompts::Status::Pending => Disposition::Continue,
                 tui_prompts::Status::Aborted => {
                     // TODO: When aborting a new item, delete it.
-                    state.current_screen = state::Screen::Main;
+                    state.current_screen = ui_state::Screen::Main;
                     Disposition::Continue
                 }
                 tui_prompts::Status::Done => {
                     let task = &mut state.list.tasks.tasks[edit_state.index];
                     task.title = text_state.value().into();
-                    state.current_screen = state::Screen::Main;
+                    state.current_screen = ui_state::Screen::Main;
                     Disposition::Continue
                 }
             }
@@ -80,7 +80,7 @@ pub(crate) fn update(state: &mut state::State, key_event: KeyEvent) -> Dispositi
     }
 }
 
-fn delete(state: &mut state::State) {
+fn delete(state: &mut ui_state::State) {
     let list = &mut state.list;
     if let Some(index) = list.state.selected() {
         // Decrement the selected item index by the number of todo
@@ -97,7 +97,7 @@ fn delete(state: &mut state::State) {
     list.tasks.tasks.retain(|task| !task.completed);
 }
 
-fn snooze(state: &mut state::State) {
+fn snooze(state: &mut ui_state::State) {
     let list = &mut state.list;
     if let Some(index) = list.state.selected() {
         let task = &mut list.tasks.tasks[index];
@@ -120,7 +120,7 @@ fn next_week() -> chrono::NaiveDate {
     today + chrono::TimeDelta::try_weeks(1).unwrap()
 }
 
-fn add(state: &mut state::State) {
+fn add(state: &mut ui_state::State) {
     let list = &mut state.list;
 
     let index = list.state.selected().unwrap_or(0);
@@ -137,14 +137,14 @@ fn add(state: &mut state::State) {
     edit(state);
 }
 
-fn edit(state: &mut state::State) {
+fn edit(state: &mut ui_state::State) {
     let list = &mut state.list;
     if let Some(index) = list.state.selected() {
         let task = &list.tasks.tasks[index];
         let text_state = TextState::new()
             .with_value(Cow::Owned(task.title.clone()))
             .with_focus(FocusState::Focused);
-        let edit_state = state::EditState { index, text_state };
-        state.current_screen = state::Screen::Edit(edit_state);
+        let edit_state = ui_state::EditState { index, text_state };
+        state.current_screen = ui_state::Screen::Edit(edit_state);
     }
 }

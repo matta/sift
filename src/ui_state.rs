@@ -1,5 +1,8 @@
 /*!
-Application level glue code
+Code for managing the displayed state of the application.
+
+The `State` struct contains the application's state.  It is the
+central data structure for the application.
 */
 
 use std::{

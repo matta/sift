@@ -8,11 +8,11 @@ use ratatui::{
 };
 use tui_prompts::{State, TextPrompt};
 
-use crate::state;
+use crate::ui_state;
 
-pub(crate) fn render(state: &mut state::State, f: &mut Frame) {
+pub(crate) fn render(state: &mut ui_state::State, f: &mut Frame) {
     match &mut state.current_screen {
-        state::Screen::Main => {
+        ui_state::Screen::Main => {
             let tasks = &state.list.tasks;
             let items: Vec<_> = tasks.tasks.iter().map(render_task).collect();
             let items = List::new(items)
@@ -21,7 +21,7 @@ pub(crate) fn render(state: &mut state::State, f: &mut Frame) {
 
             f.render_stateful_widget(items, f.size(), &mut state.list.state);
         }
-        state::Screen::Edit(edit_state) => {
+        ui_state::Screen::Edit(edit_state) => {
             let prompt = TextPrompt::new(Cow::Borrowed("edit"));
             let text_state = &mut edit_state.text_state;
             f.render_stateful_widget(prompt, f.size(), text_state);

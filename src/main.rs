@@ -6,7 +6,7 @@ This is a toy todo list application I have written to explore Rust.
 
 pub mod event;
 pub mod persist;
-pub mod state;
+pub mod ui_state;
 pub mod tui;
 pub mod ui;
 pub mod update;
@@ -20,10 +20,10 @@ use update::update;
 fn main() -> Result<()> {
     let save_name = "sift.sift";
     // Create an application.
-    let mut state = if let Ok(app) = state::State::load(save_name) {
+    let mut state = if let Ok(app) = ui_state::State::load(save_name) {
         app
     } else {
-        state::State::new()
+        ui_state::State::new()
     };
 
     // Initialize the terminal user interface.
