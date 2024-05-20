@@ -16,7 +16,7 @@ use crate::persist::{decode_document, encode_document, Task, TaskList};
 #[derive(Default)]
 pub(crate) struct State {
     pub list: TodoList,
-    pub screen: Screen,
+    pub current_screen: Screen,
 }
 
 #[derive(Default)]
@@ -118,7 +118,7 @@ impl State {
                 tasks,
                 state: ListState::default(),
             },
-            screen: Screen::Main,
+            current_screen: Screen::Main,
         })
     }
 }

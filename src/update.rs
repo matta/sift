@@ -18,7 +18,7 @@ pub(crate) enum Disposition {
 }
 
 pub(crate) fn update(state: &mut state::State, key_event: KeyEvent) -> Disposition {
-    match &mut state.screen {
+    match &mut state.current_screen {
         state::Screen::Main => match key_event.code {
             KeyCode::Esc | KeyCode::Char('q') => Disposition::Quit,
             KeyCode::Char('c' | 'C') if key_event.modifiers == KeyModifiers::CONTROL => {
@@ -66,13 +66,13 @@ pub(crate) fn update(state: &mut state::State, key_event: KeyEvent) -> Dispositi
                 tui_prompts::Status::Pending => Disposition::Continue,
                 tui_prompts::Status::Aborted => {
                     // TODO: When aborting a new item, delete it.
-                    state.screen = state::Screen::Main;
+                    state.current_screen = state::Screen::Main;
                     Disposition::Continue
                 }
                 tui_prompts::Status::Done => {
                     let task = &mut state.list.tasks.tasks[edit_state.index];
                     task.title = text_state.value().into();
-                    state.screen = state::Screen::Main;
+                    state.current_screen = state::Screen::Main;
                     Disposition::Continue
                 }
             }
@@ -145,6 +145,6 @@ fn edit(state: &mut state::State) {
             .with_value(Cow::Owned(task.title.clone()))
             .with_focus(FocusState::Focused);
         let edit_state = state::EditState { index, text_state };
-        state.screen = state::Screen::Edit(edit_state);
+        state.current_screen = state::Screen::Edit(edit_state);
     }
 }

@@ -11,7 +11,7 @@ use tui_prompts::{State, TextPrompt};
 use crate::state;
 
 pub(crate) fn render(state: &mut state::State, f: &mut Frame) {
-    match &mut state.screen {
+    match &mut state.current_screen {
         state::Screen::Main => {
             let tasks = &state.list.tasks;
             let items: Vec<_> = tasks.tasks.iter().map(render_task).collect();
