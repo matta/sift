@@ -3,7 +3,7 @@
 use std::borrow::Cow;
 
 use chrono::Datelike;
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use crokey;
 use tui_prompts::FocusState;
 use tui_prompts::State as _;
 use tui_prompts::TextState;
@@ -17,47 +17,15 @@ pub(crate) enum Disposition {
     Quit,
 }
 
-pub(crate) fn update(state: &mut ui_state::State, key_event: KeyEvent) -> Disposition {
+pub(crate) fn update(
+    state: &mut ui_state::State,
+    key_event: crossterm::event::KeyEvent,
+) -> Disposition {
     match &mut state.current_screen {
-        ui_state::Screen::Main => match key_event.code {
-            KeyCode::Esc | KeyCode::Char('q') => Disposition::Quit,
-            KeyCode::Char('c' | 'C') if key_event.modifiers == KeyModifiers::CONTROL => {
-                Disposition::Quit
-            }
-            KeyCode::Char(' ') => {
-                state.list.toggle();
-                Disposition::Continue
-            }
-            KeyCode::Char('e') => {
-                edit(state);
-                Disposition::Continue
-            }
-            KeyCode::Char('s') => {
-                snooze(state);
-                Disposition::Continue
-            }
-            KeyCode::Left | KeyCode::Char('h') => {
-                state.list.unselect();
-                Disposition::Continue
-            }
-            KeyCode::Down | KeyCode::Char('j') => {
-                state.list.next();
-                Disposition::Continue
-            }
-            KeyCode::Up | KeyCode::Char('k') => {
-                state.list.previous();
-                Disposition::Continue
-            }
-            KeyCode::Char('a') => {
-                add(state);
-                Disposition::Continue
-            }
-            KeyCode::Char('D') => {
-                delete(state);
-                Disposition::Continue
-            }
-            _ => Disposition::Continue,
-        },
+        ui_state::Screen::Main => {
+            let key_combination: crokey::KeyCombination = key_event.into();
+            update_main_screen(key_combination, state)
+        }
         ui_state::Screen::Edit(edit_state) => {
             let text_state = &mut edit_state.text_state;
             assert!(text_state.is_focused());
@@ -77,6 +45,50 @@ pub(crate) fn update(state: &mut ui_state::State, key_event: KeyEvent) -> Dispos
                 }
             }
         }
+    }
+}
+
+fn update_main_screen(
+    key_combination: crokey::KeyCombination,
+    state: &mut ui_state::State,
+) -> Disposition {
+    #[allow(clippy::unnested_or_patterns)]
+    match key_combination {
+        crokey::key!(Esc) | crokey::key!(q) => Disposition::Quit,
+        crokey::key!(Ctrl - c) => Disposition::Quit,
+        crokey::key!(Space) => {
+            state.list.toggle();
+            Disposition::Continue
+        }
+        crokey::key!(e) => {
+            edit(state);
+            Disposition::Continue
+        }
+        crokey::key!(S) => {
+            snooze(state);
+            Disposition::Continue
+        }
+        crokey::key!(LEFT) | crokey::key!(H) => {
+            state.list.unselect();
+            Disposition::Continue
+        }
+        crokey::key!(DOWN) | crokey::key!(J) => {
+            state.list.next();
+            Disposition::Continue
+        }
+        crokey::key!(UP) | crokey::key!(K) => {
+            state.list.previous();
+            Disposition::Continue
+        }
+        crokey::key!(A) => {
+            add(state);
+            Disposition::Continue
+        }
+        crokey::key!(D) => {
+            delete(state);
+            Disposition::Continue
+        }
+        _ => Disposition::Continue,
     }
 }
 

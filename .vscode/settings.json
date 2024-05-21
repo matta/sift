@@ -3,9 +3,11 @@
         "automerge",
         "autosurgeon",
         "chrono",
+        "crokey",
         "crossterm",
         "Datelike",
         "ratatui",
-        "uninlined"
+        "uninlined",
+        "unnested"
     ]
 }
