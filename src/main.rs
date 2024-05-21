@@ -3,6 +3,7 @@ This is a toy todo list application I have written to explore Rust.
 */
 #![warn(clippy::all, clippy::pedantic)]
 #![allow(clippy::uninlined_format_args)]
+#![deny(unused_crate_dependencies)]
 
 pub mod event;
 pub mod persist;
