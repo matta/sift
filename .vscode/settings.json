@@ -5,6 +5,7 @@
         "chrono",
         "crossterm",
         "Datelike",
-        "ratatui"
+        "ratatui",
+        "uninlined"
     ]
 }
