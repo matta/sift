@@ -6,14 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.81"
-automerge = "0.5.9"
+anyhow = "1.0.86"
+automerge = "0.5.11"
 autosurgeon = "0.8.3"
-chrono = "0.4.37"
+chrono = "0.4.38"
 crossterm = "0.27.0"
-ratatui = "0.26.2"
-smol_str = "0.2.1"
-tui-prompts = "0.3.8"
+ratatui = "0.26.3"
+smol_str = "0.2.2"
+tui-prompts = "0.3.12"
 
 [dependencies.uuid]
 version = "1.8.0"
