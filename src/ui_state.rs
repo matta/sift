@@ -10,11 +10,10 @@ use std::{
     io::{Read, Write},
 };
 
+use crate::persist;
 use anyhow::Result;
 use ratatui::widgets::ListState;
 use tui_prompts::TextState;
-
-use crate::persist::{decode_document, encode_document, Task, TaskList};
 
 #[derive(Default)]
 pub(crate) struct State {
@@ -39,14 +38,14 @@ pub(crate) struct EditState {
 
 pub(crate) struct TodoList {
     pub state: ListState,
-    pub tasks: TaskList,
+    pub tasks: persist::TaskList,
 }
 
 impl Default for TodoList {
     fn default() -> Self {
         let tasks = (1..=10)
-            .map(|i| Task {
-                id: Task::new_id(),
+            .map(|i| persist::Task {
+                id: persist::Task::new_id(),
                 title: format!("Item {}", i),
                 snoozed: None,
                 due_date: None,
@@ -55,7 +54,7 @@ impl Default for TodoList {
             .collect::<Vec<_>>();
         TodoList {
             state: ListState::default(),
-            tasks: TaskList { tasks },
+            tasks: persist::TaskList { tasks },
         }
     }
 }
@@ -101,7 +100,7 @@ impl State {
     }
 
     pub fn save(&self, filename: &str) -> Result<()> {
-        let binary = encode_document(&self.list.tasks)?;
+        let binary = persist::encode_document(&self.list.tasks)?;
         let mut file = File::create(filename)?;
         file.write_all(&binary)?;
         file.sync_all()?;
@@ -114,7 +113,7 @@ impl State {
         let mut binary = Vec::new();
         file.read_to_end(&mut binary)?;
 
-        let tasks = decode_document(&binary)?;
+        let tasks = persist::decode_document(&binary)?;
 
         Ok(State {
             list: TodoList {
