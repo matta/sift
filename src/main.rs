@@ -4,12 +4,13 @@ This is a toy todo list application I have written to explore Rust.
 #![warn(clippy::all, clippy::pedantic)]
 #![allow(clippy::uninlined_format_args)]
 #![deny(unused_crate_dependencies)]
+#![deny(unused_extern_crates)]
 
 pub mod event;
 pub mod persist;
-pub mod ui_state;
 pub mod tui;
 pub mod ui;
+pub mod ui_state;
 pub mod update;
 
 use anyhow::Result;
