@@ -57,8 +57,7 @@ fn update_main_screen(
 ) -> Disposition {
     #[allow(clippy::unnested_or_patterns)]
     match key_combination {
-        crokey::key!(Esc) | crokey::key!(q) => Disposition::Quit,
-        crokey::key!(Ctrl - c) => Disposition::Quit,
+        crokey::key!(Esc) | crokey::key!(q) | crokey::key!(Ctrl - c) => Disposition::Quit,
         crokey::key!(Space) => {
             state.list.toggle();
             Disposition::NoChange
