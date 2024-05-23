@@ -13,7 +13,9 @@ use crate::ui_state;
 
 #[derive(PartialEq, Eq)]
 pub(crate) enum Disposition {
-    Continue,
+    NoChange,
+    AcceptTaskEdit(usize, String),
+    SwitchToMainScreen,
     Quit,
 }
 
@@ -26,24 +28,25 @@ pub(crate) fn update(
             let key_combination: crokey::KeyCombination = key_event.into();
             update_main_screen(key_combination, state)
         }
-        ui_state::Screen::Edit(edit_state) => {
-            let text_state = &mut edit_state.text_state;
-            assert!(text_state.is_focused());
-            text_state.handle_key_event(key_event);
-            match text_state.status() {
-                tui_prompts::Status::Pending => Disposition::Continue,
-                tui_prompts::Status::Aborted => {
-                    // TODO: When aborting a new item, delete it.
-                    state.current_screen = ui_state::Screen::Main;
-                    Disposition::Continue
-                }
-                tui_prompts::Status::Done => {
-                    let task = &mut state.list.tasks.tasks[edit_state.index];
-                    task.title = text_state.value().into();
-                    state.current_screen = ui_state::Screen::Main;
-                    Disposition::Continue
-                }
-            }
+        ui_state::Screen::Edit(edit_state) => update_edit_screen(edit_state, key_event),
+    }
+}
+
+fn update_edit_screen(
+    edit_state: &mut ui_state::EditState,
+    key_event: crossterm::event::KeyEvent,
+) -> Disposition {
+    let text_state = &mut edit_state.text_state;
+    assert!(text_state.is_focused());
+    text_state.handle_key_event(key_event);
+    match text_state.status() {
+        tui_prompts::Status::Pending => Disposition::NoChange,
+        tui_prompts::Status::Aborted => {
+            // TODO: When aborting a new item, delete it.
+            Disposition::SwitchToMainScreen
+        }
+        tui_prompts::Status::Done => {
+            Disposition::AcceptTaskEdit(edit_state.index, text_state.value().into())
         }
     }
 }
@@ -58,37 +61,37 @@ fn update_main_screen(
         crokey::key!(Ctrl - c) => Disposition::Quit,
         crokey::key!(Space) => {
             state.list.toggle();
-            Disposition::Continue
+            Disposition::NoChange
         }
         crokey::key!(e) => {
             edit(state);
-            Disposition::Continue
+            Disposition::NoChange
         }
         crokey::key!(S) => {
             snooze(state);
-            Disposition::Continue
+            Disposition::NoChange
         }
         crokey::key!(LEFT) | crokey::key!(H) => {
             state.list.unselect();
-            Disposition::Continue
+            Disposition::NoChange
         }
         crokey::key!(DOWN) | crokey::key!(J) => {
             state.list.next();
-            Disposition::Continue
+            Disposition::NoChange
         }
         crokey::key!(UP) | crokey::key!(K) => {
             state.list.previous();
-            Disposition::Continue
+            Disposition::NoChange
         }
         crokey::key!(A) => {
             add(state);
-            Disposition::Continue
+            Disposition::NoChange
         }
         crokey::key!(D) => {
             delete(state);
-            Disposition::Continue
+            Disposition::NoChange
         }
-        _ => Disposition::Continue,
+        _ => Disposition::NoChange,
     }
 }
 

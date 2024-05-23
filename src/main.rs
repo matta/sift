@@ -6,18 +6,19 @@ This is a toy todo list application I have written to explore Rust.
 #![deny(unused_crate_dependencies)]
 #![deny(unused_extern_crates)]
 
+use anyhow::Result;
+use ratatui::{backend::CrosstermBackend, Terminal};
+
+use event::Event;
+use tui::Tui;
+use update::update;
+
 pub mod event;
 pub mod persist;
 pub mod tui;
 pub mod ui;
 pub mod ui_state;
 pub mod update;
-
-use anyhow::Result;
-use event::Event;
-use ratatui::{backend::CrosstermBackend, Terminal};
-use tui::Tui;
-use update::update;
 
 fn main() -> Result<()> {
     let save_name = "sift.sift";
@@ -36,15 +37,27 @@ fn main() -> Result<()> {
     tui.enter()?;
 
     // Start the main loop.
-    let mut disposition = update::Disposition::Continue;
-    while disposition == update::Disposition::Continue {
+    loop {
         // Render the user interface.
         tui.draw(&mut state)?;
         // Handle events.
-        disposition = match tui.event_reader.next()? {
+        let disposition = match tui.event_reader.next()? {
             Event::Key(key_event) => update(&mut state, key_event),
-            Event::Tick | Event::Mouse(_) | Event::Resize(_, _) => update::Disposition::Continue,
+            Event::Tick | Event::Mouse(_) | Event::Resize(_, _) => update::Disposition::NoChange,
         };
+        match disposition {
+            update::Disposition::AcceptTaskEdit(index, new_title) => {
+                state.list.tasks.tasks[index].title = new_title;
+                state.current_screen = ui_state::Screen::Main;
+            }
+            update::Disposition::SwitchToMainScreen => {
+                state.current_screen = ui_state::Screen::Main;
+            }
+            update::Disposition::Quit => {
+                break;
+            }
+            update::Disposition::NoChange => {}
+        }
     }
 
     // Exit the user interface.
