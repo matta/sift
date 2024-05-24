@@ -6,14 +6,11 @@ central data structure for the application.
 */
 
 use std::{
-    fs::File,
-    io::{Read, Write},
+    cell::RefCell, fs::File, io::{Read, Write}
 };
 
 use crate::persist;
 use anyhow::Result;
-use ratatui::widgets::ListState;
-use tui_prompts::TextState;
 
 #[derive(Default)]
 pub(crate) struct State {
@@ -33,11 +30,11 @@ pub(crate) struct EditState {
     // TODO: in upstream make the 'static workaround used here more
     // discoverable.  See
     // https://github.com/rhysd/tui-textarea/issues/46
-    pub text_state: TextState<'static>,
+    pub text_state: RefCell<tui_prompts::TextState<'static>>,
 }
 
 pub(crate) struct TodoList {
-    pub state: ListState,
+    pub state: RefCell<ratatui::widgets::ListState>,
     pub tasks: persist::TaskList,
 }
 
@@ -53,7 +50,7 @@ impl Default for TodoList {
             })
             .collect::<Vec<_>>();
         TodoList {
-            state: ListState::default(),
+            state: RefCell::new(ratatui::widgets::ListState::default()),
             tasks: persist::TaskList { tasks },
         }
     }
@@ -61,16 +58,18 @@ impl Default for TodoList {
 
 impl TodoList {
     pub(crate) fn next(&mut self) {
-        let i = if let Some(i) = self.state.selected() {
+        let mut state = self.state.borrow_mut();
+        let i = if let Some(i) = state.selected() {
             (i + 1) % self.tasks.tasks.len()
         } else {
             0
         };
-        self.state.select(Some(i));
+        state.select(Some(i));
     }
 
     pub(crate) fn previous(&mut self) {
-        let i = if let Some(i) = self.state.selected() {
+        let mut state = self.state.borrow_mut();
+        let i = if let Some(i) = state.selected() {
             if i == 0 {
                 self.tasks.tasks.len() - 1
             } else {
@@ -79,15 +78,15 @@ impl TodoList {
         } else {
             0
         };
-        self.state.select(Some(i));
+        state.select(Some(i));
     }
 
     pub(crate) fn unselect(&mut self) {
-        self.state.select(None);
+        self.state.borrow_mut().select(None);
     }
 
     pub(crate) fn toggle(&mut self) {
-        if let Some(i) = self.state.selected() {
+        if let Some(i) = self.state.borrow().selected() {
             let task = &mut self.tasks.tasks[i];
             task.completed = !task.completed;
         }
@@ -118,7 +117,7 @@ impl State {
         Ok(State {
             list: TodoList {
                 tasks,
-                state: ListState::default(),
+                state: RefCell::new(ratatui::widgets::ListState::default()),
             },
             current_screen: Screen::Main,
         })

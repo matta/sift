@@ -53,7 +53,7 @@ impl Tui {
     }
 
     /// Draw the terminal interface by rendering the widgets.
-    pub fn draw(&mut self, state: &mut crate::ui_state::State) -> Result<()> {
+    pub fn draw(&mut self, state: &crate::ui_state::State) -> Result<()> {
         self.terminal.draw(|frame| ui::render(state, frame))?;
         Ok(())
     }

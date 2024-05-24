@@ -39,24 +39,24 @@ fn main() -> Result<()> {
     // Start the main loop.
     loop {
         // Render the user interface.
-        tui.draw(&mut state)?;
+        tui.draw(&state)?;
         // Handle events.
         let disposition = match tui.event_reader.next()? {
             Event::Key(key_event) => update(&mut state, key_event),
-            Event::Tick | Event::Mouse(_) | Event::Resize(_, _) => update::Disposition::NoChange,
+            Event::Tick | Event::Mouse(_) | Event::Resize(_, _) => update::Action::NoChange,
         };
         match disposition {
-            update::Disposition::AcceptTaskEdit(index, new_title) => {
+            update::Action::AcceptTaskEdit(index, new_title) => {
                 state.list.tasks.tasks[index].title = new_title;
                 state.current_screen = ui_state::Screen::Main;
             }
-            update::Disposition::SwitchToMainScreen => {
+            update::Action::SwitchToMainScreen => {
                 state.current_screen = ui_state::Screen::Main;
             }
-            update::Disposition::Quit => {
+            update::Action::Quit => {
                 break;
             }
-            update::Disposition::NoChange => {}
+            update::Action::NoChange => {}
         }
     }
 
