@@ -11,12 +11,14 @@ use ratatui::{backend::CrosstermBackend, Terminal};
 
 use tui::Tui;
 
-pub mod handle_key_event;
-pub mod persist;
-pub mod render;
-pub mod terminal_input;
-pub mod tui;
-pub mod ui_state;
+mod edit_screen;
+mod handle_key_event;
+mod main_screen;
+mod persist;
+mod render;
+mod terminal_input;
+mod tui;
+mod ui_state;
 
 fn main() -> Result<()> {
     let save_name = "sift.sift";
