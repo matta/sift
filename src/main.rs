@@ -13,9 +13,9 @@ use tui::Tui;
 
 pub mod handle_key_event;
 pub mod persist;
+pub mod render;
 pub mod terminal_input;
 pub mod tui;
-pub mod ui;
 pub mod ui_state;
 
 fn main() -> Result<()> {
