@@ -10,7 +10,7 @@ use crossterm::{
 
 pub type CrosstermTerminal = ratatui::Terminal<ratatui::backend::CrosstermBackend<std::io::Stderr>>;
 
-use crate::ui;
+use crate::{terminal_input, ui};
 
 /// Representation of a terminal user interface.
 ///
@@ -20,12 +20,12 @@ pub(crate) struct Tui {
     /// Interface to the Terminal.
     terminal: CrosstermTerminal,
     /// Terminal event handler.
-    pub event_reader: crate::event::Reader,
+    pub event_reader: crate::terminal_input::Reader,
 }
 
 impl Tui {
     /// Constructs a new instance of [`Tui`].
-    pub fn new(terminal: CrosstermTerminal, event_reader: crate::event::Reader) -> Self {
+    pub fn new(terminal: CrosstermTerminal, event_reader: terminal_input::Reader) -> Self {
         Self {
             terminal,
             event_reader,

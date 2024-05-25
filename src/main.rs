@@ -9,12 +9,11 @@ This is a toy todo list application I have written to explore Rust.
 use anyhow::Result;
 use ratatui::{backend::CrosstermBackend, Terminal};
 
-use event::Event;
 use tui::Tui;
 use update::update;
 
-pub mod event;
 pub mod persist;
+pub mod terminal_input;
 pub mod tui;
 pub mod ui;
 pub mod ui_state;
@@ -32,7 +31,7 @@ fn main() -> Result<()> {
     // Initialize the terminal user interface.
     let backend = CrosstermBackend::new(std::io::stderr());
     let terminal = Terminal::new(backend)?;
-    let events = event::Reader::new(250);
+    let events = terminal_input::Reader::new(250);
     let mut tui = Tui::new(terminal, events);
     tui.enter()?;
 
@@ -42,8 +41,10 @@ fn main() -> Result<()> {
         tui.draw(&state)?;
         // Handle events.
         let disposition = match tui.event_reader.next()? {
-            Event::Key(key_event) => update(&mut state, key_event),
-            Event::Tick | Event::Mouse(_) | Event::Resize(_, _) => update::Action::NoChange,
+            terminal_input::Event::Key(key_event) => update(&mut state, key_event),
+            terminal_input::Event::Tick
+            | terminal_input::Event::Mouse(_)
+            | terminal_input::Event::Resize(_, _) => update::Action::NoChange,
         };
         match disposition {
             update::Action::AcceptTaskEdit(index, new_title) => {
