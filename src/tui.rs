@@ -14,13 +14,13 @@ use crate::{terminal_input, ui};
 
 /// Representation of a terminal user interface.
 ///
-/// It is responsible for setting up the terminal,
-/// initializing the interface and handling the draw events.
+/// It is responsible for setting up the terminal, initializing the interface
+/// and handling the draw events.
 pub(crate) struct Tui {
     /// Interface to the Terminal.
     terminal: CrosstermTerminal,
-    /// Terminal event handler.
-    pub event_reader: crate::terminal_input::Reader,
+    /// Terminal event reader.
+    event_reader: terminal_input::Reader,
 }
 
 impl Tui {
@@ -75,5 +75,9 @@ impl Tui {
         Self::reset()?;
         self.terminal.show_cursor()?;
         Ok(())
+    }
+
+    pub fn next_terminal_event(&mut self) -> Result<terminal_input::Event> {
+        self.event_reader.next()
     }
 }

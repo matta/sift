@@ -39,8 +39,8 @@ fn main() -> Result<()> {
     loop {
         // Render the user interface.
         tui.draw(&state)?;
-        // Handle events.
-        let disposition = match tui.event_reader.next()? {
+        // Handle terminal events.
+        let disposition = match tui.next_terminal_event()? {
             terminal_input::Event::Key(key_event) => update(&mut state, key_event),
             terminal_input::Event::Tick
             | terminal_input::Event::Mouse(_)
