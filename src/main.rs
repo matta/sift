@@ -11,12 +11,12 @@ use ratatui::{backend::CrosstermBackend, Terminal};
 
 use tui::Tui;
 
+pub mod handle_key_event;
 pub mod persist;
 pub mod terminal_input;
 pub mod tui;
 pub mod ui;
 pub mod ui_state;
-pub mod update;
 
 fn main() -> Result<()> {
     let save_name = "sift.sift";
@@ -41,24 +41,24 @@ fn main() -> Result<()> {
         // Handle terminal events.
         let disposition = match tui.next_terminal_event()? {
             terminal_input::Event::Key(key_event) => {
-                update::handle_key_event(&mut state, key_event)
+                handle_key_event::handle_key_event(&mut state, key_event)
             }
             terminal_input::Event::Tick
             | terminal_input::Event::Mouse(_)
-            | terminal_input::Event::Resize(_, _) => update::Action::NoChange,
+            | terminal_input::Event::Resize(_, _) => handle_key_event::Action::NoChange,
         };
         match disposition {
-            update::Action::AcceptTaskEdit(index, new_title) => {
+            handle_key_event::Action::AcceptTaskEdit(index, new_title) => {
                 state.list.tasks.tasks[index].title = new_title;
                 state.current_screen = ui_state::Screen::Main;
             }
-            update::Action::SwitchToMainScreen => {
+            handle_key_event::Action::SwitchToMainScreen => {
                 state.current_screen = ui_state::Screen::Main;
             }
-            update::Action::Quit => {
+            handle_key_event::Action::Quit => {
                 break;
             }
-            update::Action::NoChange => {}
+            handle_key_event::Action::NoChange => {}
         }
     }
 

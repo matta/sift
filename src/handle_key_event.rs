@@ -14,10 +14,13 @@ use crate::ui_state;
 
 /// The possible actions that can be taken in the application.
 ///
-/// The `NoChange` variant indicates that no action needs to be taken.
-/// The `AcceptTaskEdit` variant represents accepting an edit to a task, and includes the index of the task and the new task text.
-/// The `SwitchToMainScreen` variant indicates that the application should switch to the main screen.
-/// The `Quit` variant represents the user quitting the application.
+/// * The `NoChange` variant indicates that no action needs to be taken.
+/// * The `AcceptTaskEdit` variant represents accepting an edit to a task, and
+///   includes the index of the task and the new task text.
+/// * The `SwitchToMainScreen` variant indicates that the application should
+///   switch to the main screen.
+/// * The `Quit` variant represents the user quitting the application.
+// TODO: this is in the wrong module
 #[derive(PartialEq, Eq)]
 pub(crate) enum Action {
     NoChange,
