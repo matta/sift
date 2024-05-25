@@ -10,7 +10,6 @@ use anyhow::Result;
 use ratatui::{backend::CrosstermBackend, Terminal};
 
 use tui::Tui;
-use update::update;
 
 pub mod persist;
 pub mod terminal_input;
@@ -41,7 +40,9 @@ fn main() -> Result<()> {
         tui.draw(&state)?;
         // Handle terminal events.
         let disposition = match tui.next_terminal_event()? {
-            terminal_input::Event::Key(key_event) => update(&mut state, key_event),
+            terminal_input::Event::Key(key_event) => {
+                update::handle_key_event(&mut state, key_event)
+            }
             terminal_input::Event::Tick
             | terminal_input::Event::Mouse(_)
             | terminal_input::Event::Resize(_, _) => update::Action::NoChange,

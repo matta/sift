@@ -26,17 +26,20 @@ pub(crate) enum Action {
     Quit,
 }
 
-pub(crate) fn update(state: &mut ui_state::State, key_event: crossterm::event::KeyEvent) -> Action {
+pub(crate) fn handle_key_event(
+    state: &mut ui_state::State,
+    key_event: crossterm::event::KeyEvent,
+) -> Action {
     match &mut state.current_screen {
         ui_state::Screen::Main => {
             let key_combination: crokey::KeyCombination = key_event.into();
-            update_main_screen(key_combination, state)
+            handle_main_screen_key_event(state, key_combination)
         }
-        ui_state::Screen::Edit(edit_state) => update_edit_screen(edit_state, key_event),
+        ui_state::Screen::Edit(edit_state) => handle_edit_screen_key_event(edit_state, key_event),
     }
 }
 
-fn update_edit_screen(
+fn handle_edit_screen_key_event(
     edit_state: &mut ui_state::EditState,
     key_event: crossterm::event::KeyEvent,
 ) -> Action {
@@ -55,9 +58,9 @@ fn update_edit_screen(
     }
 }
 
-fn update_main_screen(
-    key_combination: crokey::KeyCombination,
+fn handle_main_screen_key_event(
     state: &mut ui_state::State,
+    key_combination: crokey::KeyCombination,
 ) -> Action {
     #[allow(clippy::unnested_or_patterns)]
     match key_combination {

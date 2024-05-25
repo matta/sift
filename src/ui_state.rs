@@ -6,7 +6,9 @@ central data structure for the application.
 */
 
 use std::{
-    cell::RefCell, fs::File, io::{Read, Write}
+    cell::RefCell,
+    fs::File,
+    io::{Read, Write},
 };
 
 use crate::persist;
