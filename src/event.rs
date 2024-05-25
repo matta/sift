@@ -7,7 +7,7 @@ use std::{
 };
 
 use anyhow::Result;
-use crossterm::event::{self, Event as CrosstermEvent, KeyEvent, MouseEvent};
+use crossterm::event;
 
 /// Terminal events.
 #[derive(Clone, Copy, Debug)]
@@ -15,9 +15,9 @@ pub enum Event {
     /// Terminal tick.
     Tick,
     /// Key press.
-    Key(KeyEvent),
+    Key(crossterm::event::KeyEvent),
     /// Mouse click/scroll.
-    Mouse(MouseEvent),
+    Mouse(crossterm::event::MouseEvent),
     /// Terminal resize.
     Resize(u16, u16),
 }
@@ -51,15 +51,17 @@ impl Reader {
 
                     if event::poll(timeout).expect("unable to poll for event") {
                         match event::read().expect("unable to read event") {
-                            CrosstermEvent::Key(e) => {
+                            crossterm::event::Event::Key(e) => {
                                 if e.kind == event::KeyEventKind::Press {
                                     sender.send(Event::Key(e))
                                 } else {
                                     Ok(()) // ignore KeyEventKind::Release on windows
                                 }
                             }
-                            CrosstermEvent::Mouse(e) => sender.send(Event::Mouse(e)),
-                            CrosstermEvent::Resize(w, h) => sender.send(Event::Resize(w, h)),
+                            crossterm::event::Event::Mouse(e) => sender.send(Event::Mouse(e)),
+                            crossterm::event::Event::Resize(w, h) => {
+                                sender.send(Event::Resize(w, h))
+                            }
                             _ => unimplemented!(),
                         }
                         .expect("failed to send terminal event");
