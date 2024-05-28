@@ -11,23 +11,51 @@ use std::{
     io::{Read, Write},
 };
 
-use crate::persist;
 use anyhow::Result;
+
+use crate::persist;
 
 #[derive(Default)]
 pub(crate) struct State {
-    pub list: TodoList,
     pub current_screen: Screen,
 }
 
 #[derive(Default)]
-pub(crate) enum Screen {
-    #[default]
-    Main,
-    Edit(EditState),
+pub(crate) struct CommonState {
+    pub list: TodoList,
 }
 
-pub(crate) struct EditState {
+pub(crate) enum Screen {
+    Main(MainScreenState),
+    Edit(EditScreenState),
+}
+
+impl Default for Screen {
+    fn default() -> Self {
+        Screen::Main(MainScreenState::default())
+    }
+}
+
+impl Screen {
+    pub(crate) fn mut_common_state(&mut self) -> &mut CommonState {
+        match self {
+            Screen::Main(s) => &mut s.common_state,
+            Screen::Edit(s) => &mut s.common_state,
+        }
+    }
+
+    pub(crate) fn take_common_state(&mut self) -> CommonState {
+        std::mem::take(self.mut_common_state())
+    }
+}
+
+#[derive(Default)]
+pub(crate) struct MainScreenState {
+    pub common_state: CommonState,
+}
+
+pub(crate) struct EditScreenState {
+    pub common_state: CommonState,
     pub index: usize,
     // TODO: in upstream make the 'static workaround used here more
     // discoverable.  See
@@ -101,7 +129,11 @@ impl State {
     }
 
     pub fn save(&self, filename: &str) -> Result<()> {
-        let binary = persist::encode_document(&self.list.tasks)?;
+        let state = match &self.current_screen {
+            Screen::Main(state) => &state.common_state,
+            Screen::Edit(state) => &state.common_state,
+        };
+        let binary = persist::encode_document(&state.list.tasks)?;
         let mut file = File::create(filename)?;
         file.write_all(&binary)?;
         file.sync_all()?;
@@ -117,11 +149,14 @@ impl State {
         let tasks = persist::decode_document(&binary)?;
 
         Ok(State {
-            list: TodoList {
-                tasks,
-                state: RefCell::new(ratatui::widgets::ListState::default()),
-            },
-            current_screen: Screen::Main,
+            current_screen: Screen::Main(MainScreenState {
+                common_state: CommonState {
+                    list: TodoList {
+                        tasks,
+                        state: RefCell::new(ratatui::widgets::ListState::default()),
+                    },
+                },
+            }),
         })
     }
 }

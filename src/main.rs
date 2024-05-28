@@ -47,20 +47,41 @@ fn main() -> Result<()> {
             }
             terminal_input::Event::Tick
             | terminal_input::Event::Mouse(_)
-            | terminal_input::Event::Resize(_, _) => handle_key_event::Action::NoChange,
+            | terminal_input::Event::Resize(_, _) => handle_key_event::Action::Handled,
         };
         match disposition {
             handle_key_event::Action::AcceptTaskEdit(index, new_title) => {
-                state.list.tasks.tasks[index].title = new_title;
-                state.current_screen = ui_state::Screen::Main;
+                let mut common_state = state.current_screen.take_common_state();
+                common_state.list.tasks.tasks[index].title = new_title;
+                state.current_screen = ui_state::Screen::Main(
+                    ui_state::MainScreenState {
+                        common_state
+                    }
+                );
             }
             handle_key_event::Action::SwitchToMainScreen => {
-                state.current_screen = ui_state::Screen::Main;
+                state.current_screen = ui_state::Screen::Main(
+                    ui_state::MainScreenState {
+                        common_state: state.current_screen.take_common_state(),
+                    }
+                );
+            }
+            handle_key_event::Action::SwitchToEditScreen(index, title) => {
+                let text_state = tui_prompts::TextState::new()
+                    .with_value(std::borrow::Cow::Owned(title))
+                    .with_focus(tui_prompts::FocusState::Focused);
+                let common_state = state.current_screen.take_common_state();
+                let edit_state = ui_state::EditScreenState {
+                    common_state,
+                    index,
+                    text_state: std::cell::RefCell::new(text_state),
+                };
+                state.current_screen = ui_state::Screen::Edit(edit_state);
             }
             handle_key_event::Action::Quit => {
                 break;
             }
-            handle_key_event::Action::NoChange => {}
+            handle_key_event::Action::Handled => {}
         }
     }
 
