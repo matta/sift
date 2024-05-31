@@ -3,7 +3,7 @@ module github.com/matta/sift
 go 1.22.1
 
 require (
-	github.com/charmbracelet/lipgloss v0.10.0
+	github.com/charmbracelet/lipgloss v0.11.0
 	github.com/charmbracelet/log v0.4.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/google/uuid v1.6.0
@@ -18,7 +18,7 @@ require (
 	github.com/charmbracelet/x/windows v0.1.0 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
-	github.com/mattn/go-isatty v0.0.18 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
