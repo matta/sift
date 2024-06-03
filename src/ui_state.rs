@@ -76,7 +76,7 @@ impl Default for TodoList {
                 title: format!("Item {}", i),
                 snoozed: None,
                 due_date: None,
-                completed: false,
+                completed: None,
             })
             .collect::<Vec<_>>();
         TodoList {
@@ -118,7 +118,11 @@ impl TodoList {
     pub(crate) fn toggle(&mut self) {
         if let Some(i) = self.state.borrow().selected() {
             let task = &mut self.tasks.tasks[i];
-            task.completed = !task.completed;
+            if task.completed.is_some() {
+                task.completed = None;
+            } else {
+                task.completed = Some(chrono::Utc::now());
+            }
         }
     }
 }

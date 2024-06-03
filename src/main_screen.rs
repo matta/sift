@@ -18,7 +18,7 @@ pub fn render(f: &mut Frame, list: &TodoList) {
 }
 
 fn render_task(s: &Task) -> ListItem<'_> {
-    let check = if s.completed { 'x' } else { ' ' };
+    let check = if s.completed.is_some() { 'x' } else { ' ' };
     ListItem::new(format!("[{}] {}", check, s.title.as_str()))
 }
 
@@ -70,11 +70,11 @@ fn delete(state: &mut ui_state::MainScreenState) {
             .tasks
             .iter()
             .take(index)
-            .filter(|task| task.completed)
+            .filter(|task| task.completed.is_some())
             .count();
         *list.state.borrow_mut().selected_mut() = Some(index - count);
     }
-    list.tasks.tasks.retain(|task| !task.completed);
+    list.tasks.tasks.retain(|task| task.completed.is_none());
 }
 
 fn snooze(state: &mut ui_state::MainScreenState) {
@@ -109,7 +109,7 @@ fn add(state: &mut ui_state::MainScreenState) -> Action {
     let task = Task {
         id: Task::new_id(),
         title: String::new(),
-        completed: false,
+        completed: None,
         snoozed: None,
         due_date: None,
     };

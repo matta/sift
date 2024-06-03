@@ -12,7 +12,9 @@ pub(crate) struct Task {
     pub title: String,
     pub snoozed: Option<NaiveDate>,
     pub due_date: Option<NaiveDate>,
-    pub completed: bool,
+
+    /// Completion date of the task.  If `None`, the task is incomplete.
+    pub completed: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 impl Task {
@@ -37,7 +39,8 @@ pub(crate) struct SerializableTask {
     pub snoozed: Option<NaiveDate>,
     #[autosurgeon(with = "option_naive_date")]
     pub due_date: Option<NaiveDate>,
-    pub completed: bool,
+    #[autosurgeon(with = "option_date_time")]
+    pub completed: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 // SerializableTaskList is a TaskList that can be stored and retrieved from
@@ -101,6 +104,48 @@ impl From<SerializableTaskList> for TaskList {
             })
             .collect();
         TaskList { tasks }
+    }
+}
+
+/// Reconcile an `Option<NaiveDate>` value with an optional string in
+/// an automerge document.
+///a
+/// This helper module is used with the
+// `#[autosurgeon(with = "option_naive_date")]`
+/// syntax.
+mod option_date_time {
+    use autosurgeon::{Hydrate, HydrateError, Prop, ReadDoc, Reconciler};
+
+    pub(super) fn hydrate<D: ReadDoc>(
+        doc: &D,
+        obj: &automerge::ObjId,
+        prop: Prop<'_>,
+    ) -> Result<Option<chrono::DateTime<chrono::Utc>>, HydrateError> {
+        type OptionString = Option<String>;
+        let inner = OptionString::hydrate(doc, obj, prop)?;
+        match inner {
+            None => Ok(None),
+            Some(s) => match s.parse::<chrono::DateTime<chrono::Utc>>() {
+                Ok(d) => Ok(Some(d)),
+                Err(_) => Err(HydrateError::unexpected(
+                    "a valid date in YYYY-MM-DD format",
+                    s,
+                )),
+            },
+        }
+    }
+
+    // Given an `Option<NaiveDate>` value, write either a none value or
+    // a string in the format YYYY-MM-DD.
+    #[allow(clippy::trivially_copy_pass_by_ref)]
+    pub(super) fn reconcile<R: Reconciler>(
+        date: &Option<chrono::DateTime<chrono::Utc>>,
+        mut reconciler: R,
+    ) -> Result<(), R::Error> {
+        match date {
+            None => reconciler.none(),
+            Some(d) => reconciler.str(d.format("%FT%TZ").to_string()),
+        }
     }
 }
 
@@ -181,14 +226,16 @@ mod tests {
                 title: "first title".to_string(),
                 snoozed: None,
                 due_date: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
-                completed: false,
+                completed: None,
             },
             Task {
                 id: Task::new_id(),
                 title: "second title".to_string(),
                 snoozed: Some(NaiveDate::from_ymd_opt(2022, 5, 7).unwrap()),
                 due_date: None,
-                completed: false,
+                completed: "2024-07-03T13:01:42Z"
+                    .parse::<chrono::DateTime<chrono::Utc>>()
+                    .ok(),
             },
         ];
         let task_list = TaskList {
@@ -211,7 +258,7 @@ mod tests {
                                 "title" => {"first title"},
                                 "snoozed" => {ScalarValue::Null},
                                 "due_date" => {"2022-01-01"},
-                                "completed" => {false},
+                                "completed" => {ScalarValue::Null},
                             }
                         },
                         tasks[1].id => {
@@ -219,7 +266,7 @@ mod tests {
                                 "title" => {"second title"},
                                 "snoozed" => {"2022-05-07"},
                                 "due_date" => {ScalarValue::Null},
-                                "completed" => {false},
+                                "completed" => {"2024-07-03T13:01:42Z"},
                             }
                         }
                     }
