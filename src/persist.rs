@@ -8,12 +8,22 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Task {
+    /// Task identifier.
     pub id: Uuid,
-    pub title: String,
-    pub snoozed: Option<NaiveDate>,
-    pub due_date: Option<NaiveDate>,
 
-    /// Completion date of the task.  If `None`, the task is incomplete.
+    /// Title of the task.
+    pub title: String,
+
+    /// Snooze date of the task.  Optional.  The snooze date only records date
+    /// information.
+    pub snoozed: Option<NaiveDate>,
+
+    /// Due date of the task.  Optional.  The due date only records date
+    /// information.
+    pub due: Option<NaiveDate>,
+
+    /// Completion date and time of the task.  If `None`, the task is
+    /// incomplete.
     pub completed: Option<chrono::DateTime<chrono::Utc>>,
 }
 
@@ -57,7 +67,7 @@ impl From<Task> for SerializableTask {
         Self {
             title: value.title,
             snoozed: value.snoozed,
-            due_date: value.due_date,
+            due_date: value.due,
             completed: value.completed,
         }
     }
@@ -98,7 +108,7 @@ impl From<SerializableTaskList> for TaskList {
                     id,
                     title: task.title.clone(),
                     snoozed: task.snoozed,
-                    due_date: task.due_date,
+                    due: task.due_date,
                     completed: task.completed,
                 }
             })
@@ -225,14 +235,14 @@ mod tests {
                 id: Task::new_id(),
                 title: "first title".to_string(),
                 snoozed: None,
-                due_date: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
+                due: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
                 completed: None,
             },
             Task {
                 id: Task::new_id(),
                 title: "second title".to_string(),
                 snoozed: Some(NaiveDate::from_ymd_opt(2022, 5, 7).unwrap()),
-                due_date: None,
+                due: None,
                 completed: "2024-07-03T13:01:42Z"
                     .parse::<chrono::DateTime<chrono::Utc>>()
                     .ok(),

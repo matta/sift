@@ -75,7 +75,7 @@ impl Default for TodoList {
                 id: persist::Task::new_id(),
                 title: format!("Item {}", i),
                 snoozed: None,
-                due_date: None,
+                due: None,
                 completed: None,
             })
             .collect::<Vec<_>>();

@@ -111,7 +111,7 @@ fn add(state: &mut ui_state::MainScreenState) -> Action {
         title: String::new(),
         completed: None,
         snoozed: None,
-        due_date: None,
+        due: None,
     };
     list.tasks.tasks.insert(index, task);
     edit(state)
