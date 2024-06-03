@@ -29,7 +29,9 @@ pub fn handle_key_event(
     let list = &mut state.common_state.list;
     #[allow(clippy::unnested_or_patterns)]
     match key_combination {
-        crokey::key!(Esc) | crokey::key!(q) | crokey::key!(Ctrl - c) => Action::Quit,
+        crokey::key!(Esc) | crokey::key!(q) | crokey::key!(Ctrl - c) => {
+            Action::Quit
+        }
         crokey::key!(Space) => {
             list.toggle();
             Action::Handled
@@ -96,7 +98,9 @@ fn snooze(state: &mut ui_state::MainScreenState) {
 
 fn next_week() -> chrono::NaiveDate {
     let now = chrono::Local::now();
-    let today = chrono::NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap();
+    let today =
+        chrono::NaiveDate::from_ymd_opt(now.year(), now.month(), now.day())
+            .unwrap();
     today + chrono::TimeDelta::try_weeks(1).unwrap()
 }
 

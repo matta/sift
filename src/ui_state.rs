@@ -158,7 +158,9 @@ impl State {
                 common_state: CommonState {
                     list: TodoList {
                         tasks,
-                        state: RefCell::new(ratatui::widgets::ListState::default()),
+                        state: RefCell::new(
+                            ratatui::widgets::ListState::default(),
+                        ),
                     },
                 },
             }),

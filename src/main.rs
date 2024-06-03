@@ -50,24 +50,24 @@ fn main() -> Result<()> {
             }
             terminal_input::Event::Tick
             | terminal_input::Event::Mouse(_)
-            | terminal_input::Event::Resize(_, _) => handle_key_event::Action::Handled,
+            | terminal_input::Event::Resize(_, _) => {
+                handle_key_event::Action::Handled
+            }
         };
         match disposition {
             handle_key_event::Action::AcceptTaskEdit(index, new_title) => {
                 let mut common_state = state.current_screen.take_common_state();
                 common_state.list.tasks.tasks[index].title = new_title;
-                state.current_screen = ui_state::Screen::Main(
-                    ui_state::MainScreenState {
-                        common_state
-                    }
-                );
+                state.current_screen =
+                    ui_state::Screen::Main(ui_state::MainScreenState {
+                        common_state,
+                    });
             }
             handle_key_event::Action::SwitchToMainScreen => {
-                state.current_screen = ui_state::Screen::Main(
-                    ui_state::MainScreenState {
+                state.current_screen =
+                    ui_state::Screen::Main(ui_state::MainScreenState {
                         common_state: state.current_screen.take_common_state(),
-                    }
-                );
+                    });
             }
             handle_key_event::Action::SwitchToEditScreen(index, title) => {
                 let text_state = tui_prompts::TextState::new()

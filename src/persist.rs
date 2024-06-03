@@ -42,7 +42,9 @@ pub(crate) struct TaskList {
 
 // SerializableTask is a Task that can be stored and retrieved from an
 // Automerge document.
-#[derive(Debug, Clone, PartialEq, autosurgeon::Reconcile, autosurgeon::Hydrate)]
+#[derive(
+    Debug, Clone, PartialEq, autosurgeon::Reconcile, autosurgeon::Hydrate,
+)]
 pub(crate) struct SerializableTask {
     pub title: String,
     #[autosurgeon(with = "option_naive_date")]
@@ -55,7 +57,9 @@ pub(crate) struct SerializableTask {
 
 // SerializableTaskList is a TaskList that can be stored and retrieved from
 // an Automerge document.
-#[derive(Debug, Clone, PartialEq, autosurgeon::Reconcile, autosurgeon::Hydrate)]
+#[derive(
+    Debug, Clone, PartialEq, autosurgeon::Reconcile, autosurgeon::Hydrate,
+)]
 pub(crate) struct SerializableTaskList {
     pub task_map: BTreeMap<String, SerializableTask>,
     pub task_order: Vec<String>,
@@ -207,14 +211,18 @@ mod option_naive_date {
     }
 }
 
-pub(crate) fn encode_document(tasks: &TaskList) -> Result<Vec<u8>, anyhow::Error> {
+pub(crate) fn encode_document(
+    tasks: &TaskList,
+) -> Result<Vec<u8>, anyhow::Error> {
     let mut doc = automerge::AutoCommit::new();
     let tasks: SerializableTaskList = tasks.clone().into();
     autosurgeon::reconcile(&mut doc, tasks)?;
     Ok(doc.save())
 }
 
-pub(crate) fn decode_document(binary: &[u8]) -> Result<TaskList, anyhow::Error> {
+pub(crate) fn decode_document(
+    binary: &[u8],
+) -> Result<TaskList, anyhow::Error> {
     let doc = Automerge::load(binary)?;
     let tasks: SerializableTaskList = autosurgeon::hydrate(&doc)?;
     let tasks: TaskList = tasks.into();
@@ -293,7 +301,8 @@ mod tests {
             }
         );
 
-        let todo_list2: SerializableTaskList = autosurgeon::hydrate(&doc).unwrap();
+        let todo_list2: SerializableTaskList =
+            autosurgeon::hydrate(&doc).unwrap();
         let todo_list2: TaskList = todo_list2.into();
         assert_eq!(task_list, todo_list2);
     }

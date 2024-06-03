@@ -9,7 +9,11 @@ use crate::ui_state::EditScreenState;
 
 pub fn render(f: &mut Frame, edit_state: &EditScreenState) {
     let prompt = TextPrompt::new(Cow::Borrowed("edit"));
-    f.render_stateful_widget(prompt, f.size(), &mut edit_state.text_state.borrow_mut());
+    f.render_stateful_widget(
+        prompt,
+        f.size(),
+        &mut edit_state.text_state.borrow_mut(),
+    );
     let (x, y) = edit_state.text_state.borrow().cursor();
     f.set_cursor(x, y);
 }

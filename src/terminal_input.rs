@@ -58,7 +58,9 @@ impl Reader {
                                     Ok(()) // ignore KeyEventKind::Release on windows
                                 }
                             }
-                            crossterm::event::Event::Mouse(e) => sender.send(Event::Mouse(e)),
+                            crossterm::event::Event::Mouse(e) => {
+                                sender.send(Event::Mouse(e))
+                            }
                             crossterm::event::Event::Resize(w, h) => {
                                 sender.send(Event::Resize(w, h))
                             }
@@ -68,7 +70,9 @@ impl Reader {
                     }
 
                     if last_tick.elapsed() >= tick_rate {
-                        sender.send(Event::Tick).expect("failed to send tick event");
+                        sender
+                            .send(Event::Tick)
+                            .expect("failed to send tick event");
                         last_tick = Instant::now();
                     }
                 }
