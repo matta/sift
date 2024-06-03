@@ -9,6 +9,7 @@ use std::{
     cell::RefCell,
     fs::File,
     io::{Read, Write},
+    path::Path,
 };
 
 use anyhow::Result;
@@ -132,7 +133,7 @@ impl State {
         State::default()
     }
 
-    pub fn save(&self, filename: &str) -> Result<()> {
+    pub fn save(&self, filename: &Path) -> Result<()> {
         let state = match &self.current_screen {
             Screen::Main(state) => &state.common_state,
             Screen::Edit(state) => &state.common_state,
@@ -144,7 +145,7 @@ impl State {
         Ok(())
     }
 
-    pub fn load(filename: &str) -> Result<State> {
+    pub fn load(filename: &Path) -> Result<State> {
         let mut file = File::open(filename)?;
 
         let mut binary = Vec::new();

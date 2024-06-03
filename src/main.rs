@@ -6,6 +6,8 @@ This is a toy todo list application I have written to explore Rust.
 #![deny(unused_crate_dependencies)]
 #![deny(unused_extern_crates)]
 
+use std::path::PathBuf;
+
 use anyhow::Result;
 use ratatui::{backend::CrosstermBackend, Terminal};
 
@@ -21,9 +23,10 @@ mod tui;
 mod ui_state;
 
 fn main() -> Result<()> {
-    let save_name = "sift.sift";
+    let save_name = save_name();
+
     // Create an application.
-    let mut state = if let Ok(app) = ui_state::State::load(save_name) {
+    let mut state = if let Ok(app) = ui_state::State::load(&save_name) {
         app
     } else {
         ui_state::State::new()
@@ -88,7 +91,17 @@ fn main() -> Result<()> {
     // Exit the user interface.
     tui.exit()?;
 
-    state.save(save_name)?;
+    state.save(&save_name)?;
 
     Ok(())
+}
+
+fn save_name() -> PathBuf {
+    let mut path = if let Some(home) = dirs::home_dir() {
+        home
+    } else {
+        PathBuf::new()
+    };
+    path.push(".sift.sift");
+    path
 }
