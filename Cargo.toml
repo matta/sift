@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.86"
 automerge = "0.5.11"
-autosurgeon = "0.8.3"
+autosurgeon = "0.8.4"
 chrono = "0.4.38"
 crokey = "1.0.0"
 crossterm = "0.27.0"

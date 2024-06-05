@@ -3,8 +3,25 @@
 use std::collections::BTreeMap;
 
 use automerge::Automerge;
+use autosurgeon::{
+    hydrate::MaybeMissing, reconcile::NoKey, Hydrate, HydrateError, Reconcile,
+};
 use chrono::NaiveDate;
 use uuid::Uuid;
+
+fn to_option<T>(from: MaybeMissing<T>) -> Option<T> {
+    match from {
+        MaybeMissing::Missing => None,
+        MaybeMissing::Present(v) => Some(v),
+    }
+}
+
+fn to_maybe<T>(from: Option<T>) -> MaybeMissing<T> {
+    match from {
+        None => MaybeMissing::Missing,
+        Some(v) => MaybeMissing::Present(v),
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Task {
@@ -40,19 +57,71 @@ pub(crate) struct TaskList {
     pub tasks: Vec<Task>,
 }
 
+fn make_hydrate_error(
+    input: &str,
+    kind: &str,
+    parse_error: chrono::ParseError,
+) -> HydrateError {
+    HydrateError::unexpected(
+        format!("error parsing {}: {}", kind, parse_error),
+        input.to_string(),
+    )
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) struct SerializableNaiveDate(NaiveDate);
+
+impl Reconcile for SerializableNaiveDate {
+    type Key<'a> = NoKey;
+
+    fn reconcile<R: autosurgeon::Reconciler>(
+        &self,
+        mut reconciler: R,
+    ) -> Result<(), R::Error> {
+        reconciler.str(self.0.format("%F").to_string())
+    }
+}
+
+impl Hydrate for SerializableNaiveDate {
+    fn hydrate_string(s: &'_ str) -> Result<Self, HydrateError> {
+        match s.parse::<NaiveDate>() {
+            Ok(d) => Ok(SerializableNaiveDate(d)),
+            Err(e) => Err(make_hydrate_error(s, "naive date", e)),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) struct SerializableDateTime(chrono::DateTime<chrono::Utc>);
+
+impl Reconcile for SerializableDateTime {
+    type Key<'a> = NoKey;
+
+    fn reconcile<R: autosurgeon::Reconciler>(
+        &self,
+        mut reconciler: R,
+    ) -> Result<(), R::Error> {
+        reconciler.str(self.0.format("%FT%TZ").to_string())
+    }
+}
+
+impl Hydrate for SerializableDateTime {
+    fn hydrate_string(s: &'_ str) -> Result<Self, HydrateError> {
+        match s.parse::<chrono::DateTime<chrono::Utc>>() {
+            Ok(d) => Ok(SerializableDateTime(d)),
+            Err(e) => Err(make_hydrate_error(s, "date time", e)),
+        }
+    }
+}
+
 // SerializableTask is a Task that can be stored and retrieved from an
 // Automerge document.
-#[derive(
-    Debug, Clone, PartialEq, autosurgeon::Reconcile, autosurgeon::Hydrate,
-)]
+#[derive(Debug, Clone, PartialEq, Reconcile, Hydrate)]
 pub(crate) struct SerializableTask {
     pub title: String,
-    #[autosurgeon(with = "option_naive_date")]
-    pub snoozed: Option<NaiveDate>,
-    #[autosurgeon(with = "option_naive_date")]
-    pub due_date: Option<NaiveDate>,
-    #[autosurgeon(with = "option_date_time")]
-    pub completed: Option<chrono::DateTime<chrono::Utc>>,
+    pub snoozed: autosurgeon::hydrate::MaybeMissing<SerializableNaiveDate>,
+    pub due_date: autosurgeon::hydrate::MaybeMissing<SerializableNaiveDate>,
+    pub completed: autosurgeon::hydrate::MaybeMissing<SerializableDateTime>,
 }
 
 // SerializableTaskList is a TaskList that can be stored and retrieved from
@@ -70,9 +139,9 @@ impl From<Task> for SerializableTask {
     fn from(value: Task) -> Self {
         Self {
             title: value.title,
-            snoozed: value.snoozed,
-            due_date: value.due,
-            completed: value.completed,
+            snoozed: to_maybe(value.snoozed.map(SerializableNaiveDate)),
+            due_date: to_maybe(value.due.map(SerializableNaiveDate)),
+            completed: to_maybe(value.completed.map(SerializableDateTime)),
         }
     }
 }
@@ -111,103 +180,13 @@ impl From<SerializableTaskList> for TaskList {
                 Task {
                     id,
                     title: task.title.clone(),
-                    snoozed: task.snoozed,
-                    due: task.due_date,
-                    completed: task.completed,
+                    snoozed: to_option(task.snoozed).map(|v| v.0),
+                    due: to_option(task.due_date).map(|v| v.0),
+                    completed: to_option(task.completed).map(|v| v.0),
                 }
             })
             .collect();
         TaskList { tasks }
-    }
-}
-
-/// Reconcile an `Option<NaiveDate>` value with an optional string in
-/// an automerge document.
-///a
-/// This helper module is used with the
-// `#[autosurgeon(with = "option_naive_date")]`
-/// syntax.
-mod option_date_time {
-    use autosurgeon::{Hydrate, HydrateError, Prop, ReadDoc, Reconciler};
-
-    pub(super) fn hydrate<D: ReadDoc>(
-        doc: &D,
-        obj: &automerge::ObjId,
-        prop: Prop<'_>,
-    ) -> Result<Option<chrono::DateTime<chrono::Utc>>, HydrateError> {
-        type OptionString = Option<String>;
-        let inner = OptionString::hydrate(doc, obj, prop)?;
-        match inner {
-            None => Ok(None),
-            Some(s) => match s.parse::<chrono::DateTime<chrono::Utc>>() {
-                Ok(d) => Ok(Some(d)),
-                Err(_) => Err(HydrateError::unexpected(
-                    "a valid date in YYYY-MM-DD format",
-                    s,
-                )),
-            },
-        }
-    }
-
-    // Given an `Option<NaiveDate>` value, write either a none value or
-    // a string in the format YYYY-MM-DD.
-    #[allow(clippy::trivially_copy_pass_by_ref)]
-    pub(super) fn reconcile<R: Reconciler>(
-        date: &Option<chrono::DateTime<chrono::Utc>>,
-        mut reconciler: R,
-    ) -> Result<(), R::Error> {
-        match date {
-            None => reconciler.none(),
-            Some(d) => reconciler.str(d.format("%FT%TZ").to_string()),
-        }
-    }
-}
-
-/// Reconcile an `Option<NaiveDate>` value with an optional string in
-/// an automerge document.
-///a
-/// This helper module is used with the
-// `#[autosurgeon(with = "option_naive_date")]`
-/// syntax.
-mod option_naive_date {
-    use autosurgeon::{Hydrate, HydrateError, Prop, ReadDoc, Reconciler};
-    use chrono::NaiveDate;
-
-    /// Create a new `Option<NaiveDate>` value from a, possibly missing,
-    /// string in an automerge document.
-    ///
-    /// May return an error if the string is not in the format YYYY-MM-DD
-    /// or not a valid date.
-    pub(super) fn hydrate<D: ReadDoc>(
-        doc: &D,
-        obj: &automerge::ObjId,
-        prop: Prop<'_>,
-    ) -> Result<Option<NaiveDate>, HydrateError> {
-        type OptionString = Option<String>;
-        let inner = OptionString::hydrate(doc, obj, prop)?;
-        match inner {
-            None => Ok(None),
-            Some(s) => match s.parse::<NaiveDate>() {
-                Ok(d) => Ok(Some(d)),
-                Err(_) => Err(HydrateError::unexpected(
-                    "a valid date in YYYY-MM-DD format",
-                    s,
-                )),
-            },
-        }
-    }
-
-    // Given an `Option<NaiveDate>` value, write either a none value or
-    // a string in the format YYYY-MM-DD.
-    #[allow(clippy::trivially_copy_pass_by_ref)]
-    pub(super) fn reconcile<R: Reconciler>(
-        date: &Option<NaiveDate>,
-        mut reconciler: R,
-    ) -> Result<(), R::Error> {
-        match date {
-            None => reconciler.none(),
-            Some(d) => reconciler.str(d.format("%F").to_string()),
-        }
     }
 }
 
@@ -231,7 +210,6 @@ pub(crate) fn decode_document(
 
 #[cfg(test)]
 mod tests {
-    use automerge::ScalarValue;
     use automerge_test::{assert_doc, list, map};
 
     use super::*;
@@ -274,16 +252,13 @@ mod tests {
                         tasks[0].id => {
                             map!{
                                 "title" => {"first title"},
-                                "snoozed" => {ScalarValue::Null},
                                 "due_date" => {"2022-01-01"},
-                                "completed" => {ScalarValue::Null},
                             }
                         },
                         tasks[1].id => {
                             map!{
                                 "title" => {"second title"},
                                 "snoozed" => {"2022-05-07"},
-                                "due_date" => {ScalarValue::Null},
                                 "completed" => {"2024-07-03T13:01:42Z"},
                             }
                         }
