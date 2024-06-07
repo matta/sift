@@ -5,12 +5,7 @@ The `State` struct contains the application's state.  It is the
 central data structure for the application.
 */
 
-use std::{
-    cell::RefCell,
-    fs::File,
-    io::{Read, Write},
-    path::Path,
-};
+use std::{cell::RefCell, path::Path};
 
 use anyhow::Result;
 
@@ -138,20 +133,11 @@ impl State {
             Screen::Main(state) => &state.common_state,
             Screen::Edit(state) => &state.common_state,
         };
-        let binary = persist::encode_document(&state.list.tasks)?;
-        let mut file = File::create(filename)?;
-        file.write_all(&binary)?;
-        file.sync_all()?;
-        Ok(())
+        persist::save_tasks(filename, &state.list.tasks)?
     }
 
     pub fn load(filename: &Path) -> Result<State> {
-        let mut file = File::open(filename)?;
-
-        let mut binary = Vec::new();
-        file.read_to_end(&mut binary)?;
-
-        let tasks = persist::decode_document(&binary)?;
+        let tasks = persist::load_tasks(filename)?;
 
         Ok(State {
             current_screen: Screen::Main(MainScreenState {

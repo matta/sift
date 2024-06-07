@@ -1,15 +1,11 @@
-//! Persistence layer
-
-use std::collections::BTreeMap;
-
-use automerge::Automerge;
-use autosurgeon::{
-    hydrate::MaybeMissing, reconcile::NoKey, Hydrate, HydrateError, Reconcile,
-};
+use crate::persist::document::{Task, TaskList};
+use autosurgeon::reconcile::NoKey;
+use autosurgeon::{Hydrate, HydrateError, MaybeMissing, Reconcile};
 use chrono::NaiveDate;
+use std::collections::BTreeMap;
 use uuid::Uuid;
 
-fn to_option<T>(from: MaybeMissing<T>) -> Option<T> {
+pub fn to_option<T>(from: MaybeMissing<T>) -> Option<T> {
     match from {
         MaybeMissing::Missing => None,
         MaybeMissing::Present(v) => Some(v),
@@ -21,40 +17,6 @@ fn to_maybe<T>(from: Option<T>) -> MaybeMissing<T> {
         None => MaybeMissing::Missing,
         Some(v) => MaybeMissing::Present(v),
     }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub(crate) struct Task {
-    /// Task identifier.
-    pub id: Uuid,
-
-    /// Title of the task.
-    pub title: String,
-
-    /// Snooze date of the task.  Optional.  The snooze date only records date
-    /// information.
-    pub snoozed: Option<NaiveDate>,
-
-    /// Due date of the task.  Optional.  The due date only records date
-    /// information.
-    pub due: Option<NaiveDate>,
-
-    /// Completion date and time of the task.  If `None`, the task is
-    /// incomplete.
-    pub completed: Option<chrono::DateTime<chrono::Utc>>,
-}
-
-impl Task {
-    pub(crate) fn new_id() -> Uuid {
-        let context = uuid::NoContext;
-        let ts = uuid::Timestamp::now(context);
-        uuid::Uuid::new_v7(ts)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Default)]
-pub(crate) struct TaskList {
-    pub tasks: Vec<Task>,
 }
 
 fn make_hydrate_error(
@@ -187,98 +149,5 @@ impl From<SerializableTaskList> for TaskList {
             })
             .collect();
         TaskList { tasks }
-    }
-}
-
-pub(crate) fn encode_document(
-    tasks: &TaskList,
-) -> Result<Vec<u8>, anyhow::Error> {
-    let mut doc = automerge::AutoCommit::new();
-    let tasks: SerializableTaskList = tasks.clone().into();
-    autosurgeon::reconcile(&mut doc, tasks)?;
-    Ok(doc.save())
-}
-
-pub(crate) fn decode_document(
-    binary: &[u8],
-) -> Result<TaskList, anyhow::Error> {
-    let doc = Automerge::load(binary)?;
-    let tasks: SerializableTaskList = autosurgeon::hydrate(&doc)?;
-    let tasks: TaskList = tasks.into();
-    Ok(tasks)
-}
-
-#[cfg(test)]
-mod tests {
-    use automerge_test::{assert_doc, list, map};
-
-    use super::*;
-
-    #[test]
-    fn test() {
-        let tasks = vec![
-            Task {
-                id: Task::new_id(),
-                title: "first title".to_string(),
-                snoozed: None,
-                due: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
-                completed: None,
-            },
-            Task {
-                id: Task::new_id(),
-                title: "second title".to_string(),
-                snoozed: Some(NaiveDate::from_ymd_opt(2022, 5, 7).unwrap()),
-                due: None,
-                completed: "2024-07-03T13:01:42Z"
-                    .parse::<chrono::DateTime<chrono::Utc>>()
-                    .ok(),
-            },
-        ];
-        let task_list = TaskList {
-            tasks: tasks.clone(),
-        };
-
-        let mut doc = automerge::AutoCommit::new();
-        {
-            let value: SerializableTaskList = task_list.clone().into();
-            autosurgeon::reconcile(&mut doc, &value).unwrap();
-        }
-
-        assert_doc!(
-            doc.document(),
-            map! {
-                "task_map" => {
-                    map!{
-                        tasks[0].id => {
-                            map!{
-                                "title" => {"first title"},
-                                "due_date" => {"2022-01-01"},
-                            }
-                        },
-                        tasks[1].id => {
-                            map!{
-                                "title" => {"second title"},
-                                "snoozed" => {"2022-05-07"},
-                                "completed" => {"2024-07-03T13:01:42Z"},
-                            }
-                        }
-                    }
-                },
-                "task_order" => {
-                    list!{
-                        // FIXME: this is slightly convoluted. It would be nice
-                        // if the .as_str() was unecessary.
-                        // https://github.com/automerge/automerge/issues/926
-                        {tasks[0].id.to_string().as_str()},
-                        {tasks[1].id.to_string().as_str()},
-                    }
-                },
-            }
-        );
-
-        let todo_list2: SerializableTaskList =
-            autosurgeon::hydrate(&doc).unwrap();
-        let todo_list2: TaskList = todo_list2.into();
-        assert_eq!(task_list, todo_list2);
     }
 }
