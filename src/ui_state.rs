@@ -121,6 +121,20 @@ impl TodoList {
             }
         }
     }
+
+    fn new(tasks: persist::TaskList) -> Self {
+        let selected = if tasks.tasks.is_empty() {
+            None
+        } else {
+            Some(0)
+        };
+        let list_state =
+            ratatui::widgets::ListState::default().with_selected(selected);
+        Self {
+            tasks,
+            state: RefCell::new(list_state),
+        }
+    }
 }
 
 impl State {
@@ -143,12 +157,7 @@ impl State {
         Ok(State {
             current_screen: Screen::Main(MainScreenState {
                 common_state: CommonState {
-                    list: TodoList {
-                        tasks,
-                        state: RefCell::new(
-                            ratatui::widgets::ListState::default(),
-                        ),
-                    },
+                    list: TodoList::new(tasks),
                 },
             }),
         })
