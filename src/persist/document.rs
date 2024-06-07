@@ -1,5 +1,4 @@
 use crate::persist::serialization::SerializableTaskList;
-use anyhow::Error;
 use automerge::Automerge;
 use chrono::NaiveDate;
 use std::fs::File;
@@ -62,10 +61,12 @@ fn decode_document(binary: &[u8]) -> Result<TaskList, anyhow::Error> {
 const AUTOMERGE_CHUNK: [u8; 4] = [b'A', b'M', b'R', b'G'];
 const END_CHUNK: [u8; 4] = [b'S', b'E', b'N', b'D'];
 
+// TODO: use a custom error type. See
+// https://www.reddit.com/r/rust/comments/wtu5te/how_should_i_propagate_my_errors_to_include_a/
 fn write_document<W: Write>(
     tasks: &TaskList,
     writer: &mut W,
-) -> anyhow::Result<(), Error> {
+) -> anyhow::Result<(), anyhow::Error> {
     write_header(writer)?;
     let chunk = Chunk::new(AUTOMERGE_CHUNK, encode_document(tasks)?);
     write_chunk(&chunk, writer)?;
@@ -74,6 +75,8 @@ fn write_document<W: Write>(
     Ok(())
 }
 
+// TODO: use a custom error type. See
+// https://www.reddit.com/r/rust/comments/wtu5te/how_should_i_propagate_my_errors_to_include_a/
 fn expect_type(
     chunk: &Chunk,
     expected_type: [u8; 4],
@@ -88,7 +91,11 @@ fn expect_type(
     }
 }
 
-fn read_document<R: Read>(reader: &mut R) -> anyhow::Result<TaskList, Error> {
+// TODO: use a custom error type. See
+// https://www.reddit.com/r/rust/comments/wtu5te/how_should_i_propagate_my_errors_to_include_a/
+fn read_document<R: Read>(
+    reader: &mut R,
+) -> anyhow::Result<TaskList, anyhow::Error> {
     read_header(reader)?;
     let automerge_chunk = read_chunk(reader)?;
     expect_type(&automerge_chunk, AUTOMERGE_CHUNK)?;
@@ -101,17 +108,21 @@ fn read_document<R: Read>(reader: &mut R) -> anyhow::Result<TaskList, Error> {
     Ok(tasks)
 }
 
+// TODO: use a custom error type. See
+// https://www.reddit.com/r/rust/comments/wtu5te/how_should_i_propagate_my_errors_to_include_a/
 pub fn save_tasks(
     filename: &Path,
     tasks: &TaskList,
-) -> anyhow::Result<anyhow::Result<(), Error>, Error> {
+) -> anyhow::Result<(), anyhow::Error> {
     let mut file = File::create(filename)?;
     write_document(tasks, &mut file)?;
     file.sync_all()?;
-    Ok(Ok(()))
+    Ok(())
 }
 
-pub fn load_tasks(filename: &Path) -> anyhow::Result<TaskList, Error> {
+// TODO: use a custom error type. See
+// https://www.reddit.com/r/rust/comments/wtu5te/how_should_i_propagate_my_errors_to_include_a/
+pub fn load_tasks(filename: &Path) -> anyhow::Result<TaskList, anyhow::Error> {
     let mut file = File::open(filename)?;
     read_document(&mut file)
 }

@@ -1,5 +1,5 @@
 use chrono::Datelike;
-use ratatui::widgets::{Block, Borders, List, ListItem};
+use ratatui::widgets::{Block, Borders, List, ListItem, StatefulWidget};
 use ratatui::Frame;
 
 use crate::handle_key_event::Action;
@@ -11,10 +11,10 @@ pub fn render(f: &mut Frame, list: &TodoList) {
     let tasks = &list.tasks;
     let items: Vec<_> = tasks.tasks.iter().map(render_task).collect();
     let items = List::new(items)
-        .block(Block::default().borders(Borders::ALL).title("List"))
+        .block(Block::default().borders(Borders::ALL).title("Tasks"))
         .highlight_symbol("> ");
 
-    f.render_stateful_widget(items, f.size(), &mut list.state.borrow_mut());
+    items.render(f.size(), f.buffer_mut(), &mut list.state.borrow_mut());
 }
 
 fn render_task(s: &Task) -> ListItem<'_> {

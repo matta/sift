@@ -133,7 +133,8 @@ impl State {
             Screen::Main(state) => &state.common_state,
             Screen::Edit(state) => &state.common_state,
         };
-        persist::save_tasks(filename, &state.list.tasks)?
+        persist::save_tasks(filename, &state.list.tasks)?;
+        Ok(())
     }
 
     pub fn load(filename: &Path) -> Result<State> {

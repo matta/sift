@@ -9,6 +9,7 @@ This is a toy todo list application I have written to explore Rust.
 use std::path::PathBuf;
 
 use anyhow::Result;
+use cli_log::{debug, init_cli_log, warn};
 use ratatui::{backend::CrosstermBackend, Terminal};
 
 use tui::Tui;
@@ -23,13 +24,23 @@ mod tui;
 mod ui_state;
 
 fn main() -> Result<()> {
+    init_cli_log!();
     let save_name = save_name();
+    debug!("save name {}", save_name.display());
 
     // Create an application.
-    let mut state = if let Ok(app) = ui_state::State::load(&save_name) {
-        app
-    } else {
-        ui_state::State::new()
+    let mut state = match ui_state::State::load(&save_name) {
+        Ok(app) => {
+            debug!("loaded state from disk");
+            app
+        }
+        Err(error) => {
+            warn!(
+                "loading todos failed: {}; using a default set of todos",
+                error
+            );
+            ui_state::State::new()
+        }
     };
 
     // Initialize the terminal user interface.

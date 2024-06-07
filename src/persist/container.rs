@@ -1,14 +1,17 @@
 #![allow(dead_code)]
-use std::io::{Error, Read, Write};
+use std::io::{Read, Write};
 
-fn read_u32<R: Read>(reader: &mut R) -> Result<u32, Error> {
+fn read_u32<R: Read>(reader: &mut R) -> Result<u32, std::io::Error> {
     let mut bytes = [0; 4];
     reader.read_exact(&mut bytes)?;
     let value = u32::from_be_bytes(bytes);
     Ok(value)
 }
 
-fn write_u32<W: Write>(writer: &mut W, value: u32) -> Result<(), Error> {
+fn write_u32<W: Write>(
+    writer: &mut W,
+    value: u32,
+) -> Result<(), std::io::Error> {
     writer.write_all(&value.to_be_bytes())?;
     Ok(())
 }
@@ -26,6 +29,8 @@ impl Chunk {
         Self { chunk_type, data }
     }
 
+    // TODO: use a custom error type. See
+    // https://www.reddit.com/r/rust/comments/wtu5te/how_should_i_propagate_my_errors_to_include_a/
     fn read<R: Read>(reader: &mut R) -> Result<Chunk, std::io::Error> {
         let data_length = read_u32(reader)?;
         let chunk_size_limit = 1024 * 1024 * 1024;
@@ -53,6 +58,8 @@ impl Chunk {
         Ok(chunk)
     }
 
+    // TODO: use a custom error type. See
+    // https://www.reddit.com/r/rust/comments/wtu5te/how_should_i_propagate_my_errors_to_include_a/
     fn write<W: Write>(&self, writer: &mut W) -> Result<(), std::io::Error> {
         let Ok(len) = u32::try_from(self.data.len()) else {
             return Err(std::io::Error::new(
@@ -84,17 +91,22 @@ impl Chunk {
 const HEADER: &[u8] = &[0x89, 0x53, 0x49, 0x46, 0x54, 0x0D, 0x0A, 0x1A, 0x0A];
 
 // Function to read the header of the file
+// TODO: use a custom error type. See
+// https://www.reddit.com/r/rust/comments/wtu5te/how_should_i_propagate_my_errors_to_include_a/
 pub(crate) fn read_header<R: Read>(
     reader: &mut R,
 ) -> Result<(), std::io::Error> {
-    let mut header = [0; 8];
+    let mut header = [0; HEADER.len()];
     reader.read_exact(&mut header)?;
     if header == HEADER {
         Ok(())
     } else {
         Err(std::io::Error::new(
             std::io::ErrorKind::InvalidData,
-            "Invalid header",
+            format!(
+                "Invalid Sift file header: actual {:?} != expected {:?}",
+                header, HEADER
+            ),
         ))
     }
 }
