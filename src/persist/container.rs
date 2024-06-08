@@ -1,18 +1,35 @@
 #![allow(dead_code)]
 use std::io::{Read, Write};
 
-fn read_u32<R: Read>(reader: &mut R) -> Result<u32, std::io::Error> {
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    //#[error("Cannot open `{1}`")]
+    //OpenFile(#[source] std::io::Error, PathBuf),
+    #[error("Cannot read from file")]
+    Read(#[source] std::io::Error),
+    #[error("Cannot write to file")]
+    Write(#[source] std::io::Error),
+    #[error(
+        "Read a chunk with an invalid chunk size: {0} is greater than {1}"
+    )]
+    ReadInvalidChunkSize(u32, u32),
+    #[error("Chunk size too large to be written: {0}")]
+    WriteInvalidChunkSize(usize),
+    #[error("CRC mismatch when reading data")]
+    ReadCrcMismatch,
+}
+
+fn read_u32<R: Read>(reader: &mut R) -> Result<u32, Error> {
     let mut bytes = [0; 4];
-    reader.read_exact(&mut bytes)?;
+    reader.read_exact(&mut bytes).map_err(Error::Read)?;
     let value = u32::from_be_bytes(bytes);
     Ok(value)
 }
 
-fn write_u32<W: Write>(
-    writer: &mut W,
-    value: u32,
-) -> Result<(), std::io::Error> {
-    writer.write_all(&value.to_be_bytes())?;
+fn write_u32<W: Write>(writer: &mut W, value: u32) -> Result<(), Error> {
+    writer
+        .write_all(&value.to_be_bytes())
+        .map_err(Error::Write)?;
     Ok(())
 }
 
@@ -29,47 +46,37 @@ impl Chunk {
         Self { chunk_type, data }
     }
 
-    // TODO: use a custom error type. See
-    // https://www.reddit.com/r/rust/comments/wtu5te/how_should_i_propagate_my_errors_to_include_a/
-    fn read<R: Read>(reader: &mut R) -> Result<Chunk, std::io::Error> {
+    fn read<R: Read>(reader: &mut R) -> Result<Chunk, Error> {
         let data_length = read_u32(reader)?;
         let chunk_size_limit = 1024 * 1024 * 1024;
         if data_length > chunk_size_limit {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "chunk size exceeded",
+            return Err(Error::ReadInvalidChunkSize(
+                data_length,
+                chunk_size_limit,
             ));
         }
         let mut chunk_type = [0; 4];
-        reader.read_exact(&mut chunk_type)?;
+        reader.read_exact(&mut chunk_type).map_err(Error::Read)?;
         let mut data = vec![0; usize::try_from(data_length).unwrap()];
-        reader.read_exact(&mut data)?;
+        reader.read_exact(&mut data).map_err(Error::Read)?;
 
         let chunk = Chunk { chunk_type, data };
 
         let crc = read_u32(reader)?;
         if crc != chunk.compute_crc() {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "CRC mismatch",
-            ));
+            return Err(Error::ReadCrcMismatch);
         }
 
         Ok(chunk)
     }
 
-    // TODO: use a custom error type. See
-    // https://www.reddit.com/r/rust/comments/wtu5te/how_should_i_propagate_my_errors_to_include_a/
-    fn write<W: Write>(&self, writer: &mut W) -> Result<(), std::io::Error> {
+    fn write<W: Write>(&self, writer: &mut W) -> Result<(), Error> {
         let Ok(len) = u32::try_from(self.data.len()) else {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "chunk size exceeded",
-            ));
+            return Err(Error::WriteInvalidChunkSize(self.data.len()));
         };
         write_u32(writer, len)?;
-        writer.write_all(&self.chunk_type)?;
-        writer.write_all(&self.data)?;
+        writer.write_all(&self.chunk_type).map_err(Error::Write)?;
+        writer.write_all(&self.data).map_err(Error::Write)?;
         write_u32(writer, self.compute_crc())?;
         Ok(())
     }
@@ -91,8 +98,6 @@ impl Chunk {
 const HEADER: &[u8] = &[0x89, 0x53, 0x49, 0x46, 0x54, 0x0D, 0x0A, 0x1A, 0x0A];
 
 // Function to read the header of the file
-// TODO: use a custom error type. See
-// https://www.reddit.com/r/rust/comments/wtu5te/how_should_i_propagate_my_errors_to_include_a/
 pub(crate) fn read_header<R: Read>(
     reader: &mut R,
 ) -> Result<(), std::io::Error> {
@@ -119,9 +124,7 @@ pub(crate) fn write_header<W: Write>(
 }
 
 // Function to read a single PNG chunk
-pub(crate) fn read_chunk<R: Read>(
-    reader: &mut R,
-) -> Result<Chunk, std::io::Error> {
+pub(crate) fn read_chunk<R: Read>(reader: &mut R) -> Result<Chunk, Error> {
     Chunk::read(reader)
 }
 
@@ -129,6 +132,6 @@ pub(crate) fn read_chunk<R: Read>(
 pub(crate) fn write_chunk<W: Write>(
     chunk: &Chunk,
     writer: &mut W,
-) -> Result<(), std::io::Error> {
+) -> Result<(), Error> {
     chunk.write(writer)
 }

@@ -801,6 +801,7 @@ dependencies = [
  "crossterm",
  "dirs",
  "ratatui",
+ "thiserror",
  "tui-prompts",
  "uuid",
 ]
