@@ -6,7 +6,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use anyhow::Result;
 use crossterm::event;
 
 /// Terminal events.
@@ -85,12 +84,7 @@ impl Reader {
     ///
     /// This function will always block the current thread if there is no data
     /// available and it's possible for more data to be sent.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error only if the sender thread has finished, which
-    /// currently does not happen.
-    pub fn next(&self) -> Result<Event> {
-        Ok(self.receiver.recv()?)
+    pub fn next(&self) -> Event {
+        self.receiver.recv().unwrap()
     }
 }

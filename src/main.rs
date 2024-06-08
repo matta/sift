@@ -55,7 +55,7 @@ fn main() -> Result<()> {
         // Render the user interface.
         tui.draw(&state)?;
         // Handle terminal events.
-        let disposition = match tui.next_terminal_event()? {
+        let disposition = match tui.next_terminal_event() {
             terminal_input::Event::Key(key_event) => {
                 handle_key_event::handle_key_event(&mut state, key_event)
             }
