@@ -1,0 +1,14 @@
+# This config file is embedded in the program and parsed at run time.
+[bindings]
+Esc = "Quit"
+q = "Quit"
+Ctrl-c = "Quit"
+Space = "Toggle"
+e = "Edit"
+s = "Snooze"
+Down = "Next"
+j = "Next"
+Up = "Previous"
+k = "Previous"
+a = "Add"
+d = "Delete"

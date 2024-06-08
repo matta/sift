@@ -4,8 +4,8 @@ use ratatui::Frame;
 
 use crate::handle_key_event::Action;
 use crate::persist::Task;
-use crate::ui_state;
 use crate::ui_state::TodoList;
+use crate::{keys, ui_state};
 
 pub fn render(f: &mut Frame, list: &TodoList) {
     let tasks = &list.tasks;
@@ -27,38 +27,34 @@ pub fn handle_key_event(
     key_combination: crokey::KeyCombination,
 ) -> Action {
     let list = &mut state.common_state.list;
-    #[allow(clippy::unnested_or_patterns)]
-    match key_combination {
-        crokey::key!(Esc) | crokey::key!(q) | crokey::key!(Ctrl - c) => {
-            Action::Quit
-        }
-        crokey::key!(Space) => {
-            list.toggle();
-            Action::Handled
-        }
-        crokey::key!(e) => edit(state),
-        crokey::key!(S) => {
-            snooze(state);
-            Action::Handled
-        }
-        crokey::key!(LEFT) | crokey::key!(H) => {
-            list.unselect();
-            Action::Handled
-        }
-        crokey::key!(DOWN) | crokey::key!(J) => {
-            list.next();
-            Action::Handled
-        }
-        crokey::key!(UP) | crokey::key!(K) => {
-            list.previous();
-            Action::Handled
-        }
-        crokey::key!(A) => add(state),
-        crokey::key!(D) => {
-            delete(state);
-            Action::Handled
-        }
-        _ => Action::Handled,
+    let bindings = crate::keys::bindings();
+    match bindings.get(&key_combination) {
+        None => Action::Handled,
+        Some(action) => match action {
+            keys::Action::Quit => Action::Quit,
+            keys::Action::Toggle => {
+                list.toggle();
+                Action::Handled
+            }
+            keys::Action::Edit => edit(state),
+            keys::Action::Snooze => {
+                snooze(state);
+                Action::Handled
+            }
+            keys::Action::Next => {
+                list.next();
+                Action::Handled
+            }
+            keys::Action::Previous => {
+                list.previous();
+                Action::Handled
+            }
+            keys::Action::Add => add(state),
+            keys::Action::Delete => {
+                delete(state);
+                Action::Handled
+            }
+        },
     }
 }
 

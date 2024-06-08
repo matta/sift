@@ -25,6 +25,11 @@ pub(crate) fn handle_key_event(
     state: &mut ui_state::State,
     key_event: crossterm::event::KeyEvent,
 ) -> Action {
+    // Hard code a security key to exit the program.  This allows the user to
+    // exit the program no matter how badly the key bindings are mishandled.
+    if key_event.code == crossterm::event::KeyCode::Esc {
+        return Action::Quit;
+    }
     match &mut state.current_screen {
         ui_state::Screen::Main(main_state) => {
             let key_combination: crokey::KeyCombination = key_event.into();

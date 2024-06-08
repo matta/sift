@@ -107,10 +107,6 @@ impl TodoList {
         state.select(Some(i));
     }
 
-    pub(crate) fn unselect(&mut self) {
-        self.state.borrow_mut().select(None);
-    }
-
     pub(crate) fn toggle(&mut self) {
         if let Some(i) = self.state.borrow().selected() {
             let task = &mut self.tasks.tasks[i];

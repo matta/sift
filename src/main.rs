@@ -16,6 +16,7 @@ use tui::Tui;
 
 mod edit_screen;
 mod handle_key_event;
+mod keys;
 mod main_screen;
 mod persist;
 mod render;
