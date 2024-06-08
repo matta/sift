@@ -87,6 +87,20 @@ impl Chunk {
         digest.update(self.data.as_slice());
         digest.finalize()
     }
+
+    pub(crate) fn expect_type(
+        &self,
+        expected_type: [u8; 4],
+    ) -> Result<(), Error> {
+        if self.chunk_type == expected_type {
+            Ok(())
+        } else {
+            Err(Error::Read(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "unexpected chunk type",
+            )))
+        }
+    }
 }
 
 // The following byte array represents the header of the file. The same value as
@@ -98,29 +112,25 @@ impl Chunk {
 const HEADER: &[u8] = &[0x89, 0x53, 0x49, 0x46, 0x54, 0x0D, 0x0A, 0x1A, 0x0A];
 
 // Function to read the header of the file
-pub(crate) fn read_header<R: Read>(
-    reader: &mut R,
-) -> Result<(), std::io::Error> {
+pub(crate) fn read_header<R: Read>(reader: &mut R) -> Result<(), Error> {
     let mut header = [0; HEADER.len()];
-    reader.read_exact(&mut header)?;
+    reader.read_exact(&mut header).map_err(Error::Read)?;
     if header == HEADER {
         Ok(())
     } else {
-        Err(std::io::Error::new(
+        Err(Error::Read(std::io::Error::new(
             std::io::ErrorKind::InvalidData,
             format!(
                 "Invalid Sift file header: actual {:?} != expected {:?}",
                 header, HEADER
             ),
-        ))
+        )))
     }
 }
 
 // Function to write the header of the file.
-pub(crate) fn write_header<W: Write>(
-    writer: &mut W,
-) -> Result<(), std::io::Error> {
-    writer.write_all(HEADER)
+pub(crate) fn write_header<W: Write>(writer: &mut W) -> Result<(), Error> {
+    writer.write_all(HEADER).map_err(Error::Write)
 }
 
 // Function to read a single PNG chunk

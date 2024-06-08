@@ -3,12 +3,32 @@ use automerge::Automerge;
 use chrono::NaiveDate;
 use std::fs::File;
 use std::io::{Read, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 use super::container::{
-    read_chunk, read_header, write_chunk, write_header, Chunk,
+    self, read_chunk, read_header, write_chunk, write_header, Chunk,
 };
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Cannot create file `{1}`")]
+    CreateFile(#[source] std::io::Error, PathBuf),
+    #[error("Cannot open file `{1}`")]
+    OpenFile(#[source] std::io::Error, PathBuf),
+    #[error("Cannot write to file")]
+    Write(#[source] std::io::Error),
+    #[error("Cannot write container item to file")]
+    ContainerWrite(#[source] container::Error),
+    #[error("Cannot read container item to file")]
+    ContainerRead(#[source] container::Error),
+    #[error("Cannot load automerge document")]
+    AutomergeLoad(#[source] automerge::AutomergeError),
+    #[error("Cannot reconcile program state as an automerge document")]
+    Reconcile(#[source] autosurgeon::ReconcileError),
+    #[error("Cannot hydrate from automerge document")]
+    Hydrate(#[source] autosurgeon::HydrateError),
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Task {
@@ -44,16 +64,17 @@ pub(crate) struct TaskList {
     pub tasks: Vec<Task>,
 }
 
-fn encode_document(tasks: &TaskList) -> Result<Vec<u8>, anyhow::Error> {
+fn encode_document(tasks: &TaskList) -> Result<Vec<u8>, Error> {
     let mut doc = automerge::AutoCommit::new();
     let tasks: SerializableTaskList = tasks.clone().into();
-    autosurgeon::reconcile(&mut doc, tasks)?;
+    autosurgeon::reconcile(&mut doc, tasks).map_err(Error::Reconcile)?;
     Ok(doc.save())
 }
 
-fn decode_document(binary: &[u8]) -> Result<TaskList, anyhow::Error> {
-    let doc = Automerge::load(binary)?;
-    let tasks: SerializableTaskList = autosurgeon::hydrate(&doc)?;
+fn decode_document(binary: &[u8]) -> Result<TaskList, Error> {
+    let doc = Automerge::load(binary).map_err(Error::AutomergeLoad)?;
+    let tasks: SerializableTaskList =
+        autosurgeon::hydrate(&doc).map_err(Error::Hydrate)?;
     let tasks: TaskList = tasks.into();
     Ok(tasks)
 }
@@ -61,69 +82,50 @@ fn decode_document(binary: &[u8]) -> Result<TaskList, anyhow::Error> {
 const AUTOMERGE_CHUNK: [u8; 4] = [b'A', b'M', b'R', b'G'];
 const END_CHUNK: [u8; 4] = [b'S', b'E', b'N', b'D'];
 
-// TODO: use a custom error type. See
-// https://www.reddit.com/r/rust/comments/wtu5te/how_should_i_propagate_my_errors_to_include_a/
 fn write_document<W: Write>(
     tasks: &TaskList,
     writer: &mut W,
-) -> anyhow::Result<(), anyhow::Error> {
-    write_header(writer)?;
+) -> Result<(), Error> {
+    write_header(writer).map_err(Error::ContainerWrite)?;
     let chunk = Chunk::new(AUTOMERGE_CHUNK, encode_document(tasks)?);
-    write_chunk(&chunk, writer)?;
+    write_chunk(&chunk, writer).map_err(Error::ContainerWrite)?;
     let chunk = Chunk::new(END_CHUNK, vec![]);
-    write_chunk(&chunk, writer)?;
+    write_chunk(&chunk, writer).map_err(Error::ContainerWrite)?;
     Ok(())
 }
 
-// TODO: use a custom error type. See
-// https://www.reddit.com/r/rust/comments/wtu5te/how_should_i_propagate_my_errors_to_include_a/
-fn expect_type(
-    chunk: &Chunk,
-    expected_type: [u8; 4],
-) -> Result<(), std::io::Error> {
-    if chunk.chunk_type == expected_type {
-        Ok(())
-    } else {
-        Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "unexpected chunk type",
-        ))
-    }
-}
-
-// TODO: use a custom error type. See
-// https://www.reddit.com/r/rust/comments/wtu5te/how_should_i_propagate_my_errors_to_include_a/
-fn read_document<R: Read>(
-    reader: &mut R,
-) -> anyhow::Result<TaskList, anyhow::Error> {
-    read_header(reader)?;
-    let automerge_chunk = read_chunk(reader)?;
-    expect_type(&automerge_chunk, AUTOMERGE_CHUNK)?;
+fn read_document<R: Read>(reader: &mut R) -> Result<TaskList, Error> {
+    read_header(reader).map_err(Error::ContainerRead)?;
+    let automerge_chunk = read_chunk(reader).map_err(Error::ContainerRead)?;
+    automerge_chunk
+        .expect_type(AUTOMERGE_CHUNK)
+        .map_err(Error::ContainerRead)?;
 
     let tasks = decode_document(&automerge_chunk.data)?;
 
-    let end_chunk = read_chunk(reader)?;
-    expect_type(&end_chunk, END_CHUNK)?;
+    let end_chunk = read_chunk(reader).map_err(Error::ContainerRead)?;
+    end_chunk
+        .expect_type(END_CHUNK)
+        .map_err(Error::ContainerRead)?;
 
     Ok(tasks)
 }
 
-// TODO: use a custom error type. See
-// https://www.reddit.com/r/rust/comments/wtu5te/how_should_i_propagate_my_errors_to_include_a/
-pub fn save_tasks(
-    filename: &Path,
-    tasks: &TaskList,
-) -> anyhow::Result<(), anyhow::Error> {
-    let mut file = File::create(filename)?;
+pub fn save_tasks(filename: &Path, tasks: &TaskList) -> Result<(), Error> {
+    let mut file = File::create(filename)
+        .map_err(|e| Error::CreateFile(e, filename.to_owned()))?;
     write_document(tasks, &mut file)?;
-    file.sync_all()?;
+    file.sync_all().map_err(Error::Write)?;
     Ok(())
 }
 
-// TODO: use a custom error type. See
-// https://www.reddit.com/r/rust/comments/wtu5te/how_should_i_propagate_my_errors_to_include_a/
-pub fn load_tasks(filename: &Path) -> anyhow::Result<TaskList, anyhow::Error> {
-    let mut file = File::open(filename)?;
+pub fn load_tasks(filename: &Path) -> Result<TaskList, Error> {
+    let mut file = File::open(filename)
+        .map_err(|e| Error::OpenFile(e, filename.to_owned()))?;
+    // TODO: the file name is not reported for errors returned by read_document.
+    // It would probably be better for the container module to return only
+    // std::io::Error, and wrap all std::io::Error in more general Read and Write
+    // errors in this module.
     read_document(&mut file)
 }
 
