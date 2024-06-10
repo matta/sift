@@ -11,6 +11,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/davecgh/go-spew/spew"
 )
 
 type teaModel struct {
@@ -65,6 +66,10 @@ var keys = keyMap{
 }
 
 func (m teaModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	prefix := spew.Sprintf("Update(%#v)", msg)
+	slog.Debug(fmt.Sprintf("%s ENTER", prefix))
+	defer slog.Debug(fmt.Sprintf("%s LEAVE", prefix))
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		// If we set a width on our sub-models, so they can respond as needed.
@@ -91,6 +96,9 @@ func (m teaModel) handleKeyMsg(msg tea.KeyMsg) tea.Cmd {
 }
 
 func (m teaModel) View() string {
+	slog.Debug("View() ENTER")
+	defer slog.Debug("View() LEAVE")
+
 	out := fmt.Sprint("The screen has ", m.windowWidth, " columns and ", m.windowHeight, " rows\n")
 	if m.windowWidth > 0 {
 		out += m.help.View(keys)
@@ -125,6 +133,7 @@ func setUpLogging() *os.File {
 		}
 
 		log.Default().SetFlags(log.LstdFlags | log.Lmicroseconds | log.Llongfile)
+		slog.SetLogLoggerLevel(slog.LevelDebug)
 
 		return file
 	}
