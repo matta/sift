@@ -57,21 +57,17 @@ func (m model) View() string {
 }
 
 func setUpLogging() *os.File {
-	logfilePath := os.Getenv("SIFT_LOGFILE")
-	if logfilePath != "" {
-		file, err := tea.LogToFileWith(logfilePath, "sift", log.Default())
-		if err != nil {
-			fmt.Printf("Error logging to file: %v\n", err)
-			os.Exit(1)
-		}
-
-		log.Default().SetFlags(log.LstdFlags | log.Lmicroseconds | log.Llongfile)
-		slog.SetLogLoggerLevel(slog.LevelDebug)
-
-		return file
+	file, err := tea.LogToFileWith(
+		"sift.log", "sift", log.Default())
+	if err != nil {
+		fmt.Printf("Error logging to file: %v\n", err)
+		os.Exit(1)
 	}
 
-	return nil
+	log.Default().SetFlags(log.LstdFlags | log.Lmicroseconds | log.Llongfile)
+	slog.SetLogLoggerLevel(slog.LevelDebug)
+
+	return file
 }
 
 func main() {
@@ -81,7 +77,7 @@ func main() {
 			_ = logFile.Close()
 		}
 	}()
-	slog.Info("program started")
+	slog.Debug("program started")
 
 	program := tea.NewProgram(model{}, tea.WithAltScreen())
 	_, err := program.Run()
