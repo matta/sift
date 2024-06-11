@@ -58,7 +58,7 @@ impl TodoList {
         if let Some(index) = index {
             assert!(index < self.tasks.tasks.len());
         }
-        self.selected = index
+        self.selected = index;
     }
 
     fn next_index(&self) -> Option<usize> {
@@ -168,7 +168,7 @@ impl TodoList {
         if let Some(selected) = self.selected {
             return self.tasks.tasks.get(selected);
         }
-        return None;
+        None
     }
 
     pub(crate) fn set_title(&mut self, index: usize, new_title: String) {
