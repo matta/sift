@@ -2,7 +2,7 @@ use crate::persist::document::{Task, TaskList};
 use autosurgeon::reconcile::NoKey;
 use autosurgeon::{Hydrate, HydrateError, MaybeMissing, Reconcile};
 use chrono::NaiveDate;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use uuid::Uuid;
 
 pub fn to_option<T>(from: MaybeMissing<T>) -> Option<T> {
@@ -131,21 +131,25 @@ impl From<TaskList> for SerializableTaskList {
 // A TaskList can be created from a SerializableTaskList.
 impl From<SerializableTaskList> for TaskList {
     fn from(value: SerializableTaskList) -> Self {
-        // TODO: this keeps the *last* of any duplicates in the task_order list.
-        // We probably want to keep the first.
+        let mut seen = HashSet::new();
         let tasks: Vec<Task> = value
             .task_order
             .iter()
-            .map(|id| {
+            .filter_map(|id| {
                 let task = value.task_map.get(id).unwrap();
                 let id = Uuid::parse_str(id).unwrap();
-                Task {
+                if !seen.insert(id) {
+                    // Due to CRDT merges an item may appear in multiple places in
+                    // the automerge doc.  Ignore all but the first.
+                    return None;
+                }
+                Some(Task {
                     id,
                     title: task.title.clone(),
                     snoozed: to_option(task.snoozed).map(|v| v.0),
                     due: to_option(task.due_date).map(|v| v.0),
                     completed: to_option(task.completed).map(|v| v.0),
-                }
+                })
             })
             .collect();
         TaskList { tasks }
