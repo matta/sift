@@ -8,7 +8,8 @@ pub(crate) fn render(state: &ui_state::State, f: &mut Frame) {
     match &state.current_screen {
         ui_state::Screen::Main(main_state) => {
             let mut list_state = main_state.list_state.borrow_mut();
-            list_state.select(main_state.common_state.list.selected());
+            let list = &main_state.common_state.list;
+            list_state.select(list.index_of_id(list.selected()));
             main_screen::render(
                 f,
                 &main_state.common_state.list,

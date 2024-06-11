@@ -32,7 +32,7 @@ pub fn handle_key_event(
             Action::SwitchToMainScreen
         }
         tui_prompts::Status::Done => {
-            Action::AcceptTaskEdit(edit_state.index, text_state.value().into())
+            Action::AcceptTaskEdit(edit_state.id, text_state.value().into())
         }
     }
 }

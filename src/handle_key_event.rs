@@ -15,10 +15,10 @@ use crate::{edit_screen, main_screen, ui_state};
 #[derive(PartialEq, Eq)]
 pub(crate) enum Action {
     Handled,
-    AcceptTaskEdit(usize, String),
+    AcceptTaskEdit(uuid::Uuid, String),
     SwitchToMainScreen,
     Quit,
-    SwitchToEditScreen(usize, String),
+    SwitchToEditScreen(uuid::Uuid, String),
 }
 
 pub(crate) fn handle_key_event(

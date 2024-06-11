@@ -85,14 +85,14 @@ pub fn run(save_name: &Path) -> Result<()> {
                     ),
                 );
             }
-            handle_key_event::Action::SwitchToEditScreen(index, title) => {
+            handle_key_event::Action::SwitchToEditScreen(id, title) => {
                 let text_state = tui_prompts::TextState::new()
                     .with_value(std::borrow::Cow::Owned(title))
                     .with_focus(tui_prompts::FocusState::Focused);
                 let common_state = state.current_screen.take_common_state();
                 let edit_state = ui_state::EditScreenState {
                     common_state,
-                    index,
+                    id,
                     text_state: std::cell::RefCell::new(text_state),
                 };
                 state.current_screen = ui_state::Screen::Edit(edit_state);

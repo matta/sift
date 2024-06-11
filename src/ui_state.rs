@@ -50,11 +50,21 @@ impl TodoList {
         self.tasks.tasks.iter()
     }
 
-    pub(crate) fn selected(&self) -> Option<usize> {
-        self.selected
+    pub(crate) fn selected(&self) -> Option<uuid::Uuid> {
+        self.selected.map(|selected| self.tasks.tasks[selected].id)
     }
 
-    pub(crate) fn select(&mut self, index: Option<usize>) {
+    pub(crate) fn index_of_id(&self, id: Option<uuid::Uuid>) -> Option<usize> {
+        self.tasks.tasks.iter().enumerate().find_map(|(i, task)| {
+            if Some(task.id) == id {
+                Some(i)
+            } else {
+                None
+            }
+        })
+    }
+
+    fn select(&mut self, index: Option<usize>) {
         if let Some(index) = index {
             assert!(index < self.tasks.tasks.len());
         }
@@ -62,7 +72,7 @@ impl TodoList {
     }
 
     fn next_index(&self) -> Option<usize> {
-        let i = if let Some(i) = self.selected() {
+        let i = if let Some(i) = self.selected {
             i.saturating_add(1) % self.tasks.tasks.len()
         } else {
             0
@@ -75,7 +85,7 @@ impl TodoList {
     }
 
     fn previous_index(&self) -> Option<usize> {
-        let i = if let Some(i) = self.selected() {
+        let i = if let Some(i) = self.selected {
             if i == 0 {
                 self.tasks.tasks.len().saturating_sub(1)
             } else {
@@ -100,15 +110,14 @@ impl TodoList {
     }
 
     pub(crate) fn move_up(&mut self) {
-        if let (Some(from), Some(to)) = (self.selected(), self.previous_index())
-        {
+        if let (Some(from), Some(to)) = (self.selected, self.previous_index()) {
             self.tasks.tasks.swap(from, to);
             self.select(Some(to));
         }
     }
 
     pub(crate) fn move_down(&mut self) {
-        if let (Some(from), Some(to)) = (self.selected(), self.next_index()) {
+        if let (Some(from), Some(to)) = (self.selected, self.next_index()) {
             self.tasks.tasks.swap(from, to);
             self.select(Some(to));
         }
@@ -171,8 +180,12 @@ impl TodoList {
         None
     }
 
-    pub(crate) fn set_title(&mut self, index: usize, new_title: String) {
-        self.tasks.tasks[index].title = new_title;
+    pub(crate) fn set_title(&mut self, id: uuid::Uuid, title: String) {
+        if let Some(task) =
+            self.tasks.tasks.iter_mut().find(|task| task.id == id)
+        {
+            task.title = title;
+        }
     }
 }
 
@@ -203,7 +216,7 @@ impl Default for MainScreenState {
 
 pub(crate) struct EditScreenState {
     pub common_state: CommonState,
-    pub index: usize,
+    pub id: uuid::Uuid,
     // TODO: in upstream make the 'static workaround used here more
     // discoverable.  See
     // https://github.com/rhysd/tui-textarea/issues/46
