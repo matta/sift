@@ -73,7 +73,7 @@ pub fn run(save_name: &Path) -> Result<()> {
         match disposition {
             handle_key_event::Action::AcceptTaskEdit(index, new_title) => {
                 let mut common_state = state.current_screen.take_common_state();
-                common_state.list.tasks.tasks[index].title = new_title;
+                common_state.list.set_title(index, new_title);
                 state.current_screen = ui_state::Screen::Main(
                     ui_state::MainScreenState::from_common_state(common_state),
                 );

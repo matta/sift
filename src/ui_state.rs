@@ -9,10 +9,10 @@ use std::{cell::RefCell, path::Path};
 
 use anyhow::Result;
 
-use crate::persist;
+use crate::{main_screen::today, persist};
 
 pub(crate) struct TodoList {
-    pub tasks: persist::TaskList,
+    tasks: persist::TaskList,
     selected: Option<usize>,
 }
 
@@ -32,7 +32,24 @@ impl Default for TodoList {
     }
 }
 
+pub(crate) fn next_week() -> chrono::NaiveDate {
+    today() + chrono::TimeDelta::try_weeks(1).unwrap()
+}
+
 impl TodoList {
+    fn new(tasks: persist::TaskList) -> Self {
+        let selected = if tasks.tasks.is_empty() {
+            None
+        } else {
+            Some(0)
+        };
+        Self { tasks, selected }
+    }
+
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &persist::Task> {
+        self.tasks.tasks.iter()
+    }
+
     pub(crate) fn selected(&self) -> Option<usize> {
         self.selected
     }
@@ -108,13 +125,54 @@ impl TodoList {
         }
     }
 
-    fn new(tasks: persist::TaskList) -> Self {
-        let selected = if tasks.tasks.is_empty() {
-            None
-        } else {
-            Some(0)
-        };
-        Self { tasks, selected }
+    pub(crate) fn add_task(&mut self, task: persist::Task) {
+        let index = self.selected.unwrap_or(0);
+        self.selected = Some(index);
+        self.tasks.tasks.insert(index, task);
+    }
+
+    pub(crate) fn delete_selected(&mut self) {
+        if let Some(index) = self.selected {
+            // Decrement the selected item index by the number of todo
+            // items up to it that will be deleted.
+            let count = self
+                .tasks
+                .tasks
+                .iter()
+                .take(index)
+                .filter(|task| task.completed.is_some())
+                .count();
+            self.selected = Some(index - count);
+        }
+        self.tasks.tasks.retain(|task| task.completed.is_none());
+    }
+
+    pub(crate) fn snooze(&mut self) {
+        if let Some(index) = self.selected {
+            let task = &mut self.tasks.tasks[index];
+            task.snoozed = if task.snoozed.is_some() {
+                None
+            } else {
+                let next_week = next_week();
+                Some(next_week)
+            };
+        }
+        // Order snoozed items after non-snoozed items.  Keep the current selection.
+        //
+        // Note: this is a stable sort.
+        // Note: false sorts before true.
+        self.tasks.tasks.sort_by_key(|task| task.snoozed.is_some());
+    }
+
+    pub(crate) fn selected_task(&self) -> Option<&persist::Task> {
+        if let Some(selected) = self.selected {
+            return self.tasks.tasks.get(selected);
+        }
+        return None;
+    }
+
+    pub(crate) fn set_title(&mut self, index: usize, new_title: String) {
+        self.tasks.tasks[index].title = new_title;
     }
 }
 

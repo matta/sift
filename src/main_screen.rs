@@ -10,8 +10,7 @@ use crate::ui_state::TodoList;
 use crate::{keys, ui_state};
 
 pub fn render(f: &mut Frame, list: &TodoList, state: &mut ListState) {
-    let tasks = &list.tasks;
-    let items: Vec<_> = tasks.tasks.iter().filter_map(render_task).collect();
+    let items: Vec<_> = list.iter().filter_map(render_task).collect();
     let items = List::new(items)
         .block(Block::default().borders(Borders::ALL).title("Tasks"))
         .highlight_symbol("> ");
@@ -74,53 +73,21 @@ pub fn handle_key_event(
 
 fn delete(state: &mut ui_state::MainScreenState) {
     let list = &mut state.common_state.list;
-    if let Some(index) = list.selected() {
-        // Decrement the selected item index by the number of todo
-        // items up to it that will be deleted.
-        let count = list
-            .tasks
-            .tasks
-            .iter()
-            .take(index)
-            .filter(|task| task.completed.is_some())
-            .count();
-        list.select(Some(index - count));
-    }
-    list.tasks.tasks.retain(|task| task.completed.is_none());
+    list.delete_selected();
 }
 
 fn snooze(state: &mut ui_state::MainScreenState) {
-    let list = &mut state.common_state.list;
-    if let Some(index) = list.selected() {
-        let task = &mut list.tasks.tasks[index];
-        task.snoozed = if task.snoozed.is_some() {
-            None
-        } else {
-            let next_week = next_week();
-            Some(next_week)
-        };
-    }
-    // Order snoozed items after non-snoozed items.  Keep the current selection.
-    //
-    // Note: this is a stable sort.
-    // Note: false sorts before true.
-    list.tasks.tasks.sort_by_key(|task| task.snoozed.is_some());
+    state.common_state.list.snooze();
 }
 
-fn today() -> chrono::NaiveDate {
+// TODO: move this elsewhere
+pub(crate) fn today() -> chrono::NaiveDate {
     let now = chrono::Local::now();
     chrono::NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap()
 }
 
-fn next_week() -> chrono::NaiveDate {
-    today() + chrono::TimeDelta::try_weeks(1).unwrap()
-}
-
 fn add(state: &mut ui_state::MainScreenState) -> Action {
     let list = &mut state.common_state.list;
-
-    let index = list.selected().unwrap_or(0);
-    list.select(Some(index));
 
     let task = Task {
         id: Task::new_id(),
@@ -129,15 +96,16 @@ fn add(state: &mut ui_state::MainScreenState) -> Action {
         snoozed: None,
         due: None,
     };
-    list.tasks.tasks.insert(index, task);
+
+    list.add_task(task);
     edit(state)
 }
 
 fn edit(state: &mut ui_state::MainScreenState) -> Action {
     let list = &mut state.common_state.list;
-    if let Some(index) = list.selected() {
-        let task = &list.tasks.tasks[index];
-        Action::SwitchToEditScreen(index, task.title.clone())
+    if let Some(selected) = list.selected() {
+        let title = list.selected_task().unwrap().title.clone();
+        Action::SwitchToEditScreen(selected, title)
     } else {
         Action::Handled
     }
