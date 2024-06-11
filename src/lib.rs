@@ -74,16 +74,16 @@ pub fn run(save_name: &Path) -> Result<()> {
             handle_key_event::Action::AcceptTaskEdit(index, new_title) => {
                 let mut common_state = state.current_screen.take_common_state();
                 common_state.list.tasks.tasks[index].title = new_title;
-                state.current_screen =
-                    ui_state::Screen::Main(ui_state::MainScreenState {
-                        common_state,
-                    });
+                state.current_screen = ui_state::Screen::Main(
+                    ui_state::MainScreenState::from_common_state(common_state),
+                );
             }
             handle_key_event::Action::SwitchToMainScreen => {
-                state.current_screen =
-                    ui_state::Screen::Main(ui_state::MainScreenState {
-                        common_state: state.current_screen.take_common_state(),
-                    });
+                state.current_screen = ui_state::Screen::Main(
+                    ui_state::MainScreenState::from_common_state(
+                        state.current_screen.take_common_state(),
+                    ),
+                );
             }
             handle_key_event::Action::SwitchToEditScreen(index, title) => {
                 let text_state = tui_prompts::TextState::new()

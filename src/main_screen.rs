@@ -1,5 +1,7 @@
 use chrono::Datelike;
-use ratatui::widgets::{Block, Borders, List, ListItem, StatefulWidget};
+use ratatui::widgets::{
+    Block, Borders, List, ListItem, ListState, StatefulWidget,
+};
 use ratatui::Frame;
 
 use crate::handle_key_event::Action;
@@ -7,14 +9,14 @@ use crate::persist::Task;
 use crate::ui_state::TodoList;
 use crate::{keys, ui_state};
 
-pub fn render(f: &mut Frame, list: &TodoList) {
+pub fn render(f: &mut Frame, list: &TodoList, state: &mut ListState) {
     let tasks = &list.tasks;
     let items: Vec<_> = tasks.tasks.iter().filter_map(render_task).collect();
     let items = List::new(items)
         .block(Block::default().borders(Borders::ALL).title("Tasks"))
         .highlight_symbol("> ");
 
-    items.render(f.size(), f.buffer_mut(), &mut list.list_state.borrow_mut());
+    items.render(f.size(), f.buffer_mut(), state);
 }
 
 fn render_task(s: &Task) -> Option<ListItem<'_>> {
@@ -72,7 +74,7 @@ pub fn handle_key_event(
 
 fn delete(state: &mut ui_state::MainScreenState) {
     let list = &mut state.common_state.list;
-    if let Some(index) = list.list_state.borrow().selected() {
+    if let Some(index) = list.selected() {
         // Decrement the selected item index by the number of todo
         // items up to it that will be deleted.
         let count = list
@@ -82,14 +84,14 @@ fn delete(state: &mut ui_state::MainScreenState) {
             .take(index)
             .filter(|task| task.completed.is_some())
             .count();
-        *list.list_state.borrow_mut().selected_mut() = Some(index - count);
+        list.select(Some(index - count));
     }
     list.tasks.tasks.retain(|task| task.completed.is_none());
 }
 
 fn snooze(state: &mut ui_state::MainScreenState) {
     let list = &mut state.common_state.list;
-    if let Some(index) = list.list_state.borrow().selected() {
+    if let Some(index) = list.selected() {
         let task = &mut list.tasks.tasks[index];
         task.snoozed = if task.snoozed.is_some() {
             None
@@ -117,8 +119,8 @@ fn next_week() -> chrono::NaiveDate {
 fn add(state: &mut ui_state::MainScreenState) -> Action {
     let list = &mut state.common_state.list;
 
-    let index = list.list_state.borrow().selected().unwrap_or(0);
-    *list.list_state.borrow_mut().selected_mut() = Some(index);
+    let index = list.selected().unwrap_or(0);
+    list.select(Some(index));
 
     let task = Task {
         id: Task::new_id(),
@@ -133,7 +135,7 @@ fn add(state: &mut ui_state::MainScreenState) -> Action {
 
 fn edit(state: &mut ui_state::MainScreenState) -> Action {
     let list = &mut state.common_state.list;
-    if let Some(index) = list.list_state.borrow().selected() {
+    if let Some(index) = list.selected() {
         let task = &list.tasks.tasks[index];
         Action::SwitchToEditScreen(index, task.title.clone())
     } else {

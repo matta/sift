@@ -12,13 +12,13 @@ use anyhow::Result;
 use crate::persist;
 
 pub(crate) struct TodoList {
-    pub list_state: RefCell<ratatui::widgets::ListState>,
     pub tasks: persist::TaskList,
+    selected: Option<usize>,
 }
 
 impl Default for TodoList {
     fn default() -> Self {
-        let tasks = (1..=10)
+        let tasks: Vec<persist::Task> = (1..=10)
             .map(|i| persist::Task {
                 id: persist::Task::new_id(),
                 title: format!("Item {}", i),
@@ -26,28 +26,26 @@ impl Default for TodoList {
                 due: None,
                 completed: None,
             })
-            .collect::<Vec<_>>();
-        TodoList {
-            list_state: RefCell::new(ratatui::widgets::ListState::default()),
-            tasks: persist::TaskList { tasks },
-        }
+            .collect();
+        let tasks = persist::TaskList { tasks };
+        TodoList::new(tasks)
     }
 }
 
 impl TodoList {
-    fn current_index(&self) -> Option<usize> {
-        self.list_state.borrow_mut().selected()
+    pub(crate) fn selected(&self) -> Option<usize> {
+        self.selected
     }
 
-    fn select(&mut self, index: Option<usize>) {
+    pub(crate) fn select(&mut self, index: Option<usize>) {
         if let Some(index) = index {
             assert!(index < self.tasks.tasks.len());
         }
-        self.list_state.borrow_mut().select(index);
+        self.selected = index
     }
 
     fn next_index(&self) -> Option<usize> {
-        let i = if let Some(i) = self.current_index() {
+        let i = if let Some(i) = self.selected() {
             i.saturating_add(1) % self.tasks.tasks.len()
         } else {
             0
@@ -60,7 +58,7 @@ impl TodoList {
     }
 
     fn previous_index(&self) -> Option<usize> {
-        let i = if let Some(i) = self.current_index() {
+        let i = if let Some(i) = self.selected() {
             if i == 0 {
                 self.tasks.tasks.len().saturating_sub(1)
             } else {
@@ -85,8 +83,7 @@ impl TodoList {
     }
 
     pub(crate) fn move_up(&mut self) {
-        if let (Some(from), Some(to)) =
-            (self.current_index(), self.previous_index())
+        if let (Some(from), Some(to)) = (self.selected(), self.previous_index())
         {
             self.tasks.tasks.swap(from, to);
             self.select(Some(to));
@@ -94,16 +91,14 @@ impl TodoList {
     }
 
     pub(crate) fn move_down(&mut self) {
-        if let (Some(from), Some(to)) =
-            (self.current_index(), self.next_index())
-        {
+        if let (Some(from), Some(to)) = (self.selected(), self.next_index()) {
             self.tasks.tasks.swap(from, to);
             self.select(Some(to));
         }
     }
 
     pub(crate) fn toggle(&mut self) {
-        if let Some(i) = self.list_state.borrow().selected() {
+        if let Some(i) = self.selected {
             let task = &mut self.tasks.tasks[i];
             if task.completed.is_some() {
                 task.completed = None;
@@ -119,12 +114,7 @@ impl TodoList {
         } else {
             Some(0)
         };
-        let list_state =
-            ratatui::widgets::ListState::default().with_selected(selected);
-        Self {
-            tasks,
-            list_state: RefCell::new(list_state),
-        }
+        Self { tasks, selected }
     }
 }
 
@@ -133,9 +123,24 @@ pub(crate) struct CommonState {
     pub list: TodoList,
 }
 
-#[derive(Default)]
 pub(crate) struct MainScreenState {
     pub common_state: CommonState,
+    pub list_state: RefCell<ratatui::widgets::ListState>,
+}
+
+impl MainScreenState {
+    pub(crate) fn from_common_state(common_state: CommonState) -> Self {
+        Self {
+            common_state,
+            list_state: RefCell::new(ratatui::widgets::ListState::default()),
+        }
+    }
+}
+
+impl Default for MainScreenState {
+    fn default() -> Self {
+        MainScreenState::from_common_state(CommonState::default())
+    }
 }
 
 pub(crate) struct EditScreenState {
@@ -198,6 +203,7 @@ impl State {
                 common_state: CommonState {
                     list: TodoList::new(tasks),
                 },
+                ..Default::default()
             }),
         })
     }
