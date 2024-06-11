@@ -1,4 +1,3 @@
-use chrono::Datelike;
 use ratatui::widgets::{
     Block, Borders, List, ListItem, ListState, StatefulWidget,
 };
@@ -10,7 +9,7 @@ use crate::ui_state::TodoList;
 use crate::{keys, ui_state};
 
 pub fn render(f: &mut Frame, list: &TodoList, state: &mut ListState) {
-    let items: Vec<_> = list.iter().filter_map(render_task).collect();
+    let items: Vec<_> = list.iter().map(render_task).collect();
     let items = List::new(items)
         .block(Block::default().borders(Borders::ALL).title("Tasks"))
         .highlight_symbol("> ");
@@ -18,13 +17,9 @@ pub fn render(f: &mut Frame, list: &TodoList, state: &mut ListState) {
     items.render(f.size(), f.buffer_mut(), state);
 }
 
-fn render_task(s: &Task) -> Option<ListItem<'_>> {
-    if matches!(s.snoozed, Some(date) if date > today()) {
-        return None;
-    }
+fn render_task(s: &Task) -> ListItem<'_> {
     let check = if s.completed.is_some() { 'x' } else { ' ' };
-    let item = ListItem::new(format!("[{}] {}", check, s.title.as_str()));
-    Some(item)
+    ListItem::new(format!("[{}] {}", check, s.title.as_str()))
 }
 
 pub fn handle_key_event(
@@ -78,12 +73,6 @@ fn delete(state: &mut ui_state::MainScreenState) {
 
 fn snooze(state: &mut ui_state::MainScreenState) {
     state.common_state.list.snooze();
-}
-
-// TODO: move this elsewhere
-pub(crate) fn today() -> chrono::NaiveDate {
-    let now = chrono::Local::now();
-    chrono::NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap()
 }
 
 fn add(state: &mut ui_state::MainScreenState) -> Action {

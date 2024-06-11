@@ -8,8 +8,9 @@ central data structure for the application.
 use std::{cell::RefCell, path::Path};
 
 use anyhow::Result;
+use chrono::Datelike;
 
-use crate::{main_screen::today, persist};
+use crate::persist;
 
 pub(crate) struct TodoList {
     tasks: persist::TaskList,
@@ -32,7 +33,13 @@ impl Default for TodoList {
     }
 }
 
-pub(crate) fn next_week() -> chrono::NaiveDate {
+// TODO: move this elsewhere
+fn today() -> chrono::NaiveDate {
+    let now = chrono::Local::now();
+    chrono::NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap()
+}
+
+fn next_week() -> chrono::NaiveDate {
     today() + chrono::TimeDelta::try_weeks(1).unwrap()
 }
 
@@ -47,7 +54,11 @@ impl TodoList {
     }
 
     pub(crate) fn iter(&self) -> impl Iterator<Item = &persist::Task> {
-        self.tasks.tasks.iter()
+        let today = today();
+        self.tasks.tasks.iter().filter(move |task| {
+            let snoozed = matches!(task.snoozed, Some(date) if date > today);
+            !snoozed
+        })
     }
 
     pub(crate) fn selected(&self) -> Option<uuid::Uuid> {
@@ -72,33 +83,32 @@ impl TodoList {
     }
 
     fn next_index(&self) -> Option<usize> {
-        let i = if let Some(i) = self.selected {
-            i.saturating_add(1) % self.tasks.tasks.len()
+        let visible = self.iter().count();
+        if visible == 0 {
+            return None;
+        }
+        Some(if let Some(i) = self.selected {
+            i.wrapping_add(1) % visible
         } else {
             0
-        };
-        if i < self.tasks.tasks.len() {
-            Some(i)
-        } else {
-            None
-        }
+        })
     }
 
     fn previous_index(&self) -> Option<usize> {
-        let i = if let Some(i) = self.selected {
-            if i == 0 {
-                self.tasks.tasks.len().saturating_sub(1)
-            } else {
-                i - 1
-            }
-        } else {
-            0
-        };
-        if i < self.tasks.tasks.len() {
-            Some(i)
-        } else {
-            None
+        let visible = self.iter().count();
+        if visible == 0 {
+            return None;
         }
+        Some(match self.selected {
+            Some(i) => {
+                if i == 0 {
+                    visible - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => 0,
+        })
     }
 
     pub(crate) fn next(&mut self) {
