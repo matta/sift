@@ -38,12 +38,11 @@ pub(crate) struct Task {
     /// Title of the task.
     pub title: String,
 
-    /// Snooze date of the task.  Optional.  The snooze date only records date
-    /// information.
+    /// Snooze date of the task.  Tasks with a snoozed date do not appear
+    // by default if the date is before the current date.
     pub snoozed: Option<NaiveDate>,
 
-    /// Due date of the task.  Optional.  The due date only records date
-    /// information.
+    /// Due date of the task.
     pub due: Option<NaiveDate>,
 
     /// Completion date and time of the task.  If `None`, the task is

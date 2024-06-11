@@ -9,7 +9,7 @@ use crate::{keys, ui_state};
 
 pub fn render(f: &mut Frame, list: &TodoList) {
     let tasks = &list.tasks;
-    let items: Vec<_> = tasks.tasks.iter().map(render_task).collect();
+    let items: Vec<_> = tasks.tasks.iter().filter_map(render_task).collect();
     let items = List::new(items)
         .block(Block::default().borders(Borders::ALL).title("Tasks"))
         .highlight_symbol("> ");
@@ -17,9 +17,13 @@ pub fn render(f: &mut Frame, list: &TodoList) {
     items.render(f.size(), f.buffer_mut(), &mut list.list_state.borrow_mut());
 }
 
-fn render_task(s: &Task) -> ListItem<'_> {
+fn render_task(s: &Task) -> Option<ListItem<'_>> {
+    if matches!(s.snoozed, Some(date) if date > today()) {
+        return None;
+    }
     let check = if s.completed.is_some() { 'x' } else { ' ' };
-    ListItem::new(format!("[{}] {}", check, s.title.as_str()))
+    let item = ListItem::new(format!("[{}] {}", check, s.title.as_str()));
+    Some(item)
 }
 
 pub fn handle_key_event(
@@ -94,18 +98,20 @@ fn snooze(state: &mut ui_state::MainScreenState) {
             Some(next_week)
         };
     }
-    // Order snoozed items after non-snoozed items.
-    // Boolean false comes before true.
+    // Order snoozed items after non-snoozed items.  Keep the current selection.
+    //
     // Note: this is a stable sort.
+    // Note: false sorts before true.
     list.tasks.tasks.sort_by_key(|task| task.snoozed.is_some());
 }
 
-fn next_week() -> chrono::NaiveDate {
+fn today() -> chrono::NaiveDate {
     let now = chrono::Local::now();
-    let today =
-        chrono::NaiveDate::from_ymd_opt(now.year(), now.month(), now.day())
-            .unwrap();
-    today + chrono::TimeDelta::try_weeks(1).unwrap()
+    chrono::NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap()
+}
+
+fn next_week() -> chrono::NaiveDate {
+    today() + chrono::TimeDelta::try_weeks(1).unwrap()
 }
 
 fn add(state: &mut ui_state::MainScreenState) -> Action {
