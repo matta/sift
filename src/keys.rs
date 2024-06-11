@@ -7,6 +7,8 @@ pub(crate) enum Action {
     Snooze,
     Next,
     Previous,
+    MoveUp,
+    MoveDown,
     Add,
     Delete,
     Quit,
@@ -34,6 +36,6 @@ mod tests {
     #[test]
     fn test() {
         let bindings = bindings();
-        assert_eq!(bindings.len(), 12);
+        assert_eq!(bindings.len(), 14);
     }
 }
