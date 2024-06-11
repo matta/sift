@@ -31,34 +31,34 @@ pub fn handle_key_event(
     match bindings.get(&key_combination) {
         None => Action::Handled,
         Some(action) => match action {
-            keys::Action::Quit => Action::Quit,
-            keys::Action::Toggle => {
+            keys::Command::Quit => Action::Quit,
+            keys::Command::Toggle => {
                 list.toggle();
                 Action::Handled
             }
-            keys::Action::Edit => edit(state),
-            keys::Action::Snooze => {
+            keys::Command::Edit => edit(state),
+            keys::Command::Snooze => {
                 snooze(state);
                 Action::Handled
             }
-            keys::Action::Next => {
+            keys::Command::Next => {
                 list.next();
                 Action::Handled
             }
-            keys::Action::Previous => {
+            keys::Command::Previous => {
                 list.previous();
                 Action::Handled
             }
-            keys::Action::MoveUp => {
+            keys::Command::MoveUp => {
                 list.move_up();
                 Action::Handled
             }
-            keys::Action::MoveDown => {
+            keys::Command::MoveDown => {
                 list.move_down();
                 Action::Handled
             }
-            keys::Action::Add => add(state),
-            keys::Action::Delete => {
+            keys::Command::Add => add(state),
+            keys::Command::Delete => {
                 delete(state);
                 Action::Handled
             }
