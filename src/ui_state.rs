@@ -11,54 +11,6 @@ use anyhow::Result;
 
 use crate::persist;
 
-#[derive(Default)]
-pub(crate) struct State {
-    pub current_screen: Screen,
-}
-
-#[derive(Default)]
-pub(crate) struct CommonState {
-    pub list: TodoList,
-}
-
-pub(crate) enum Screen {
-    Main(MainScreenState),
-    Edit(EditScreenState),
-}
-
-impl Default for Screen {
-    fn default() -> Self {
-        Screen::Main(MainScreenState::default())
-    }
-}
-
-impl Screen {
-    pub(crate) fn mut_common_state(&mut self) -> &mut CommonState {
-        match self {
-            Screen::Main(s) => &mut s.common_state,
-            Screen::Edit(s) => &mut s.common_state,
-        }
-    }
-
-    pub(crate) fn take_common_state(&mut self) -> CommonState {
-        std::mem::take(self.mut_common_state())
-    }
-}
-
-#[derive(Default)]
-pub(crate) struct MainScreenState {
-    pub common_state: CommonState,
-}
-
-pub(crate) struct EditScreenState {
-    pub common_state: CommonState,
-    pub index: usize,
-    // TODO: in upstream make the 'static workaround used here more
-    // discoverable.  See
-    // https://github.com/rhysd/tui-textarea/issues/46
-    pub text_state: RefCell<tui_prompts::TextState<'static>>,
-}
-
 pub(crate) struct TodoList {
     pub list_state: RefCell<ratatui::widgets::ListState>,
     pub tasks: persist::TaskList,
@@ -107,7 +59,7 @@ impl TodoList {
         }
     }
 
-    pub(crate) fn previous_index(&self) -> Option<usize> {
+    fn previous_index(&self) -> Option<usize> {
         let i = if let Some(i) = self.current_index() {
             if i == 0 {
                 self.tasks.tasks.len().saturating_sub(1)
@@ -174,6 +126,54 @@ impl TodoList {
             list_state: RefCell::new(list_state),
         }
     }
+}
+
+#[derive(Default)]
+pub(crate) struct CommonState {
+    pub list: TodoList,
+}
+
+#[derive(Default)]
+pub(crate) struct MainScreenState {
+    pub common_state: CommonState,
+}
+
+pub(crate) struct EditScreenState {
+    pub common_state: CommonState,
+    pub index: usize,
+    // TODO: in upstream make the 'static workaround used here more
+    // discoverable.  See
+    // https://github.com/rhysd/tui-textarea/issues/46
+    pub text_state: RefCell<tui_prompts::TextState<'static>>,
+}
+
+pub(crate) enum Screen {
+    Main(MainScreenState),
+    Edit(EditScreenState),
+}
+
+impl Default for Screen {
+    fn default() -> Self {
+        Screen::Main(MainScreenState::default())
+    }
+}
+
+impl Screen {
+    pub(crate) fn mut_common_state(&mut self) -> &mut CommonState {
+        match self {
+            Screen::Main(s) => &mut s.common_state,
+            Screen::Edit(s) => &mut s.common_state,
+        }
+    }
+
+    pub(crate) fn take_common_state(&mut self) -> CommonState {
+        std::mem::take(self.mut_common_state())
+    }
+}
+
+#[derive(Default)]
+pub(crate) struct State {
+    pub current_screen: Screen,
 }
 
 impl State {
