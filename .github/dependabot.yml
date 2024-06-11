@@ -5,7 +5,14 @@
 
 version: 2
 updates:
-  - package-ecosystem: "cargo" # See documentation for possible values
+  # Maintain dependencies for Cargo
+  - package-ecosystem: cargo
     directory: "/" # Location of package manifests
     schedule:
-      interval: "monthly"
+      interval: monthly
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 10
