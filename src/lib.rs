@@ -8,12 +8,10 @@ use cli_log::{debug, warn};
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::path::{Path, PathBuf};
 
-mod edit_screen;
 mod handle_key_event;
 mod keys;
-mod main_screen;
 mod persist;
-mod render;
+mod screen;
 mod terminal_input;
 mod tui;
 mod ui_state;
@@ -71,31 +69,22 @@ pub fn run(save_name: &Path) -> Result<()> {
             }
         };
         match disposition {
-            handle_key_event::Action::AcceptTaskEdit(index, new_title) => {
-                let mut common_state = state.current_screen.take_common_state();
-                common_state.list.set_title(index, new_title);
-                state.current_screen = ui_state::Screen::Main(
-                    ui_state::MainScreenState::from_common_state(common_state),
-                );
-            }
             handle_key_event::Action::SwitchToMainScreen => {
-                state.current_screen = ui_state::Screen::Main(
-                    ui_state::MainScreenState::from_common_state(
-                        state.current_screen.take_common_state(),
-                    ),
-                );
+                state.current_screen =
+                    Box::new(screen::main::State::from_common_state(
+                        state.common_state.clone(),
+                    ));
             }
             handle_key_event::Action::SwitchToEditScreen(id, title) => {
                 let text_state = tui_prompts::TextState::new()
                     .with_value(std::borrow::Cow::Owned(title))
                     .with_focus(tui_prompts::FocusState::Focused);
-                let common_state = state.current_screen.take_common_state();
-                let edit_state = ui_state::EditScreenState {
-                    common_state,
+                let edit_state = screen::edit::State {
+                    common: state.common_state.clone(),
                     id,
-                    text_state: std::cell::RefCell::new(text_state),
+                    text: std::cell::RefCell::new(text_state),
                 };
-                state.current_screen = ui_state::Screen::Edit(edit_state);
+                state.current_screen = Box::new(edit_state);
             }
             handle_key_event::Action::Quit => {
                 break;

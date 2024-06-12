@@ -5,12 +5,14 @@ The `State` struct contains the application's state.  It is the
 central data structure for the application.
 */
 
-use std::{cell::RefCell, path::Path};
+use std::cell::RefCell;
+use std::path::Path;
+use std::rc::Rc;
 
 use anyhow::Result;
 use chrono::Datelike;
 
-use crate::persist;
+use crate::{persist, screen};
 
 pub(crate) struct TodoList {
     tasks: persist::TaskList,
@@ -33,7 +35,6 @@ impl Default for TodoList {
     }
 }
 
-// TODO: move this elsewhere
 fn today() -> chrono::NaiveDate {
     let now = chrono::Local::now();
     chrono::NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap()
@@ -204,62 +205,22 @@ pub(crate) struct CommonState {
     pub list: TodoList,
 }
 
-pub(crate) struct MainScreenState {
-    pub common_state: CommonState,
-    pub list_state: RefCell<ratatui::widgets::ListState>,
-}
-
-impl MainScreenState {
-    pub(crate) fn from_common_state(common_state: CommonState) -> Self {
-        Self {
-            common_state,
-            list_state: RefCell::new(ratatui::widgets::ListState::default()),
-        }
-    }
-}
-
-impl Default for MainScreenState {
-    fn default() -> Self {
-        MainScreenState::from_common_state(CommonState::default())
-    }
-}
-
-pub(crate) struct EditScreenState {
-    pub common_state: CommonState,
-    pub id: uuid::Uuid,
-    // TODO: in upstream make the 'static workaround used here more
-    // discoverable.  See
-    // https://github.com/rhysd/tui-textarea/issues/46
-    pub text_state: RefCell<tui_prompts::TextState<'static>>,
-}
-
-pub(crate) enum Screen {
-    Main(MainScreenState),
-    Edit(EditScreenState),
-}
-
-impl Default for Screen {
-    fn default() -> Self {
-        Screen::Main(MainScreenState::default())
-    }
-}
-
-impl Screen {
-    pub(crate) fn mut_common_state(&mut self) -> &mut CommonState {
-        match self {
-            Screen::Main(s) => &mut s.common_state,
-            Screen::Edit(s) => &mut s.common_state,
-        }
-    }
-
-    pub(crate) fn take_common_state(&mut self) -> CommonState {
-        std::mem::take(self.mut_common_state())
-    }
-}
-
-#[derive(Default)]
 pub(crate) struct State {
-    pub current_screen: Screen,
+    pub common_state: Rc<RefCell<CommonState>>,
+    pub current_screen: Box<dyn screen::Screen>,
+}
+
+impl Default for State {
+    fn default() -> Self {
+        let common_state = Rc::new(RefCell::new(CommonState::default()));
+        let current_screen = Box::new(screen::main::State::from_common_state(
+            common_state.clone(),
+        ));
+        State {
+            common_state,
+            current_screen,
+        }
+    }
 }
 
 impl State {
@@ -268,24 +229,22 @@ impl State {
     }
 
     pub fn save(&self, filename: &Path) -> Result<()> {
-        let state = match &self.current_screen {
-            Screen::Main(state) => &state.common_state,
-            Screen::Edit(state) => &state.common_state,
-        };
-        persist::save_tasks(filename, &state.list.tasks)?;
+        persist::save_tasks(filename, &self.common_state.borrow().list.tasks)?;
         Ok(())
     }
 
     pub fn load(filename: &Path) -> Result<State> {
         let tasks = persist::load_tasks(filename)?;
-
-        Ok(State {
-            current_screen: Screen::Main(MainScreenState {
-                common_state: CommonState {
-                    list: TodoList::new(tasks),
-                },
-                ..Default::default()
-            }),
-        })
+        let common_state = Rc::new(RefCell::new(CommonState {
+            list: TodoList::new(tasks),
+        }));
+        let current_screen = Box::new(screen::main::State::from_common_state(
+            common_state.clone(),
+        ));
+        let state = State {
+            common_state,
+            current_screen,
+        };
+        Ok(state)
     }
 }

@@ -7,7 +7,7 @@ use crossterm::{
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-use crate::{render, terminal_input};
+use crate::terminal_input;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -74,7 +74,7 @@ impl Tui {
         state: &crate::ui_state::State,
     ) -> Result<(), Error> {
         self.terminal
-            .draw(|frame| render::render(state, frame))
+            .draw(|frame| state.current_screen.render(frame))
             .map_err(Error::TerminalWrite)?;
         Ok(())
     }
