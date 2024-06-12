@@ -5,14 +5,10 @@ The `State` struct contains the application's state.  It is the
 central data structure for the application.
 */
 
-use std::cell::RefCell;
-use std::path::Path;
-use std::rc::Rc;
-
+use crate::{persist, screen};
 use anyhow::Result;
 use chrono::Datelike;
-
-use crate::{persist, screen};
+use std::path::Path;
 
 pub(crate) struct TodoList {
     tasks: persist::TaskList,
@@ -205,19 +201,20 @@ pub(crate) struct CommonState {
     pub list: TodoList,
 }
 
+pub(crate) type Screen = dyn screen::Screen<Context = CommonState>;
+
 pub(crate) struct State {
-    pub common_state: Rc<RefCell<CommonState>>,
-    pub current_screen: Option<Box<dyn screen::Screen>>,
+    // FIXME: make non-public
+    pub common_state: CommonState,
+    pub current_screen: Option<Box<Screen>>,
 }
 
 impl Default for State {
     fn default() -> Self {
-        let common_state = Rc::new(RefCell::new(CommonState::default()));
-        let current_screen = Some(Box::<dyn screen::Screen>::from(Box::new(
-            screen::main::State::from_common_state(common_state.clone()),
-        )));
+        let current_screen =
+            Some(Box::<Screen>::from(Box::new(screen::main::State::new())));
         State {
-            common_state,
+            common_state: CommonState::default(),
             current_screen,
         }
     }
@@ -229,21 +226,18 @@ impl State {
     }
 
     pub fn save(&self, filename: &Path) -> Result<()> {
-        persist::save_tasks(filename, &self.common_state.borrow().list.tasks)?;
+        persist::save_tasks(filename, &self.common_state.list.tasks)?;
         Ok(())
     }
 
     pub fn load(filename: &Path) -> Result<State> {
         let tasks = persist::load_tasks(filename)?;
-        let common_state = Rc::new(RefCell::new(CommonState {
+        let common_state = CommonState {
             list: TodoList::new(tasks),
-        }));
-        let current_screen = Some(Box::<dyn screen::Screen>::from(Box::new(
-            screen::main::State::from_common_state(common_state.clone()),
-        )));
+        };
         let state = State {
             common_state,
-            current_screen,
+            ..Default::default()
         };
         Ok(state)
     }

@@ -34,7 +34,9 @@ fn handle_key_event(
     let key_combination: crokey::KeyCombination = key_event.into();
 
     if let Some(screen) = state.current_screen.take() {
-        state.current_screen = Some(screen.handle_key_event(key_combination));
+        state.current_screen = Some(
+            screen.handle_key_event(&mut state.common_state, key_combination),
+        );
     }
 }
 
@@ -84,7 +86,7 @@ pub fn run(save_name: &Path) -> Result<()> {
                 break;
             }
             Some(screen) => {
-                if screen.should_quit() {
+                if screen.should_quit(&mut state.common_state) {
                     debug!("current screen says quit; exiting.");
                     break;
                 }

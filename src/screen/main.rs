@@ -3,31 +3,22 @@ use ratatui::widgets::{
 };
 use std::borrow::Cow;
 use std::cell::RefCell;
-use std::rc::Rc;
 
-use crate::keys;
 use crate::persist::Task;
 use crate::screen;
 use crate::ui_state::CommonState;
+use crate::{keys, ui_state};
 
 fn render_task(s: &Task) -> ListItem<'_> {
     let check = if s.completed.is_some() { 'x' } else { ' ' };
     ListItem::new(format!("[{}] {}", check, s.title.as_str()))
 }
 
-fn delete(state: &mut State) {
-    let list = &mut state.common.borrow_mut().list;
-    list.delete_selected();
-}
-
-fn snooze(state: &mut State) {
-    state.common.borrow_mut().list.snooze();
-}
-
-fn add(state: Box<State>) -> Box<dyn screen::Screen> {
+fn add(
+    common_state: &mut CommonState,
+    state: Box<State>,
+) -> Box<ui_state::Screen> {
     {
-        let list = &mut state.common.borrow_mut().list;
-
         let task = Task {
             id: Task::new_id(),
             title: String::new(),
@@ -36,15 +27,17 @@ fn add(state: Box<State>) -> Box<dyn screen::Screen> {
             due: None,
         };
 
-        list.add_task(task);
+        common_state.list.add_task(task);
     }
-    edit(state)
+    edit(common_state, state)
 }
 
-fn edit(mut state: Box<State>) -> Box<dyn screen::Screen> {
+fn edit(
+    common_state: &mut CommonState,
+    state: Box<State>,
+) -> Box<ui_state::Screen> {
     if let Some((id, text)) = {
-        let common = &mut state.common.borrow_mut();
-        let list = &mut common.list;
+        let list = &mut common_state.list;
         if let Some(id) = list.selected() {
             let title = list.selected_task().unwrap().title.clone();
             let text = tui_prompts::TextState::new()
@@ -56,45 +49,32 @@ fn edit(mut state: Box<State>) -> Box<dyn screen::Screen> {
             None
         }
     } {
-        let edit = screen::edit::State::new(
-            std::mem::take(&mut state.common),
-            id,
-            text,
-        );
+        let edit = screen::edit::State::new(id, text);
         return Box::new(edit);
     }
     state
 }
 
+#[derive(Default)]
 pub(crate) struct State {
-    common: Rc<RefCell<CommonState>>,
     list: RefCell<ratatui::widgets::ListState>,
 }
 
 impl State {
-    pub(crate) fn from_common_state(
-        common_state: Rc<RefCell<CommonState>>,
-    ) -> Self {
-        Self {
-            common: common_state,
-            list: RefCell::new(ratatui::widgets::ListState::default()),
-        }
-    }
-}
-
-impl Default for State {
-    fn default() -> Self {
-        State::from_common_state(Rc::new(RefCell::new(CommonState::default())))
+    pub(crate) fn new() -> Self {
+        Self::default()
     }
 }
 
 impl screen::Screen for State {
+    type Context = CommonState;
+
     fn handle_key_event(
-        mut self: Box<Self>,
+        self: Box<Self>,
+        common_state: &mut ui_state::CommonState,
         key_combination: crokey::KeyCombination,
-    ) -> Box<dyn screen::Screen> {
+    ) -> Box<ui_state::Screen> {
         {
-            let mut common_state = self.common.borrow_mut();
             let list = &mut common_state.list;
             let bindings = crate::keys::bindings();
             match bindings.get(&key_combination) {
@@ -107,14 +87,10 @@ impl screen::Screen for State {
                         list.toggle();
                     }
                     keys::Command::Edit => {
-                        // FIXME: remove this drop
-                        std::mem::drop(common_state);
-                        return edit(self);
+                        return edit(common_state, self);
                     }
                     keys::Command::Snooze => {
-                        // FIXME: remove this drop
-                        std::mem::drop(common_state);
-                        snooze(&mut self);
+                        list.snooze();
                     }
                     keys::Command::Next => {
                         list.next();
@@ -129,14 +105,10 @@ impl screen::Screen for State {
                         list.move_down();
                     }
                     keys::Command::Add => {
-                        // FIXME: remove this drop
-                        std::mem::drop(common_state);
-                        return add(self);
+                        return add(common_state, self);
                     }
                     keys::Command::Delete => {
-                        // FIXME: remove this drop
-                        std::mem::drop(common_state);
-                        delete(&mut self);
+                        common_state.list.delete_selected();
                     }
                 },
             }
@@ -146,10 +118,11 @@ impl screen::Screen for State {
 
     fn render(
         self: Box<Self>,
+        common_state: &mut ui_state::CommonState,
         frame: &mut ratatui::Frame,
-    ) -> Box<dyn screen::Screen> {
+    ) -> Box<ui_state::Screen> {
         {
-            let list = &self.common.borrow().list;
+            let list = &common_state.list;
             let state: &mut ListState = &mut self.list.borrow_mut();
             // Set the list widet's selected state based on the list state.
             state.select(list.index_of_id(list.selected()));
