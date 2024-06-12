@@ -8,7 +8,6 @@ use cli_log::{debug, warn};
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::path::{Path, PathBuf};
 
-mod handle_key_event;
 mod keys;
 mod persist;
 mod screen;
@@ -25,6 +24,18 @@ pub fn save_name() -> PathBuf {
     };
     path.push(".sift.sift");
     path
+}
+
+fn handle_key_event(
+    state: &mut ui_state::State,
+    key_event: crossterm::event::KeyEvent,
+) {
+    // TODO: do this combinding earlier, properly.
+    let key_combination: crokey::KeyCombination = key_event.into();
+
+    if let Some(screen) = state.current_screen.take() {
+        state.current_screen = Some(screen.handle_key_event(key_combination));
+    }
 }
 
 /// # Errors
@@ -60,9 +71,7 @@ pub fn run(save_name: &Path) -> Result<()> {
         // Handle terminal events.
         match tui.next_terminal_event() {
             terminal_input::Event::Key(key_event) => {
-                if !handle_key_event::handle_key_event(&mut state, key_event) {
-                    break;
-                }
+                handle_key_event(&mut state, key_event);
             }
             terminal_input::Event::Tick
             | terminal_input::Event::Mouse(_)
@@ -70,9 +79,13 @@ pub fn run(save_name: &Path) -> Result<()> {
         }
 
         match &state.current_screen {
-            None => break,
+            None => {
+                debug!("no current screen; exiting.");
+                break;
+            }
             Some(screen) => {
                 if screen.should_quit() {
+                    debug!("current screen says quit; exiting.");
                     break;
                 }
             }

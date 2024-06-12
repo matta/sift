@@ -56,19 +56,19 @@ fn edit(mut state: Box<State>) -> Box<dyn screen::Screen> {
             None
         }
     } {
-        let edit = screen::edit::State {
-            common: std::mem::take(&mut state.common),
+        let edit = screen::edit::State::new(
+            std::mem::take(&mut state.common),
             id,
             text,
-        };
+        );
         return Box::new(edit);
     }
     state
 }
 
 pub(crate) struct State {
-    pub common: Rc<RefCell<CommonState>>,
-    pub list: RefCell<ratatui::widgets::ListState>,
+    common: Rc<RefCell<CommonState>>,
+    list: RefCell<ratatui::widgets::ListState>,
 }
 
 impl State {
