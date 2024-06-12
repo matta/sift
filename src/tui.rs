@@ -71,10 +71,14 @@ impl Tui {
     /// Draw the terminal interface by rendering the widgets.
     pub fn draw(
         &mut self,
-        state: &crate::ui_state::State,
+        state: &mut crate::ui_state::State,
     ) -> Result<(), Error> {
         self.terminal
-            .draw(|frame| state.current_screen.render(frame))
+            .draw(|frame| {
+                if let Some(screen) = state.current_screen.take() {
+                    state.current_screen = Some(screen.render(frame));
+                }
+            })
             .map_err(Error::TerminalWrite)?;
         Ok(())
     }

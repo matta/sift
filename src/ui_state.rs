@@ -207,15 +207,15 @@ pub(crate) struct CommonState {
 
 pub(crate) struct State {
     pub common_state: Rc<RefCell<CommonState>>,
-    pub current_screen: Box<dyn screen::Screen>,
+    pub current_screen: Option<Box<dyn screen::Screen>>,
 }
 
 impl Default for State {
     fn default() -> Self {
         let common_state = Rc::new(RefCell::new(CommonState::default()));
-        let current_screen = Box::new(screen::main::State::from_common_state(
-            common_state.clone(),
-        ));
+        let current_screen = Some(Box::<dyn screen::Screen>::from(Box::new(
+            screen::main::State::from_common_state(common_state.clone()),
+        )));
         State {
             common_state,
             current_screen,
@@ -238,9 +238,9 @@ impl State {
         let common_state = Rc::new(RefCell::new(CommonState {
             list: TodoList::new(tasks),
         }));
-        let current_screen = Box::new(screen::main::State::from_common_state(
-            common_state.clone(),
-        ));
+        let current_screen = Some(Box::<dyn screen::Screen>::from(Box::new(
+            screen::main::State::from_common_state(common_state.clone()),
+        )));
         let state = State {
             common_state,
             current_screen,

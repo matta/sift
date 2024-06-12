@@ -56,40 +56,26 @@ pub fn run(save_name: &Path) -> Result<()> {
     // Start the main loop.
     loop {
         // Render the user interface.
-        tui.draw(&state)?;
+        tui.draw(&mut state)?;
         // Handle terminal events.
-        let disposition = match tui.next_terminal_event() {
+        match tui.next_terminal_event() {
             terminal_input::Event::Key(key_event) => {
-                handle_key_event::handle_key_event(&mut state, key_event)
+                if !handle_key_event::handle_key_event(&mut state, key_event) {
+                    break;
+                }
             }
             terminal_input::Event::Tick
             | terminal_input::Event::Mouse(_)
-            | terminal_input::Event::Resize(_, _) => {
-                handle_key_event::Action::Handled
+            | terminal_input::Event::Resize(_, _) => {}
+        }
+
+        match &state.current_screen {
+            None => break,
+            Some(screen) => {
+                if screen.should_quit() {
+                    break;
+                }
             }
-        };
-        match disposition {
-            handle_key_event::Action::SwitchToMainScreen => {
-                state.current_screen =
-                    Box::new(screen::main::State::from_common_state(
-                        state.common_state.clone(),
-                    ));
-            }
-            handle_key_event::Action::SwitchToEditScreen(id, title) => {
-                let text_state = tui_prompts::TextState::new()
-                    .with_value(std::borrow::Cow::Owned(title))
-                    .with_focus(tui_prompts::FocusState::Focused);
-                let edit_state = screen::edit::State {
-                    common: state.common_state.clone(),
-                    id,
-                    text: std::cell::RefCell::new(text_state),
-                };
-                state.current_screen = Box::new(edit_state);
-            }
-            handle_key_event::Action::Quit => {
-                break;
-            }
-            handle_key_event::Action::Handled => {}
         }
     }
 

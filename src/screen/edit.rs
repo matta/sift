@@ -5,11 +5,13 @@ use std::cell::RefCell;
 use tui_prompts::State as _;
 use tui_prompts::TextPrompt;
 
-use crate::handle_key_event::Action;
 use crate::screen;
 use crate::ui_state::CommonState;
 
 pub(crate) struct State {
+    // TODO: make these non-pub
+    // TODO: move CommonState to the State trait and take it as args to the
+    // trait methods.
     pub common: Rc<RefCell<CommonState>>,
     pub id: uuid::Uuid,
     // TODO: in upstream make the 'static workaround used here more
@@ -52,5 +54,6 @@ impl screen::Screen for State {
         );
         let (x, y) = self.text.borrow().cursor();
         frame.set_cursor(x, y);
+        self
     }
 }
