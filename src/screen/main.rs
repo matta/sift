@@ -1,23 +1,20 @@
+use super::Screen;
+use crate::keys;
+use crate::persist::Task;
+use crate::screen;
+use crate::ui_state::CommonState;
 use ratatui::widgets::{
     Block, Borders, List, ListItem, ListState, StatefulWidget,
 };
 use std::borrow::Cow;
 use std::cell::RefCell;
 
-use crate::persist::Task;
-use crate::screen;
-use crate::ui_state::CommonState;
-use crate::{keys, ui_state};
-
 fn render_task(s: &Task) -> ListItem<'_> {
     let check = if s.completed.is_some() { 'x' } else { ' ' };
     ListItem::new(format!("[{}] {}", check, s.title.as_str()))
 }
 
-fn add(
-    common_state: &mut CommonState,
-    state: Box<State>,
-) -> Box<ui_state::Screen> {
+fn add(common_state: &mut CommonState, state: Box<State>) -> Box<dyn Screen> {
     {
         let task = Task {
             id: Task::new_id(),
@@ -32,10 +29,7 @@ fn add(
     edit(common_state, state)
 }
 
-fn edit(
-    common_state: &mut CommonState,
-    state: Box<State>,
-) -> Box<ui_state::Screen> {
+fn edit(common_state: &mut CommonState, state: Box<State>) -> Box<dyn Screen> {
     if let Some((id, text)) = {
         let list = &mut common_state.list;
         if let Some(id) = list.selected() {
@@ -67,13 +61,11 @@ impl State {
 }
 
 impl screen::Screen for State {
-    type Context = CommonState;
-
     fn handle_key_event(
         self: Box<Self>,
-        common_state: &mut ui_state::CommonState,
+        common_state: &mut CommonState,
         key_combination: crokey::KeyCombination,
-    ) -> Box<ui_state::Screen> {
+    ) -> Box<dyn Screen> {
         {
             let list = &mut common_state.list;
             let bindings = crate::keys::bindings();
@@ -118,9 +110,9 @@ impl screen::Screen for State {
 
     fn render(
         self: Box<Self>,
-        common_state: &mut ui_state::CommonState,
+        common_state: &mut CommonState,
         frame: &mut ratatui::Frame,
-    ) -> Box<ui_state::Screen> {
+    ) -> Box<dyn Screen> {
         {
             let list = &common_state.list;
             let state: &mut ListState = &mut self.list.borrow_mut();

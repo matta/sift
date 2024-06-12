@@ -25,13 +25,11 @@ impl State {
 }
 
 impl screen::Screen for State {
-    type Context = CommonState;
-
     fn handle_key_event(
         self: Box<Self>,
-        context: &mut Self::Context,
+        context: &mut CommonState,
         key_combination: crokey::KeyCombination,
-    ) -> Box<dyn screen::Screen<Context = Self::Context>> {
+    ) -> Box<dyn screen::Screen> {
         let mut text_state = self.text.borrow_mut();
         assert!(text_state.is_focused());
         let key_event: crossterm::event::KeyEvent = key_combination.into();
@@ -58,9 +56,9 @@ impl screen::Screen for State {
 
     fn render(
         self: Box<Self>,
-        _conext: &mut Self::Context,
+        _conext: &mut CommonState,
         frame: &mut ratatui::Frame,
-    ) -> Box<dyn screen::Screen<Context = Self::Context>> {
+    ) -> Box<dyn screen::Screen> {
         let prompt = TextPrompt::new(Cow::Borrowed("edit"));
         frame.render_stateful_widget(
             prompt,

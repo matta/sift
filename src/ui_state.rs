@@ -5,7 +5,10 @@ The `State` struct contains the application's state.  It is the
 central data structure for the application.
 */
 
-use crate::{persist, screen};
+use crate::{
+    persist,
+    screen::{self, Screen},
+};
 use anyhow::Result;
 use chrono::Datelike;
 use std::path::Path;
@@ -201,18 +204,17 @@ pub(crate) struct CommonState {
     pub list: TodoList,
 }
 
-pub(crate) type Screen = dyn screen::Screen<Context = CommonState>;
-
 pub(crate) struct State {
     // FIXME: make non-public
     pub common_state: CommonState,
-    pub current_screen: Option<Box<Screen>>,
+    pub current_screen: Option<Box<dyn Screen>>,
 }
 
 impl Default for State {
     fn default() -> Self {
-        let current_screen =
-            Some(Box::<Screen>::from(Box::new(screen::main::State::new())));
+        let current_screen = Some(Box::<dyn Screen>::from(Box::new(
+            screen::main::State::new(),
+        )));
         State {
             common_state: CommonState::default(),
             current_screen,
