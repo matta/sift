@@ -1,2 +1,8 @@
 max_width = 80
+
+# Revisit this someday when the rustfmt docs work.
+import_granularity = "Crate"
+
+# Revisit these when they are stabilized.
+# group_imports = "StdExternalCrate"
 # wrap_comments = true
