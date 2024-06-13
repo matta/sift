@@ -66,9 +66,11 @@ impl TodoList {
     }
 
     pub(crate) fn index_of_id(&self, id: Option<uuid::Uuid>) -> Option<usize> {
-        self.tasks.tasks.iter().enumerate().find_map(|(i, task)| {
-            if Some(task.id) == id { Some(i) } else { None }
-        })
+        self.tasks
+            .tasks
+            .iter()
+            .enumerate()
+            .find_map(|(i, task)| if Some(task.id) == id { Some(i) } else { None })
     }
 
     fn select(&mut self, index: Option<usize>) {
@@ -188,9 +190,7 @@ impl TodoList {
     }
 
     pub(crate) fn set_title(&mut self, id: uuid::Uuid, title: String) {
-        if let Some(task) =
-            self.tasks.tasks.iter_mut().find(|task| task.id == id)
-        {
+        if let Some(task) = self.tasks.tasks.iter_mut().find(|task| task.id == id) {
             task.title = title;
         }
     }
@@ -209,9 +209,9 @@ pub(crate) struct State {
 
 impl Default for State {
     fn default() -> Self {
-        let current_screen = Some(Box::<dyn Screen>::from(Box::new(
-            screen::main::State::new(),
-        )));
+        let current_screen = Some(Box::<dyn Screen>::from(
+            Box::new(screen::main::State::new()),
+        ));
         State {
             common_state: CommonState::default(),
             current_screen,

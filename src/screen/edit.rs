@@ -59,11 +59,7 @@ impl screen::Screen for State {
         frame: &mut ratatui::Frame,
     ) -> Box<dyn screen::Screen> {
         let prompt = TextPrompt::new(Cow::Borrowed("edit"));
-        frame.render_stateful_widget(
-            prompt,
-            frame.size(),
-            &mut self.text.borrow_mut(),
-        );
+        frame.render_stateful_widget(prompt, frame.size(), &mut self.text.borrow_mut());
         let (x, y) = self.text.borrow().cursor();
         frame.set_cursor(x, y);
         self

@@ -6,9 +6,7 @@ use automerge::Automerge;
 use chrono::NaiveDate;
 use uuid::Uuid;
 
-use super::container::{
-    self, read_chunk, read_header, write_chunk, write_header, Chunk,
-};
+use super::container::{self, read_chunk, read_header, write_chunk, write_header, Chunk};
 use crate::persist::serialization::SerializableTaskList;
 
 #[derive(thiserror::Error, Debug)]
@@ -73,8 +71,7 @@ fn encode_document(tasks: &TaskList) -> Result<Vec<u8>, Error> {
 
 fn decode_document(binary: &[u8]) -> Result<TaskList, Error> {
     let doc = Automerge::load(binary).map_err(Error::AutomergeLoad)?;
-    let tasks: SerializableTaskList =
-        autosurgeon::hydrate(&doc).map_err(Error::Hydrate)?;
+    let tasks: SerializableTaskList = autosurgeon::hydrate(&doc).map_err(Error::Hydrate)?;
     let tasks: TaskList = tasks.into();
     Ok(tasks)
 }
@@ -82,10 +79,7 @@ fn decode_document(binary: &[u8]) -> Result<TaskList, Error> {
 const AUTOMERGE_CHUNK: [u8; 4] = [b'A', b'M', b'R', b'G'];
 const END_CHUNK: [u8; 4] = [b'S', b'E', b'N', b'D'];
 
-fn write_document<W: Write>(
-    tasks: &TaskList,
-    writer: &mut W,
-) -> Result<(), Error> {
+fn write_document<W: Write>(tasks: &TaskList, writer: &mut W) -> Result<(), Error> {
     write_header(writer).map_err(Error::ContainerWrite)?;
     let chunk = Chunk::new(AUTOMERGE_CHUNK, encode_document(tasks)?);
     write_chunk(&chunk, writer).map_err(Error::ContainerWrite)?;
@@ -112,16 +106,14 @@ fn read_document<R: Read>(reader: &mut R) -> Result<TaskList, Error> {
 }
 
 pub fn save_tasks(filename: &Path, tasks: &TaskList) -> Result<(), Error> {
-    let mut file = File::create(filename)
-        .map_err(|e| Error::CreateFile(e, filename.to_owned()))?;
+    let mut file = File::create(filename).map_err(|e| Error::CreateFile(e, filename.to_owned()))?;
     write_document(tasks, &mut file)?;
     file.sync_all().map_err(Error::Write)?;
     Ok(())
 }
 
 pub fn load_tasks(filename: &Path) -> Result<TaskList, Error> {
-    let mut file = File::open(filename)
-        .map_err(|e| Error::OpenFile(e, filename.to_owned()))?;
+    let mut file = File::open(filename).map_err(|e| Error::OpenFile(e, filename.to_owned()))?;
     // TODO: the file name is not reported for errors returned by read_document.
     // It would probably be better for the container module to return only
     // std::io::Error, and wrap all std::io::Error in more general Read and
@@ -149,9 +141,7 @@ mod tests {
             Task {
                 id: Task::new_id(),
                 title: "second title".to_string(),
-                snoozed: Some(
-                    chrono::NaiveDate::from_ymd_opt(2022, 5, 7).unwrap(),
-                ),
+                snoozed: Some(chrono::NaiveDate::from_ymd_opt(2022, 5, 7).unwrap()),
                 due: None,
                 completed: "2024-07-03T13:01:42Z"
                     .parse::<chrono::DateTime<chrono::Utc>>()
@@ -164,8 +154,7 @@ mod tests {
 
         let mut doc = automerge::AutoCommit::new();
         {
-            let value: serialization::SerializableTaskList =
-                task_list.clone().into();
+            let value: serialization::SerializableTaskList = task_list.clone().into();
             autosurgeon::reconcile(&mut doc, &value).unwrap();
         }
 
@@ -201,8 +190,7 @@ mod tests {
             }
         );
 
-        let todo_list2: serialization::SerializableTaskList =
-            autosurgeon::hydrate(&doc).unwrap();
+        let todo_list2: serialization::SerializableTaskList = autosurgeon::hydrate(&doc).unwrap();
         let todo_list2: TaskList = todo_list2.into();
         assert_eq!(task_list, todo_list2);
     }

@@ -28,17 +28,13 @@ pub fn save_name() -> PathBuf {
     path
 }
 
-fn handle_key_event(
-    state: &mut ui_state::State,
-    key_event: crossterm::event::KeyEvent,
-) {
+fn handle_key_event(state: &mut ui_state::State, key_event: crossterm::event::KeyEvent) {
     // TODO: do this combinding earlier, properly.
     let key_combination: crokey::KeyCombination = key_event.into();
 
     if let Some(screen) = state.current_screen.take() {
-        state.current_screen = Some(
-            screen.handle_key_event(&mut state.common_state, key_combination),
-        );
+        state.current_screen =
+            Some(screen.handle_key_event(&mut state.common_state, key_combination));
     }
 }
 

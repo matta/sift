@@ -13,8 +13,7 @@ pub enum Error {
     TerminalWrite(#[source] std::io::Error),
 }
 
-pub type CrosstermTerminal =
-    ratatui::Terminal<ratatui::backend::CrosstermBackend<std::io::Stderr>>;
+pub type CrosstermTerminal = ratatui::Terminal<ratatui::backend::CrosstermBackend<std::io::Stderr>>;
 
 /// Representation of a terminal user interface.
 ///
@@ -29,10 +28,7 @@ pub(crate) struct Tui {
 
 impl Tui {
     /// Constructs a new instance of [`Tui`].
-    pub fn new(
-        terminal: CrosstermTerminal,
-        event_reader: terminal_input::Reader,
-    ) -> Self {
+    pub fn new(terminal: CrosstermTerminal, event_reader: terminal_input::Reader) -> Self {
         Self {
             terminal,
             event_reader,
@@ -45,11 +41,7 @@ impl Tui {
     pub fn enter(&mut self) -> Result<(), Error> {
         let mut func = || {
             terminal::enable_raw_mode()?;
-            crossterm::execute!(
-                io::stderr(),
-                EnterAlternateScreen,
-                EnableMouseCapture
-            )?;
+            crossterm::execute!(io::stderr(), EnterAlternateScreen, EnableMouseCapture)?;
 
             // Define a custom panic hook to reset the terminal properties.
             // This way, you won't have your terminal messed up if an unexpected
@@ -68,15 +60,11 @@ impl Tui {
     }
 
     /// Draw the terminal interface by rendering the widgets.
-    pub fn draw(
-        &mut self,
-        state: &mut crate::ui_state::State,
-    ) -> Result<(), Error> {
+    pub fn draw(&mut self, state: &mut crate::ui_state::State) -> Result<(), Error> {
         self.terminal
             .draw(|frame| {
                 if let Some(screen) = state.current_screen.take() {
-                    state.current_screen =
-                        Some(screen.render(&mut state.common_state, frame));
+                    state.current_screen = Some(screen.render(&mut state.common_state, frame));
                 }
             })
             .map_err(Error::TerminalWrite)?;
@@ -89,12 +77,8 @@ impl Tui {
     /// the terminal properties if unexpected errors occur.
     fn reset() -> Result<(), Error> {
         terminal::disable_raw_mode().map_err(Error::TerminalWrite)?;
-        crossterm::execute!(
-            io::stderr(),
-            LeaveAlternateScreen,
-            DisableMouseCapture
-        )
-        .map_err(Error::TerminalWrite)?;
+        crossterm::execute!(io::stderr(), LeaveAlternateScreen, DisableMouseCapture)
+            .map_err(Error::TerminalWrite)?;
         Ok(())
     }
 

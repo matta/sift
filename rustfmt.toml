@@ -2,7 +2,7 @@
 # https://github.com/rust-lang/rustfmt/issues/3383#issuecomment-1649048685
 version = "Two"
 
-max_width = 80
+max_width = 100
 
 use_field_init_shorthand = true
 imports_granularity = "Module"

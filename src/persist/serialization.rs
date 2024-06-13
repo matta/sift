@@ -21,11 +21,7 @@ fn to_maybe<T>(from: Option<T>) -> MaybeMissing<T> {
     }
 }
 
-fn make_hydrate_error(
-    input: &str,
-    kind: &str,
-    parse_error: chrono::ParseError,
-) -> HydrateError {
+fn make_hydrate_error(input: &str, kind: &str, parse_error: chrono::ParseError) -> HydrateError {
     HydrateError::unexpected(
         format!("error parsing {}: {}", kind, parse_error),
         input.to_string(),
@@ -38,10 +34,7 @@ pub(crate) struct SerializableNaiveDate(NaiveDate);
 impl Reconcile for SerializableNaiveDate {
     type Key<'a> = NoKey;
 
-    fn reconcile<R: autosurgeon::Reconciler>(
-        &self,
-        mut reconciler: R,
-    ) -> Result<(), R::Error> {
+    fn reconcile<R: autosurgeon::Reconciler>(&self, mut reconciler: R) -> Result<(), R::Error> {
         reconciler.str(self.0.format("%F").to_string())
     }
 }
@@ -61,10 +54,7 @@ pub(crate) struct SerializableDateTime(chrono::DateTime<chrono::Utc>);
 impl Reconcile for SerializableDateTime {
     type Key<'a> = NoKey;
 
-    fn reconcile<R: autosurgeon::Reconciler>(
-        &self,
-        mut reconciler: R,
-    ) -> Result<(), R::Error> {
+    fn reconcile<R: autosurgeon::Reconciler>(&self, mut reconciler: R) -> Result<(), R::Error> {
         reconciler.str(self.0.format("%FT%TZ").to_string())
     }
 }
@@ -90,9 +80,7 @@ pub(crate) struct SerializableTask {
 
 // SerializableTaskList is a TaskList that can be stored and retrieved from
 // an Automerge document.
-#[derive(
-    Debug, Clone, PartialEq, autosurgeon::Reconcile, autosurgeon::Hydrate,
-)]
+#[derive(Debug, Clone, PartialEq, autosurgeon::Reconcile, autosurgeon::Hydrate)]
 pub(crate) struct SerializableTaskList {
     pub task_map: BTreeMap<String, SerializableTask>,
     pub task_order: Vec<String>,

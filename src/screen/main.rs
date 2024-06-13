@@ -1,9 +1,7 @@
 use std::borrow::Cow;
 use std::cell::RefCell;
 
-use ratatui::widgets::{
-    Block, Borders, List, ListItem, ListState, StatefulWidget,
-};
+use ratatui::widgets::{Block, Borders, List, ListItem, ListState, StatefulWidget};
 
 use crate::persist::Task;
 use crate::screen::Screen;

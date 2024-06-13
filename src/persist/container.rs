@@ -9,9 +9,7 @@ pub enum Error {
     Read(#[source] std::io::Error),
     #[error("Cannot write to file")]
     Write(#[source] std::io::Error),
-    #[error(
-        "Read a chunk with an invalid chunk size: {0} is greater than {1}"
-    )]
+    #[error("Read a chunk with an invalid chunk size: {0} is greater than {1}")]
     ReadInvalidChunkSize(u32, u32),
     #[error("Chunk size too large to be written: {0}")]
     WriteInvalidChunkSize(usize),
@@ -50,10 +48,7 @@ impl Chunk {
         let data_length = read_u32(reader)?;
         let chunk_size_limit = 1024 * 1024 * 1024;
         if data_length > chunk_size_limit {
-            return Err(Error::ReadInvalidChunkSize(
-                data_length,
-                chunk_size_limit,
-            ));
+            return Err(Error::ReadInvalidChunkSize(data_length, chunk_size_limit));
         }
         let mut chunk_type = [0; 4];
         reader.read_exact(&mut chunk_type).map_err(Error::Read)?;
@@ -88,10 +83,7 @@ impl Chunk {
         digest.finalize()
     }
 
-    pub(crate) fn expect_type(
-        &self,
-        expected_type: [u8; 4],
-    ) -> Result<(), Error> {
+    pub(crate) fn expect_type(&self, expected_type: [u8; 4]) -> Result<(), Error> {
         if self.chunk_type == expected_type {
             Ok(())
         } else {
@@ -139,9 +131,6 @@ pub(crate) fn read_chunk<R: Read>(reader: &mut R) -> Result<Chunk, Error> {
 }
 
 // Function to write a single PNG chunk
-pub(crate) fn write_chunk<W: Write>(
-    chunk: &Chunk,
-    writer: &mut W,
-) -> Result<(), Error> {
+pub(crate) fn write_chunk<W: Write>(chunk: &Chunk, writer: &mut W) -> Result<(), Error> {
     chunk.write(writer)
 }
