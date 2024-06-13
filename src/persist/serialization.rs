@@ -1,9 +1,11 @@
-use crate::persist::document::{Task, TaskList};
+use std::collections::{BTreeMap, HashSet};
+
 use autosurgeon::reconcile::NoKey;
 use autosurgeon::{Hydrate, HydrateError, MaybeMissing, Reconcile};
 use chrono::NaiveDate;
-use std::collections::{BTreeMap, HashSet};
 use uuid::Uuid;
+
+use crate::persist::document::{Task, TaskList};
 
 pub fn to_option<T>(from: MaybeMissing<T>) -> Option<T> {
     match from {
@@ -139,8 +141,9 @@ impl From<SerializableTaskList> for TaskList {
                 let task = value.task_map.get(id).unwrap();
                 let id = Uuid::parse_str(id).unwrap();
                 if !seen.insert(id) {
-                    // Due to CRDT merges an item may appear in multiple places in
-                    // the automerge doc.  Ignore all but the first.
+                    // Due to CRDT merges an item may appear in multiple places
+                    // in the automerge doc.  Ignore all but
+                    // the first.
                     return None;
                 }
                 Some(Task {

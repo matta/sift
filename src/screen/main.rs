@@ -1,13 +1,14 @@
-use super::Screen;
-use crate::keys;
-use crate::persist::Task;
-use crate::screen;
-use crate::ui_state::CommonState;
+use std::borrow::Cow;
+use std::cell::RefCell;
+
 use ratatui::widgets::{
     Block, Borders, List, ListItem, ListState, StatefulWidget,
 };
-use std::borrow::Cow;
-use std::cell::RefCell;
+
+use crate::persist::Task;
+use crate::screen::Screen;
+use crate::ui_state::CommonState;
+use crate::{keys, screen};
 
 fn render_task(s: &Task) -> ListItem<'_> {
     let check = if s.completed.is_some() { 'x' } else { ' ' };

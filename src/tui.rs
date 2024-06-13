@@ -2,10 +2,8 @@
 
 use std::{io, panic};
 
-use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture},
-    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
-};
+use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
+use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
 
 use crate::terminal_input;
 
@@ -54,7 +52,8 @@ impl Tui {
             )?;
 
             // Define a custom panic hook to reset the terminal properties.
-            // This way, you won't have your terminal messed up if an unexpected error happens.
+            // This way, you won't have your terminal messed up if an unexpected
+            // error happens.
             let panic_hook = panic::take_hook();
             panic::set_hook(Box::new(move |panic| {
                 Self::reset().expect("failed to reset the terminal");

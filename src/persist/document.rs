@@ -1,14 +1,15 @@
-use crate::persist::serialization::SerializableTaskList;
-use automerge::Automerge;
-use chrono::NaiveDate;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+
+use automerge::Automerge;
+use chrono::NaiveDate;
 use uuid::Uuid;
 
 use super::container::{
     self, read_chunk, read_header, write_chunk, write_header, Chunk,
 };
+use crate::persist::serialization::SerializableTaskList;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -123,8 +124,8 @@ pub fn load_tasks(filename: &Path) -> Result<TaskList, Error> {
         .map_err(|e| Error::OpenFile(e, filename.to_owned()))?;
     // TODO: the file name is not reported for errors returned by read_document.
     // It would probably be better for the container module to return only
-    // std::io::Error, and wrap all std::io::Error in more general Read and Write
-    // errors in this module.
+    // std::io::Error, and wrap all std::io::Error in more general Read and
+    // Write errors in this module.
     read_document(&mut file)
 }
 

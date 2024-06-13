@@ -5,13 +5,13 @@ The `State` struct contains the application's state.  It is the
 central data structure for the application.
 */
 
-use crate::{
-    persist,
-    screen::{self, Screen},
-};
+use std::path::Path;
+
 use anyhow::Result;
 use chrono::Datelike;
-use std::path::Path;
+
+use crate::persist;
+use crate::screen::{self, Screen};
 
 pub(crate) struct TodoList {
     tasks: persist::TaskList,
@@ -67,11 +67,7 @@ impl TodoList {
 
     pub(crate) fn index_of_id(&self, id: Option<uuid::Uuid>) -> Option<usize> {
         self.tasks.tasks.iter().enumerate().find_map(|(i, task)| {
-            if Some(task.id) == id {
-                Some(i)
-            } else {
-                None
-            }
+            if Some(task.id) == id { Some(i) } else { None }
         })
     }
 
@@ -176,7 +172,8 @@ impl TodoList {
                 Some(next_week)
             };
         }
-        // Order snoozed items after non-snoozed items.  Keep the current selection.
+        // Order snoozed items after non-snoozed items.  Keep the current
+        // selection.
         //
         // Note: this is a stable sort.
         // Note: false sorts before true.

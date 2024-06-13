@@ -3,10 +3,12 @@
 #![deny(unused_crate_dependencies)]
 #![deny(unused_extern_crates)]
 
+use std::path::{Path, PathBuf};
+
 use anyhow::Result;
 use cli_log::{debug, warn};
-use ratatui::{backend::CrosstermBackend, Terminal};
-use std::path::{Path, PathBuf};
+use ratatui::backend::CrosstermBackend;
+use ratatui::Terminal;
 
 mod keys;
 mod persist;

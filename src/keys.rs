@@ -1,4 +1,5 @@
-use std::{collections::HashMap, sync::OnceLock};
+use std::collections::HashMap;
+use std::sync::OnceLock;
 
 #[derive(Debug, Clone, Copy, PartialEq, serde::Deserialize)]
 pub(crate) enum Command {

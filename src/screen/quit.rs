@@ -1,8 +1,7 @@
 use ratatui::text::Line;
 
-use crate::ui_state::CommonState;
-
 use super::Screen;
+use crate::ui_state::CommonState;
 
 pub(crate) struct State {}
 

@@ -1,8 +1,21 @@
+# Use 2024 edition semantics, but will be replaced with "style_edition".  See
+# https://github.com/rust-lang/rustfmt/issues/3383#issuecomment-1649048685
+version = "Two"
+
 max_width = 80
 
-# Revisit this someday when the rustfmt docs work.
-import_granularity = "Crate"
+use_field_init_shorthand = true
+imports_granularity = "Module"
 
-# Revisit these when they are stabilized.
-# group_imports = "StdExternalCrate"
-# wrap_comments = true
+#
+# Unstable options.  This requires nightly rust to format code.  Try:
+#
+# 1) cargo make format
+# 2) cargo +nightly fmt --all
+#
+# The latter requires rustup.
+#
+
+group_imports = "StdExternalCrate"
+wrap_comments = true
+reorder_impl_items = true

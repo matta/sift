@@ -1,10 +1,8 @@
 //! Terminal events handler
 
-use std::{
-    sync::mpsc,
-    thread,
-    time::{Duration, Instant},
-};
+use std::sync::mpsc;
+use std::thread;
+use std::time::{Duration, Instant};
 
 use crossterm::event;
 
@@ -54,7 +52,9 @@ impl Reader {
                                 if e.kind == event::KeyEventKind::Press {
                                     sender.send(Event::Key(e))
                                 } else {
-                                    Ok(()) // ignore KeyEventKind::Release on windows
+                                    // ignore KeyEventKind::Release on
+                                    // windows
+                                    Ok(())
                                 }
                             }
                             crossterm::event::Event::Mouse(e) => {

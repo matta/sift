@@ -1,8 +1,7 @@
 use std::borrow::Cow;
-
 use std::cell::RefCell;
-use tui_prompts::State as _;
-use tui_prompts::TextPrompt;
+
+use tui_prompts::{State as _, TextPrompt};
 
 use crate::screen;
 use crate::ui_state::CommonState;
