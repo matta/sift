@@ -20,7 +20,8 @@ pub trait Screen {
     ) -> Box<dyn Screen>;
 
     // FIXME: replace this with a back channel to the event queue logic?
-    fn should_quit(&self, _context: &mut CommonState) -> bool {
+    fn should_quit(&self, context: &mut CommonState) -> bool {
+        _ = context;
         false
     }
 }
