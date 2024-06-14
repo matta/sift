@@ -14,8 +14,10 @@ pub enum Event {
     /// Key press.
     Key(crossterm::event::KeyEvent),
     /// Mouse click/scroll.
+    #[allow(dead_code)]
     Mouse(crossterm::event::MouseEvent),
     /// Terminal resize.
+    #[allow(dead_code)]
     Resize(u16, u16),
 }
 
