@@ -9,32 +9,10 @@ use std::path::Path;
 
 use anyhow::Result;
 use chrono::Datelike;
+use itertools::Itertools;
 
-use crate::persist::{self, Store, TaskId};
+use crate::persist::{MemoryStore, Store, Task, TaskId};
 use crate::screen::{self, Screen};
-
-pub(crate) struct TodoList {
-    tasks: persist::TaskList,
-    selected: Option<usize>,
-}
-
-impl Default for TodoList {
-    fn default() -> Self {
-        let tasks: Vec<persist::Task> = (1..=10)
-            .map(|i| {
-                persist::Task::new(
-                    persist::Task::new_id(),
-                    format!("Item {}", i),
-                    None,
-                    None,
-                    None,
-                )
-            })
-            .collect();
-        let tasks = persist::TaskList { tasks };
-        TodoList::new(tasks)
-    }
-}
 
 fn today() -> chrono::NaiveDate {
     let now = chrono::Local::now();
@@ -45,130 +23,62 @@ fn next_week() -> chrono::NaiveDate {
     today() + chrono::TimeDelta::try_weeks(1).unwrap()
 }
 
-impl TodoList {
-    fn new(tasks: persist::TaskList) -> Self {
-        let selected = if tasks.tasks.is_empty() {
-            None
-        } else {
-            Some(0)
+#[derive(Default)]
+pub(crate) struct CommonState {
+    pub store: MemoryStore,
+    pub selected: Option<TaskId>,
+}
+
+impl CommonState {
+    pub(crate) fn new(store: MemoryStore) -> Self {
+        let mut state = CommonState {
+            store,
+            selected: None,
         };
-        Self { tasks, selected }
+        state.selected = state.first_id();
+        state
     }
 
-    pub(crate) fn iter(&self) -> impl Iterator<Item = &persist::Task> {
+    pub(crate) fn index_of_id(&self, id: Option<TaskId>) -> Option<usize> {
+        self.iter_tasks_for_display()
+            .enumerate()
+            .find_map(
+                |(i, task)| {
+                    if Some(task.id()) == id { Some(i) } else { None }
+                },
+            )
+    }
+
+    pub fn iter_tasks_for_display(&self) -> impl Iterator<Item = &Task> {
         let today = today();
-        self.tasks.tasks.iter().filter(move |task| {
+        self.store.iter().filter(move |task| {
             let snoozed = matches!(task.snoozed(), Some(date) if date > today);
             !snoozed
         })
     }
 
-    pub(crate) fn selected(&self) -> Option<TaskId> {
-        self.selected
-            .map(|selected| self.tasks.tasks[selected].id())
-    }
-
-    pub(crate) fn index_of_id(&self, id: Option<TaskId>) -> Option<usize> {
-        self.tasks.tasks.iter().enumerate().find_map(|(i, task)| {
-            if Some(task.id()) == id { Some(i) } else { None }
-        })
-    }
-
-    fn select(&mut self, index: Option<usize>) {
-        if let Some(index) = index {
-            assert!(index < self.tasks.tasks.len());
-        }
-        self.selected = index;
-    }
-
-    fn next_index(&self) -> Option<usize> {
-        let visible = self.iter().count();
-        if visible == 0 {
-            return None;
-        }
-        Some(if let Some(i) = self.selected {
-            i.wrapping_add(1) % visible
-        } else {
-            0
-        })
-    }
-
-    fn previous_index(&self) -> Option<usize> {
-        let visible = self.iter().count();
-        if visible == 0 {
-            return None;
-        }
-        Some(match self.selected {
-            Some(i) => {
-                if i == 0 {
-                    visible - 1
-                } else {
-                    i - 1
-                }
-            }
-            None => 0,
-        })
-    }
-
-    pub(crate) fn next(&mut self) {
-        self.select(self.next_index());
-    }
-
-    pub(crate) fn previous(&mut self) {
-        self.select(self.previous_index());
-    }
-
-    pub(crate) fn move_up(&mut self) {
-        if let (Some(from), Some(to)) = (self.selected, self.previous_index()) {
-            self.tasks.tasks.swap(from, to);
-            self.select(Some(to));
-        }
-    }
-
-    pub(crate) fn move_down(&mut self) {
-        if let (Some(from), Some(to)) = (self.selected, self.next_index()) {
-            self.tasks.tasks.swap(from, to);
-            self.select(Some(to));
-        }
-    }
-
-    pub(crate) fn toggle(&mut self) {
-        if let Some(i) = self.selected {
-            let task = &mut self.tasks.tasks[i];
+    pub fn toggle(&mut self) {
+        if let Some(id) = self.selected {
+            let mut task = self
+                .store
+                .get(&id)
+                .expect("FIXME: propagate errors; selected task must be in the store");
             let completed = if task.completed().is_some() {
                 None
             } else {
                 Some(chrono::Utc::now())
             };
             task.set_completed(completed);
+            self.store.put(&task).expect("FIXME: propagate errors");
         }
-    }
-
-    pub(crate) fn add_task(&mut self, task: persist::Task) {
-        let index = self.selected.unwrap_or(0);
-        self.selected = Some(index);
-        self.tasks.tasks.insert(index, task);
-    }
-
-    pub(crate) fn delete_selected(&mut self) {
-        if let Some(index) = self.selected {
-            // Decrement the selected item index by the number of todo
-            // items up to it that will be deleted.
-            let count = self
-                .tasks
-                .tasks
-                .iter()
-                .take(index)
-                .filter(|task| task.completed().is_some())
-                .count();
-            self.selected = Some(index - count);
-        }
-        self.tasks.tasks.retain(|task| task.completed().is_none());
     }
 
     pub(crate) fn snooze(&mut self) {
-        if let Some(index) = self.selected {
-            let task = &mut self.tasks.tasks[index];
+        if let Some(id) = self.selected {
+            let mut task = self
+                .store
+                .get(&id)
+                .expect("FIXME: propagate errors; selected task must be in the store");
             let snoozed = if task.snoozed().is_some() {
                 None
             } else {
@@ -176,36 +86,107 @@ impl TodoList {
                 Some(next_week)
             };
             task.set_snoozed(snoozed);
+            self.store.put(&task).expect("FIXME: propagate errors");
         }
         // Order snoozed items after non-snoozed items.  Keep the current
         // selection.
         //
         // Note: this is a stable sort.
         // Note: false sorts before true.
-        self.tasks
-            .tasks
-            .sort_by_key(|task| task.snoozed().is_some());
+        // self.tasks
+        //     .tasks
+        //     .sort_by_key(|task| task.snoozed().is_some());
     }
 
-    pub(crate) fn selected_task(&self) -> Option<&persist::Task> {
+    fn id_of_index(&self, index: usize) -> Option<TaskId> {
+        self.iter_tasks_for_display()
+            .enumerate()
+            .find_map(|(i, task)| if i == index { Some(task.id()) } else { None })
+    }
+
+    fn first_id(&self) -> Option<TaskId> {
+        self.iter_tasks_for_display().map(Task::id).next()
+    }
+
+    fn next_id(&self) -> Option<TaskId> {
         if let Some(selected) = self.selected {
-            return self.tasks.tasks.get(selected);
+            for (prev, next) in self.iter_tasks_for_display().map(Task::id).tuple_windows() {
+                if prev == selected {
+                    return Some(next);
+                }
+            }
         }
-        None
+        self.first_id()
     }
-}
 
-impl Store for TodoList {
-    fn set_title(&mut self, id: TaskId, title: &str) {
-        if let Some(task) = self.tasks.tasks.iter_mut().find(|task| task.id() == id) {
-            task.set_title(title.into());
+    fn previous_id(&self) -> Option<TaskId> {
+        let mut last = None;
+        for (prev, next) in self.iter_tasks_for_display().map(Task::id).tuple_windows() {
+            if Some(next) == self.selected {
+                return Some(prev);
+            }
+            last = Some(next);
+        }
+        last
+    }
+
+    pub(crate) fn next(&mut self) {
+        self.selected = self.next_id();
+    }
+
+    pub(crate) fn previous(&mut self) {
+        self.selected = self.previous_id();
+    }
+
+    pub(crate) fn move_up(&mut self) {
+        if let (Some(id), Some(index)) = (&self.selected, self.index_of_id(self.selected)) {
+            let previous = index.checked_sub(1).and_then(|i| self.id_of_index(i));
+            self.store
+                .move_task(previous.as_ref(), id)
+                .expect("FIXME: handle this error");
         }
     }
-}
 
-#[derive(Default)]
-pub(crate) struct CommonState {
-    pub list: TodoList,
+    pub(crate) fn move_down(&mut self) {
+        if let (Some(selected), Some(index)) = (&self.selected, self.index_of_id(self.selected)) {
+            let next_index = if index == self.store.len() - 1 {
+                if index == 0 {
+                    return;
+                }
+                0
+            } else {
+                index + 1
+            };
+            let next = self.id_of_index(next_index);
+            self.store
+                .move_task(next.as_ref(), selected)
+                .expect("FIXME: propagate errors from here");
+        }
+    }
+
+    pub(crate) fn delete_selected(&mut self) {
+        let mut deletions = Vec::new();
+        let mut new_selected = None;
+        let mut saw_selected = false;
+
+        for task in self.iter_tasks_for_display() {
+            if task.completed().is_some() {
+                deletions.push(task.id());
+            } else if !saw_selected {
+                new_selected = Some(task.id());
+            }
+            if let Some(selected) = self.selected {
+                if task.id() == selected {
+                    saw_selected = true;
+                }
+            }
+        }
+        self.selected = new_selected;
+
+        for id in &deletions {
+            self.store.delete(id).expect("FIXME: handle error here");
+        }
+    }
 }
 
 pub(crate) struct State {
@@ -231,16 +212,13 @@ impl State {
         State::default()
     }
 
-    pub fn save(&self, filename: &Path) -> Result<()> {
-        persist::save_tasks(filename, &self.common_state.list.tasks)?;
-        Ok(())
+    pub fn save(&self, path: &Path) -> Result<()> {
+        self.common_state.store.save(path)
     }
 
-    pub fn load(filename: &Path) -> Result<State> {
-        let tasks = persist::load_tasks(filename)?;
-        let common_state = CommonState {
-            list: TodoList::new(tasks),
-        };
+    pub fn load(path: &Path) -> Result<State> {
+        let store = MemoryStore::load(path)?;
+        let common_state = CommonState::new(store);
         let state = State {
             common_state,
             ..Default::default()

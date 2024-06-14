@@ -78,7 +78,7 @@ dependencies = [
  "fxhash",
  "hex",
  "im",
- "itertools",
+ "itertools 0.12.1",
  "leb128",
  "serde",
  "sha2",
@@ -505,6 +505,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -707,7 +716,7 @@ dependencies = [
  "cassowary",
  "compact_str",
  "crossterm",
- "itertools",
+ "itertools 0.12.1",
  "lru",
  "paste",
  "stability",
@@ -825,6 +834,8 @@ dependencies = [
  "crokey",
  "crossterm",
  "dirs",
+ "im",
+ "itertools 0.13.0",
  "ratatui",
  "serde",
  "thiserror",
@@ -1071,7 +1082,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "122bb001608c2f058fb3fc729614220a392eef4f2268c520a33b5ea8b422ce54"
 dependencies = [
  "crossterm",
- "itertools",
+ "itertools 0.12.1",
  "ratatui",
 ]
 
@@ -1099,7 +1110,7 @@ version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5a5fbabedabe362c618c714dbefda9927b5afc8e2a8102f47f081089a9019226"
 dependencies = [
- "itertools",
+ "itertools 0.12.1",
  "unicode-width",
 ]
 

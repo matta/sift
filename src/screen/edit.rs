@@ -43,9 +43,7 @@ impl screen::Screen for State {
                 Box::new(screen::main::State::new())
             }
             tui_prompts::Status::Done => {
-                {
-                    context.list.set_title(self.id, text_state.value());
-                }
+                context.store.set_title(&self.id, text_state.value());
                 Box::new(screen::main::State::new())
             }
         }

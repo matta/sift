@@ -3,7 +3,7 @@ use std::cell::RefCell;
 
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState, StatefulWidget};
 
-use crate::persist::Task;
+use crate::persist::{Store, Task};
 use crate::screen::Screen;
 use crate::ui_state::CommonState;
 use crate::{keys, screen};
@@ -15,17 +15,21 @@ fn render_task(s: &Task) -> ListItem<'_> {
 
 fn add(common_state: &mut CommonState, state: Box<State>) -> Box<dyn Screen> {
     {
+        // FIXME: make generating new tasks less cumbersome
+        // FIXME: handle error
         let task = Task::new(Task::new_id(), String::new(), None, None, None);
-        common_state.list.add_task(task);
+        common_state
+            .store
+            .insert(common_state.selected.as_ref(), &task)
+            .expect("FIXME: handle error");
     }
     edit(common_state, state)
 }
 
 fn edit(common_state: &mut CommonState, state: Box<State>) -> Box<dyn Screen> {
     if let Some((id, text)) = {
-        let list = &mut common_state.list;
-        if let Some(id) = list.selected() {
-            let title = list.selected_task().unwrap().title().into();
+        if let Some(id) = common_state.selected {
+            let title = common_state.store.get(&id).unwrap().title().into();
             let text = tui_prompts::TextState::new()
                 .with_value(Cow::Owned(title))
                 .with_focus(tui_prompts::FocusState::Focused);
@@ -59,7 +63,6 @@ impl screen::Screen for State {
         key_combination: crokey::KeyCombination,
     ) -> Box<dyn Screen> {
         {
-            let list = &mut common_state.list;
             let bindings = crate::keys::bindings();
             match bindings.get(&key_combination) {
                 None => {}
@@ -68,31 +71,31 @@ impl screen::Screen for State {
                         return Box::new(screen::quit::State {});
                     }
                     keys::Command::Toggle => {
-                        list.toggle();
+                        common_state.toggle();
                     }
                     keys::Command::Edit => {
                         return edit(common_state, self);
                     }
                     keys::Command::Snooze => {
-                        list.snooze();
+                        common_state.snooze();
                     }
                     keys::Command::Next => {
-                        list.next();
+                        common_state.next();
                     }
                     keys::Command::Previous => {
-                        list.previous();
+                        common_state.previous();
                     }
                     keys::Command::MoveUp => {
-                        list.move_up();
+                        common_state.move_up();
                     }
                     keys::Command::MoveDown => {
-                        list.move_down();
+                        common_state.move_down();
                     }
                     keys::Command::Add => {
                         return add(common_state, self);
                     }
                     keys::Command::Delete => {
-                        common_state.list.delete_selected();
+                        common_state.delete_selected();
                     }
                 },
             }
@@ -106,12 +109,14 @@ impl screen::Screen for State {
         frame: &mut ratatui::Frame,
     ) -> Box<dyn Screen> {
         {
-            let list = &common_state.list;
-            let state: &mut ListState = &mut self.list.borrow_mut();
             // Set the list widet's selected state based on the list state.
-            state.select(list.index_of_id(list.selected()));
+            let state: &mut ListState = &mut self.list.borrow_mut();
+            state.select(common_state.index_of_id(common_state.selected));
 
-            let items: Vec<_> = list.iter().map(render_task).collect();
+            let items: Vec<_> = common_state
+                .iter_tasks_for_display()
+                .map(render_task)
+                .collect();
             let items = List::new(items)
                 .block(Block::default().borders(Borders::ALL).title("Tasks"))
                 .highlight_symbol("> ");

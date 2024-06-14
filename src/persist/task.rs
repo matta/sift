@@ -3,7 +3,7 @@ use std::fmt::Display;
 use chrono::{DateTime, NaiveDate, Utc};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) struct TaskId(Uuid);
 
 impl Display for TaskId {
