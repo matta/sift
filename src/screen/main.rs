@@ -14,15 +14,14 @@ fn render_task(s: &Task) -> ListItem<'_> {
 }
 
 fn add(common_state: &mut CommonState, state: Box<State>) -> Box<dyn Screen> {
-    {
-        // FIXME: make generating new tasks less cumbersome
-        // FIXME: handle error
-        let task = Task::new(Task::new_id(), String::new(), None, None, None);
-        common_state
-            .store
-            .insert(common_state.selected.as_ref(), &task)
-            .expect("FIXME: handle error");
-    }
+    // FIXME: make generating new tasks less cumbersome
+    // FIXME: handle error
+    let task = Task::new(Task::new_id(), String::new(), None, None, None);
+    common_state
+        .store
+        .insert(common_state.selected.as_ref(), &task)
+        .expect("FIXME: handle error");
+    common_state.selected = Some(task.id());
     edit(common_state, state)
 }
 
