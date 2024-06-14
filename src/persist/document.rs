@@ -3,10 +3,9 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
 use automerge::Automerge;
-use chrono::NaiveDate;
-use uuid::Uuid;
 
 use super::container::{self, read_chunk, read_header, write_chunk, write_header, Chunk};
+use super::Task;
 use crate::persist::serialization::SerializableTaskList;
 
 #[derive(thiserror::Error, Debug)]
@@ -27,34 +26,6 @@ pub enum Error {
     Reconcile(#[source] autosurgeon::ReconcileError),
     #[error("Cannot hydrate from automerge document")]
     Hydrate(#[source] autosurgeon::HydrateError),
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub(crate) struct Task {
-    /// Task identifier.
-    pub id: Uuid,
-
-    /// Title of the task.
-    pub title: String,
-
-    /// Snooze date of the task.  Tasks with a snoozed date do not appear
-    // by default if the date is before the current date.
-    pub snoozed: Option<NaiveDate>,
-
-    /// Due date of the task.
-    pub due: Option<NaiveDate>,
-
-    /// Completion date and time of the task.  If `None`, the task is
-    /// incomplete.
-    pub completed: Option<chrono::DateTime<chrono::Utc>>,
-}
-
-impl Task {
-    pub(crate) fn new_id() -> Uuid {
-        let context = uuid::NoContext;
-        let ts = uuid::Timestamp::now(context);
-        uuid::Uuid::new_v7(ts)
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -131,22 +102,22 @@ mod tests {
     #[test]
     fn test() {
         let tasks = vec![
-            Task {
-                id: Task::new_id(),
-                title: "first title".to_string(),
-                snoozed: None,
-                due: Some(chrono::NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
-                completed: None,
-            },
-            Task {
-                id: Task::new_id(),
-                title: "second title".to_string(),
-                snoozed: Some(chrono::NaiveDate::from_ymd_opt(2022, 5, 7).unwrap()),
-                due: None,
-                completed: "2024-07-03T13:01:42Z"
+            Task::new(
+                Task::new_id(),
+                "first title".to_string(),
+                None,
+                Some(chrono::NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
+                None,
+            ),
+            Task::new(
+                Task::new_id(),
+                "second title".to_string(),
+                Some(chrono::NaiveDate::from_ymd_opt(2022, 5, 7).unwrap()),
+                None,
+                "2024-07-03T13:01:42Z"
                     .parse::<chrono::DateTime<chrono::Utc>>()
                     .ok(),
-            },
+            ),
         ];
         let task_list = TaskList {
             tasks: tasks.clone(),
@@ -163,13 +134,13 @@ mod tests {
             map! {
                 "task_map" => {
                     map!{
-                        tasks[0].id => {
+                        tasks[0].id() => {
                             map!{
                                 "title" => {"first title"},
                                 "due_date" => {"2022-01-01"},
                             }
                         },
-                        tasks[1].id => {
+                        tasks[1].id() => {
                             map!{
                                 "title" => {"second title"},
                                 "snoozed" => {"2022-05-07"},
@@ -183,8 +154,8 @@ mod tests {
                         // FIXME: this is slightly convoluted. It would be nice
                         // if the .as_str() was unecessary.
                         // https://github.com/automerge/automerge/issues/926
-                        {tasks[0].id.to_string().as_str()},
-                        {tasks[1].id.to_string().as_str()},
+                        {tasks[0].id().to_string().as_str()},
+                        {tasks[1].id().to_string().as_str()},
                     }
                 },
             }

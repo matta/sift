@@ -3,11 +3,12 @@ use std::cell::RefCell;
 
 use tui_prompts::{State as _, TextPrompt};
 
+use crate::persist::{Store, TaskId};
 use crate::screen;
 use crate::ui_state::CommonState;
 
 pub(crate) struct State {
-    id: uuid::Uuid,
+    id: TaskId,
     // TODO: in upstream make the 'static workaround used here more
     // discoverable.  See
     // https://github.com/rhysd/tui-textarea/issues/46
@@ -15,10 +16,7 @@ pub(crate) struct State {
 }
 
 impl State {
-    pub(crate) fn new(
-        id: uuid::Uuid,
-        text: RefCell<tui_prompts::prelude::TextState<'static>>,
-    ) -> Self {
+    pub(crate) fn new(id: TaskId, text: RefCell<tui_prompts::prelude::TextState<'static>>) -> Self {
         Self { id, text }
     }
 }
@@ -46,7 +44,7 @@ impl screen::Screen for State {
             }
             tui_prompts::Status::Done => {
                 {
-                    context.list.set_title(self.id, text_state.value().into());
+                    context.list.set_title(self.id, text_state.value());
                 }
                 Box::new(screen::main::State::new())
             }

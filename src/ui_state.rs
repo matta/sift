@@ -10,7 +10,7 @@ use std::path::Path;
 use anyhow::Result;
 use chrono::Datelike;
 
-use crate::persist;
+use crate::persist::{self, Store, TaskId};
 use crate::screen::{self, Screen};
 
 pub(crate) struct TodoList {
@@ -21,12 +21,14 @@ pub(crate) struct TodoList {
 impl Default for TodoList {
     fn default() -> Self {
         let tasks: Vec<persist::Task> = (1..=10)
-            .map(|i| persist::Task {
-                id: persist::Task::new_id(),
-                title: format!("Item {}", i),
-                snoozed: None,
-                due: None,
-                completed: None,
+            .map(|i| {
+                persist::Task::new(
+                    persist::Task::new_id(),
+                    format!("Item {}", i),
+                    None,
+                    None,
+                    None,
+                )
             })
             .collect();
         let tasks = persist::TaskList { tasks };
@@ -56,21 +58,20 @@ impl TodoList {
     pub(crate) fn iter(&self) -> impl Iterator<Item = &persist::Task> {
         let today = today();
         self.tasks.tasks.iter().filter(move |task| {
-            let snoozed = matches!(task.snoozed, Some(date) if date > today);
+            let snoozed = matches!(task.snoozed(), Some(date) if date > today);
             !snoozed
         })
     }
 
-    pub(crate) fn selected(&self) -> Option<uuid::Uuid> {
-        self.selected.map(|selected| self.tasks.tasks[selected].id)
+    pub(crate) fn selected(&self) -> Option<TaskId> {
+        self.selected
+            .map(|selected| self.tasks.tasks[selected].id())
     }
 
-    pub(crate) fn index_of_id(&self, id: Option<uuid::Uuid>) -> Option<usize> {
-        self.tasks
-            .tasks
-            .iter()
-            .enumerate()
-            .find_map(|(i, task)| if Some(task.id) == id { Some(i) } else { None })
+    pub(crate) fn index_of_id(&self, id: Option<TaskId>) -> Option<usize> {
+        self.tasks.tasks.iter().enumerate().find_map(|(i, task)| {
+            if Some(task.id()) == id { Some(i) } else { None }
+        })
     }
 
     fn select(&mut self, index: Option<usize>) {
@@ -134,11 +135,12 @@ impl TodoList {
     pub(crate) fn toggle(&mut self) {
         if let Some(i) = self.selected {
             let task = &mut self.tasks.tasks[i];
-            if task.completed.is_some() {
-                task.completed = None;
+            let completed = if task.completed().is_some() {
+                None
             } else {
-                task.completed = Some(chrono::Utc::now());
-            }
+                Some(chrono::Utc::now())
+            };
+            task.set_completed(completed);
         }
     }
 
@@ -157,29 +159,32 @@ impl TodoList {
                 .tasks
                 .iter()
                 .take(index)
-                .filter(|task| task.completed.is_some())
+                .filter(|task| task.completed().is_some())
                 .count();
             self.selected = Some(index - count);
         }
-        self.tasks.tasks.retain(|task| task.completed.is_none());
+        self.tasks.tasks.retain(|task| task.completed().is_none());
     }
 
     pub(crate) fn snooze(&mut self) {
         if let Some(index) = self.selected {
             let task = &mut self.tasks.tasks[index];
-            task.snoozed = if task.snoozed.is_some() {
+            let snoozed = if task.snoozed().is_some() {
                 None
             } else {
                 let next_week = next_week();
                 Some(next_week)
             };
+            task.set_snoozed(snoozed);
         }
         // Order snoozed items after non-snoozed items.  Keep the current
         // selection.
         //
         // Note: this is a stable sort.
         // Note: false sorts before true.
-        self.tasks.tasks.sort_by_key(|task| task.snoozed.is_some());
+        self.tasks
+            .tasks
+            .sort_by_key(|task| task.snoozed().is_some());
     }
 
     pub(crate) fn selected_task(&self) -> Option<&persist::Task> {
@@ -188,10 +193,12 @@ impl TodoList {
         }
         None
     }
+}
 
-    pub(crate) fn set_title(&mut self, id: uuid::Uuid, title: String) {
-        if let Some(task) = self.tasks.tasks.iter_mut().find(|task| task.id == id) {
-            task.title = title;
+impl Store for TodoList {
+    fn set_title(&mut self, id: TaskId, title: &str) {
+        if let Some(task) = self.tasks.tasks.iter_mut().find(|task| task.id() == id) {
+            task.set_title(title.into());
         }
     }
 }

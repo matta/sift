@@ -5,7 +5,8 @@ use autosurgeon::{Hydrate, HydrateError, MaybeMissing, Reconcile};
 use chrono::NaiveDate;
 use uuid::Uuid;
 
-use crate::persist::document::{Task, TaskList};
+use super::Task;
+use crate::persist::document::TaskList;
 
 pub fn to_option<T>(from: MaybeMissing<T>) -> Option<T> {
     match from {
@@ -90,10 +91,10 @@ pub(crate) struct SerializableTaskList {
 impl From<Task> for SerializableTask {
     fn from(value: Task) -> Self {
         Self {
-            title: value.title,
-            snoozed: to_maybe(value.snoozed.map(SerializableNaiveDate)),
-            due_date: to_maybe(value.due.map(SerializableNaiveDate)),
-            completed: to_maybe(value.completed.map(SerializableDateTime)),
+            title: value.title().into(),
+            snoozed: to_maybe(value.snoozed().map(SerializableNaiveDate)),
+            due_date: to_maybe(value.due().map(SerializableNaiveDate)),
+            completed: to_maybe(value.completed().map(SerializableDateTime)),
         }
     }
 }
@@ -104,12 +105,12 @@ impl From<TaskList> for SerializableTaskList {
         let task_order: Vec<String> = task_list
             .tasks
             .iter()
-            .map(|task| task.id.to_string())
+            .map(|task| task.id().to_string())
             .collect();
         let task_map: BTreeMap<String, SerializableTask> = task_list
             .tasks
             .into_iter()
-            .map(|task| (task.id.to_string(), task.into()))
+            .map(|task| (task.id().to_string(), task.into()))
             .collect();
         Self {
             task_map,
@@ -134,13 +135,13 @@ impl From<SerializableTaskList> for TaskList {
                     // the first.
                     return None;
                 }
-                Some(Task {
-                    id,
-                    title: task.title.clone(),
-                    snoozed: to_option(task.snoozed).map(|v| v.0),
-                    due: to_option(task.due_date).map(|v| v.0),
-                    completed: to_option(task.completed).map(|v| v.0),
-                })
+                Some(Task::new(
+                    id.into(),
+                    task.title.clone(),
+                    to_option(task.snoozed).map(|v| v.0),
+                    to_option(task.due_date).map(|v| v.0),
+                    to_option(task.completed).map(|v| v.0),
+                ))
             })
             .collect();
         TaskList { tasks }

@@ -9,20 +9,13 @@ use crate::ui_state::CommonState;
 use crate::{keys, screen};
 
 fn render_task(s: &Task) -> ListItem<'_> {
-    let check = if s.completed.is_some() { 'x' } else { ' ' };
-    ListItem::new(format!("[{}] {}", check, s.title.as_str()))
+    let check = if s.completed().is_some() { 'x' } else { ' ' };
+    ListItem::new(format!("[{}] {}", check, s.title()))
 }
 
 fn add(common_state: &mut CommonState, state: Box<State>) -> Box<dyn Screen> {
     {
-        let task = Task {
-            id: Task::new_id(),
-            title: String::new(),
-            completed: None,
-            snoozed: None,
-            due: None,
-        };
-
+        let task = Task::new(Task::new_id(), String::new(), None, None, None);
         common_state.list.add_task(task);
     }
     edit(common_state, state)
@@ -32,7 +25,7 @@ fn edit(common_state: &mut CommonState, state: Box<State>) -> Box<dyn Screen> {
     if let Some((id, text)) = {
         let list = &mut common_state.list;
         if let Some(id) = list.selected() {
-            let title = list.selected_task().unwrap().title.clone();
+            let title = list.selected_task().unwrap().title().into();
             let text = tui_prompts::TextState::new()
                 .with_value(Cow::Owned(title))
                 .with_focus(tui_prompts::FocusState::Focused);
