@@ -112,10 +112,8 @@ impl screen::Screen for State {
             let state: &mut ListState = &mut self.list.borrow_mut();
             state.select(common_state.index_of_id(common_state.selected));
 
-            let items: Vec<_> = common_state
-                .iter_tasks_for_display()
-                .map(render_task)
-                .collect();
+            let tasks = common_state.list_tasks_for_display();
+            let items: Vec<_> = tasks.iter().map(render_task).collect();
             let items = List::new(items)
                 .block(Block::default().borders(Borders::ALL).title("Tasks"))
                 .highlight_symbol("> ");

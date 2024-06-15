@@ -25,6 +25,8 @@ pub(crate) trait Store {
 
     // TODO: rename to set_task_title
     fn set_title(&mut self, id: &TaskId, title: &str);
+
+    fn list_tasks(&mut self) -> anyhow::Result<Vec<Task>>;
 }
 
 #[derive(Default)]
@@ -63,18 +65,6 @@ impl MemoryStore {
         };
         save_tasks(path, &tasks)?;
         Ok(())
-    }
-
-    pub(crate) fn len(&self) -> usize {
-        self.order.len()
-    }
-
-    pub(crate) fn iter(&self) -> impl Iterator<Item = &Task> {
-        self.order.iter().map(|id| {
-            self.tasks
-                .get(id)
-                .expect("all items in MemoryStore::order must be in MemoryStore::tasks")
-        })
     }
 }
 
@@ -140,5 +130,18 @@ impl Store for MemoryStore {
         self.order.insert(index, *id);
 
         Ok(())
+    }
+
+    fn list_tasks(&mut self) -> anyhow::Result<Vec<Task>> {
+        Ok(self
+            .order
+            .iter()
+            .map(|id| {
+                self.tasks
+                    .get(id)
+                    .expect("all items in MemoryStore::order must be in MemoryStore::tasks")
+                    .clone()
+            })
+            .collect())
     }
 }

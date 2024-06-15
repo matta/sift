@@ -39,22 +39,29 @@ impl CommonState {
         state
     }
 
-    pub(crate) fn index_of_id(&self, id: Option<TaskId>) -> Option<usize> {
-        self.iter_tasks_for_display()
+    pub(crate) fn index_of_id(&mut self, id: Option<TaskId>) -> Option<usize> {
+        self.list_tasks_for_display()
+            .into_iter()
             .enumerate()
             .find_map(
                 |(i, task)| {
-                    if Some(task.id()) == id { Some(i) } else { None }
+                    if Some(task.id()) == id {
+                        Some(i)
+                    } else {
+                        None
+                    }
                 },
             )
     }
 
-    pub fn iter_tasks_for_display(&self) -> impl Iterator<Item = &Task> {
+    pub fn list_tasks_for_display(&mut self) -> Vec<Task> {
         let today = today();
-        self.store.iter().filter(move |task| {
+        let mut tasks = self.store.list_tasks().expect("XXX: handle error");
+        tasks.retain(|task| {
             let snoozed = matches!(task.snoozed(), Some(date) if date > today);
             !snoozed
-        })
+        });
+        tasks
     }
 
     pub fn toggle(&mut self) {
@@ -98,19 +105,28 @@ impl CommonState {
         //     .sort_by_key(|task| task.snoozed().is_some());
     }
 
-    fn id_of_index(&self, index: usize) -> Option<TaskId> {
-        self.iter_tasks_for_display()
+    fn id_of_index(&mut self, index: usize) -> Option<TaskId> {
+        self.list_tasks_for_display()
+            .into_iter()
             .enumerate()
             .find_map(|(i, task)| if i == index { Some(task.id()) } else { None })
     }
 
-    fn first_id(&self) -> Option<TaskId> {
-        self.iter_tasks_for_display().map(Task::id).next()
+    fn first_id(&mut self) -> Option<TaskId> {
+        self.list_tasks_for_display()
+            .into_iter()
+            .map(|task| task.id())
+            .next()
     }
 
-    fn next_id(&self) -> Option<TaskId> {
+    fn next_id(&mut self) -> Option<TaskId> {
         if let Some(selected) = self.selected {
-            for (prev, next) in self.iter_tasks_for_display().map(Task::id).tuple_windows() {
+            for (prev, next) in self
+                .list_tasks_for_display()
+                .into_iter()
+                .map(|task| task.id())
+                .tuple_windows()
+            {
                 if prev == selected {
                     return Some(next);
                 }
@@ -119,9 +135,14 @@ impl CommonState {
         self.first_id()
     }
 
-    fn previous_id(&self) -> Option<TaskId> {
+    fn previous_id(&mut self) -> Option<TaskId> {
         let mut last = None;
-        for (prev, next) in self.iter_tasks_for_display().map(Task::id).tuple_windows() {
+        for (prev, next) in self
+            .list_tasks_for_display()
+            .into_iter()
+            .map(|task| task.id())
+            .tuple_windows()
+        {
             if Some(next) == self.selected {
                 return Some(prev);
             }
@@ -139,17 +160,18 @@ impl CommonState {
     }
 
     pub(crate) fn move_up(&mut self) {
-        if let (Some(id), Some(index)) = (&self.selected, self.index_of_id(self.selected)) {
+        if let (Some(id), Some(index)) = (self.selected, self.index_of_id(self.selected)) {
             let previous = index.checked_sub(1).and_then(|i| self.id_of_index(i));
             self.store
-                .move_task(previous.as_ref(), id)
+                .move_task(previous.as_ref(), &id)
                 .expect("FIXME: handle this error");
         }
     }
 
     pub(crate) fn move_down(&mut self) {
-        if let (Some(selected), Some(index)) = (&self.selected, self.index_of_id(self.selected)) {
-            let next_index = if index == self.store.len() - 1 {
+        let len = self.list_tasks_for_display().len();
+        if let (Some(selected), Some(index)) = (self.selected, self.index_of_id(self.selected)) {
+            let next_index = if index == len - 1 {
                 if index == 0 {
                     return;
                 }
@@ -159,7 +181,7 @@ impl CommonState {
             };
             let next = self.id_of_index(next_index);
             self.store
-                .move_task(next.as_ref(), selected)
+                .move_task(next.as_ref(), &selected)
                 .expect("FIXME: propagate errors from here");
         }
     }
@@ -169,7 +191,7 @@ impl CommonState {
         let mut new_selected = None;
         let mut saw_selected = false;
 
-        for task in self.iter_tasks_for_display() {
+        for task in self.list_tasks_for_display() {
             if task.completed().is_some() {
                 deletions.push(task.id());
             } else if !saw_selected {
