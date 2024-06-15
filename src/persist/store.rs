@@ -1,8 +1,4 @@
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
 use std::path::Path;
-
-use im::Vector;
 
 use super::{load_tasks, save_tasks, Task, TaskId, TaskList};
 
@@ -31,8 +27,8 @@ pub(crate) trait Store {
 
 #[derive(Default)]
 pub(crate) struct MemoryStore {
-    tasks: HashMap<TaskId, Task>,
-    order: Vector<TaskId>,
+    tasks: im::HashMap<TaskId, Task>,
+    order: im::Vector<TaskId>,
 }
 
 impl MemoryStore {
@@ -44,8 +40,8 @@ impl MemoryStore {
     pub(crate) fn load(path: &Path) -> Result<MemoryStore, anyhow::Error> {
         let tasks = load_tasks(path)?;
 
-        let order: Vector<TaskId> = tasks.tasks.iter().map(Task::id).collect();
-        let tasks: HashMap<TaskId, Task> = tasks
+        let order: im::Vector<TaskId> = tasks.tasks.iter().map(Task::id).collect();
+        let tasks: im::HashMap<TaskId, Task> = tasks
             .tasks
             .into_iter()
             .map(|task| (task.id(), task))
@@ -74,13 +70,14 @@ impl Store for MemoryStore {
     }
 
     fn put_task(&mut self, task: &Task) -> anyhow::Result<()> {
+        use im::hashmap::Entry::{Occupied, Vacant};
         debug_assert!(
             self.order.contains(&task.id()),
             "MemoryStore::put called with task not in the order list"
         );
         match self.tasks.entry(task.id()) {
-            Entry::Occupied(mut entry) => *entry.get_mut() = task.clone(),
-            Entry::Vacant(_) => {
+            Occupied(mut entry) => *entry.get_mut() = task.clone(),
+            Vacant(_) => {
                 panic!("MemoryStore::put called with task not in the tasks map")
             }
         }
