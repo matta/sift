@@ -19,7 +19,7 @@ fn add(common_state: &mut CommonState, state: Box<State>) -> Box<dyn Screen> {
     let task = Task::new(Task::new_id(), String::new(), None, None, None);
     common_state
         .store
-        .insert(common_state.selected.as_ref(), &task)
+        .insert_task(common_state.selected.as_ref(), &task)
         .expect("FIXME: handle error");
     common_state.selected = Some(task.id());
     edit(common_state, state)
@@ -28,7 +28,7 @@ fn add(common_state: &mut CommonState, state: Box<State>) -> Box<dyn Screen> {
 fn edit(common_state: &mut CommonState, state: Box<State>) -> Box<dyn Screen> {
     if let Some((id, text)) = {
         if let Some(id) = common_state.selected {
-            let title = common_state.store.get(&id).unwrap().title().into();
+            let title = common_state.store.get_task(&id).unwrap().title().into();
             let text = tui_prompts::TextState::new()
                 .with_value(Cow::Owned(title))
                 .with_focus(tui_prompts::FocusState::Focused);

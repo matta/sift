@@ -7,19 +7,18 @@ use im::Vector;
 use super::{load_tasks, save_tasks, Task, TaskId, TaskList};
 
 pub(crate) trait Store {
-    // FIXME: rename to get_task
     // FIXME: return Result
     #[must_use]
-    fn get(&mut self, id: &TaskId) -> Option<Task>;
+    fn get_task(&mut self, id: &TaskId) -> Option<Task>;
 
     // TODO: rename to put_task
-    fn put(&mut self, task: &Task) -> anyhow::Result<()>;
+    fn put_task(&mut self, task: &Task) -> anyhow::Result<()>;
 
     // TODO: rename to insert_task
-    fn insert(&mut self, previous: Option<&TaskId>, task: &Task) -> anyhow::Result<()>;
+    fn insert_task(&mut self, previous: Option<&TaskId>, task: &Task) -> anyhow::Result<()>;
 
     // TODO: rename to delete_task
-    fn delete(&mut self, id: &TaskId) -> anyhow::Result<()>;
+    fn delete_task(&mut self, id: &TaskId) -> anyhow::Result<()>;
 
     // If prevous is None moves to the front, otherwise moves after previous.
     fn move_task(&mut self, previous: Option<&TaskId>, task: &TaskId) -> anyhow::Result<()>;
@@ -80,11 +79,11 @@ impl MemoryStore {
 }
 
 impl Store for MemoryStore {
-    fn get(&mut self, id: &TaskId) -> Option<Task> {
+    fn get_task(&mut self, id: &TaskId) -> Option<Task> {
         self.tasks.get(id).cloned()
     }
 
-    fn put(&mut self, task: &Task) -> anyhow::Result<()> {
+    fn put_task(&mut self, task: &Task) -> anyhow::Result<()> {
         debug_assert!(
             self.order.contains(&task.id()),
             "MemoryStore::put called with task not in the order list"
@@ -99,7 +98,7 @@ impl Store for MemoryStore {
         Ok(())
     }
 
-    fn insert(&mut self, previous: Option<&TaskId>, task: &Task) -> anyhow::Result<()> {
+    fn insert_task(&mut self, previous: Option<&TaskId>, task: &Task) -> anyhow::Result<()> {
         let index = if let Some(previous) = previous {
             self.order
                 .index_of(previous)
@@ -118,7 +117,7 @@ impl Store for MemoryStore {
         Ok(())
     }
 
-    fn delete(&mut self, id: &TaskId) -> anyhow::Result<()> {
+    fn delete_task(&mut self, id: &TaskId) -> anyhow::Result<()> {
         self.order.retain(|entry| entry != id);
         self.tasks.retain(|key, _| key != id);
         Ok(())

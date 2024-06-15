@@ -61,7 +61,7 @@ impl CommonState {
         if let Some(id) = self.selected {
             let mut task = self
                 .store
-                .get(&id)
+                .get_task(&id)
                 .expect("FIXME: propagate errors; selected task must be in the store");
             let completed = if task.completed().is_some() {
                 None
@@ -69,7 +69,7 @@ impl CommonState {
                 Some(chrono::Utc::now())
             };
             task.set_completed(completed);
-            self.store.put(&task).expect("FIXME: propagate errors");
+            self.store.put_task(&task).expect("FIXME: propagate errors");
         }
     }
 
@@ -77,7 +77,7 @@ impl CommonState {
         if let Some(id) = self.selected {
             let mut task = self
                 .store
-                .get(&id)
+                .get_task(&id)
                 .expect("FIXME: propagate errors; selected task must be in the store");
             let snoozed = if task.snoozed().is_some() {
                 None
@@ -86,7 +86,7 @@ impl CommonState {
                 Some(next_week)
             };
             task.set_snoozed(snoozed);
-            self.store.put(&task).expect("FIXME: propagate errors");
+            self.store.put_task(&task).expect("FIXME: propagate errors");
         }
         // Order snoozed items after non-snoozed items.  Keep the current
         // selection.
@@ -184,7 +184,9 @@ impl CommonState {
         self.selected = new_selected;
 
         for id in &deletions {
-            self.store.delete(id).expect("FIXME: handle error here");
+            self.store
+                .delete_task(id)
+                .expect("FIXME: handle error here");
         }
     }
 }
