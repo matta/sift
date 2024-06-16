@@ -105,13 +105,6 @@ impl CommonState {
         //     .sort_by_key(|task| task.snoozed().is_some());
     }
 
-    fn id_of_index(&mut self, index: usize) -> Option<TaskId> {
-        self.list_tasks_for_display()
-            .into_iter()
-            .enumerate()
-            .find_map(|(i, task)| if i == index { Some(task.id()) } else { None })
-    }
-
     fn first_id(&mut self) -> Option<TaskId> {
         self.list_tasks_for_display()
             .into_iter()
@@ -160,29 +153,47 @@ impl CommonState {
     }
 
     pub(crate) fn move_up(&mut self) {
-        if let (Some(id), Some(index)) = (self.selected, self.index_of_id(self.selected)) {
-            let previous = index.checked_sub(1).and_then(|i| self.id_of_index(i));
-            self.store
-                .move_task(previous.as_ref(), &id)
-                .expect("FIXME: handle this error");
+        if let Some(selected) = self.selected {
+            let ids = self.task_ids_for_move();
+            for (prev_prev_id, _, id) in ids.iter().circular_tuple_windows() {
+                if *id == Some(selected) {
+                    self.store
+                        .move_task(prev_prev_id.as_ref(), &selected)
+                        .expect("FIXME: handle this error");
+                    break;
+                }
+            }
         }
     }
 
+    // Return the list of displayed task IDs in a format useful for moving. The
+    // first id is always None, and subsequent ones are valid IDs in the usual
+    // order. This is useful for determining the previous task ID, which is None
+    // for the first real task.
+    //
+    // Not sure this is the best API. Consider returning Vec<TaskId> and making
+    // callers deal with wrapping, etc.
+    fn task_ids_for_move(&mut self) -> Vec<Option<TaskId>> {
+        std::iter::once(None)
+            .chain(
+                self.list_tasks_for_display()
+                    .iter()
+                    .map(|task| Some(task.id())),
+            )
+            .collect()
+    }
+
     pub(crate) fn move_down(&mut self) {
-        let len = self.list_tasks_for_display().len();
-        if let (Some(selected), Some(index)) = (self.selected, self.index_of_id(self.selected)) {
-            let next_index = if index == len - 1 {
-                if index == 0 {
-                    return;
+        if let Some(selected) = self.selected {
+            let ids = self.task_ids_for_move();
+            for (id, successor_id) in ids.iter().circular_tuple_windows() {
+                if *id == Some(selected) {
+                    self.store
+                        .move_task(successor_id.as_ref(), &selected)
+                        .expect("FIXME: handle this error");
+                    break;
                 }
-                0
-            } else {
-                index + 1
-            };
-            let next = self.id_of_index(next_index);
-            self.store
-                .move_task(next.as_ref(), &selected)
-                .expect("FIXME: propagate errors from here");
+            }
         }
     }
 
