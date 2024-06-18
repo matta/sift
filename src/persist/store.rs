@@ -1,5 +1,6 @@
-use anyhow::bail;
 use std::path::Path;
+
+use anyhow::bail;
 
 use super::{load_tasks, save_tasks, Task, TaskId, TaskList};
 
