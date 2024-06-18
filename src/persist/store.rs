@@ -7,20 +7,14 @@ pub(crate) trait Store {
     #[must_use]
     fn get_task(&mut self, id: &TaskId) -> Option<Task>;
 
-    // TODO: rename to put_task
     fn put_task(&mut self, task: &Task) -> anyhow::Result<()>;
 
-    // TODO: rename to insert_task
     fn insert_task(&mut self, previous: Option<&TaskId>, task: &Task) -> anyhow::Result<()>;
 
-    // TODO: rename to delete_task
     fn delete_task(&mut self, id: &TaskId) -> anyhow::Result<()>;
 
     // If prevous is None moves to the front, otherwise moves after previous.
     fn move_task(&mut self, previous: Option<&TaskId>, task: &TaskId) -> anyhow::Result<()>;
-
-    // TODO: rename to set_task_title
-    fn set_title(&mut self, id: &TaskId, title: &str);
 
     fn list_tasks(&mut self) -> anyhow::Result<Vec<Task>>;
 }
@@ -108,10 +102,6 @@ impl Store for MemoryStore {
         self.order.retain(|entry| entry != id);
         self.tasks.retain(|key, _| key != id);
         Ok(())
-    }
-
-    fn set_title(&mut self, id: &TaskId, title: &str) {
-        self.tasks.get_mut(id).unwrap().set_title(title.to_string());
     }
 
     fn move_task(&mut self, previous: Option<&TaskId>, id: &TaskId) -> anyhow::Result<()> {
