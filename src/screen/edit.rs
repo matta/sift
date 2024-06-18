@@ -43,10 +43,9 @@ impl screen::Screen for State {
                 Box::new(screen::main::State::new())
             }
             tui_prompts::Status::Done => {
-                if let Some(mut task) = context.store.get_task(&self.id) {
-                    task.set_title(text_state.value().to_string());
-                    context.store.put_task(&task).expect("TODO: handle error");
-                }
+                let mut task = context.store.get_task(&self.id).unwrap();
+                task.set_title(text_state.value().to_string());
+                context.store.put_task(&task).expect("TODO: handle error");
                 Box::new(screen::main::State::new())
             }
         }

@@ -1,11 +1,10 @@
+use anyhow::bail;
 use std::path::Path;
 
 use super::{load_tasks, save_tasks, Task, TaskId, TaskList};
 
 pub(crate) trait Store {
-    // FIXME: return Result
-    #[must_use]
-    fn get_task(&mut self, id: &TaskId) -> Option<Task>;
+    fn get_task(&mut self, id: &TaskId) -> anyhow::Result<Task>;
 
     fn put_task(&mut self, task: &Task) -> anyhow::Result<()>;
 
@@ -59,8 +58,10 @@ impl MemoryStore {
 }
 
 impl Store for MemoryStore {
-    fn get_task(&mut self, id: &TaskId) -> Option<Task> {
-        self.tasks.get(id).cloned()
+    fn get_task(&mut self, id: &TaskId) -> Result<Task, anyhow::Error> {
+        self.tasks
+            .get(id)
+            .map_or_else(|| bail!("task not found"), |task| Ok(task.clone()))
     }
 
     fn put_task(&mut self, task: &Task) -> anyhow::Result<()> {
