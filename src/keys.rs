@@ -42,6 +42,6 @@ mod tests {
     #[test]
     fn test() {
         let bindings = default_bindings();
-        assert_eq!(bindings.len(), 14);
+        assert_eq!(bindings.len(), 16);
     }
 }
