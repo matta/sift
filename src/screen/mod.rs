@@ -5,6 +5,7 @@ pub mod main;
 pub mod quit;
 
 pub trait Screen {
+    // TODO: return an Option<Box<dyn Screen>> instead.
     #[must_use]
     fn handle_key_event(
         self: Box<Self>,
@@ -12,12 +13,7 @@ pub trait Screen {
         key_combination: crokey::KeyCombination,
     ) -> Box<dyn Screen>;
 
-    #[must_use]
-    fn render(
-        self: Box<Self>,
-        conext: &mut CommonState,
-        frame: &mut ratatui::Frame,
-    ) -> Box<dyn Screen>;
+    fn render(self: &Self, conext: &mut CommonState, frame: &mut ratatui::Frame);
 
     // FIXME: replace this with a back channel to the event queue logic?
     fn should_quit(&self, context: &mut CommonState) -> bool {

@@ -19,47 +19,49 @@ impl State {
     pub(crate) fn new(id: TaskId, text: RefCell<tui_prompts::prelude::TextState<'static>>) -> Self {
         Self { id, text }
     }
-}
 
-impl screen::Screen for State {
-    fn handle_key_event(
-        self: Box<Self>,
+    fn do_handle_key_event(
+        &mut self,
         context: &mut CommonState,
         key_combination: crokey::KeyCombination,
-    ) -> Box<dyn screen::Screen> {
+    ) -> Option<Box<dyn screen::Screen>> {
         let mut text_state = self.text.borrow_mut();
         assert!(text_state.is_focused());
         let key_event: crossterm::event::KeyEvent = key_combination.into();
         text_state.handle_key_event(key_event);
         match text_state.status() {
-            tui_prompts::Status::Pending => {
-                // FIXME: having to do these drops sucks. Restructure somehow?
-                // Stems from having to return self.
-                std::mem::drop(text_state);
-                self
-            }
+            tui_prompts::Status::Pending => None,
             tui_prompts::Status::Aborted => {
                 // TODO: When aborting a new item, delete it.
-                Box::new(screen::main::State::new())
+                Some(Box::new(screen::main::State::new()))
             }
             tui_prompts::Status::Done => {
                 let mut task = context.store.get_task(&self.id).unwrap();
                 task.set_title(text_state.value().to_string());
                 context.store.put_task(&task).expect("TODO: handle error");
-                Box::new(screen::main::State::new())
+                Some(Box::new(screen::main::State::new()))
             }
         }
     }
+}
 
-    fn render(
-        self: Box<Self>,
-        _conext: &mut CommonState,
-        frame: &mut ratatui::Frame,
+impl screen::Screen for State {
+    fn handle_key_event(
+        mut self: Box<Self>,
+        context: &mut CommonState,
+        key_combination: crokey::KeyCombination,
     ) -> Box<dyn screen::Screen> {
+        if let Some(screen) = self.do_handle_key_event(context, key_combination) {
+            screen
+        } else {
+            self
+        }
+    }
+
+    fn render(self: &Self, _conext: &mut CommonState, frame: &mut ratatui::Frame) {
         let prompt = TextPrompt::new(Cow::Borrowed("edit"));
         frame.render_stateful_widget(prompt, frame.size(), &mut self.text.borrow_mut());
         let (x, y) = self.text.borrow().cursor();
         frame.set_cursor(x, y);
-        self
     }
 }

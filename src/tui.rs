@@ -63,8 +63,8 @@ impl Tui {
     pub fn draw(&mut self, state: &mut crate::ui_state::State) -> Result<(), Error> {
         self.terminal
             .draw(|frame| {
-                if let Some(screen) = state.current_screen.take() {
-                    state.current_screen = Some(screen.render(&mut state.common_state, frame));
+                if let Some(screen) = &state.current_screen {
+                    screen.render(&mut state.common_state, frame);
                 }
             })
             .map_err(Error::TerminalWrite)?;

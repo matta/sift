@@ -14,13 +14,8 @@ impl Screen for State {
         self
     }
 
-    fn render(
-        self: Box<Self>,
-        _conext: &mut CommonState,
-        frame: &mut ratatui::Frame,
-    ) -> Box<dyn Screen> {
+    fn render(self: &Self, _conext: &mut CommonState, frame: &mut ratatui::Frame) {
         frame.render_widget(Line::from("quitting..."), frame.size());
-        self
     }
 
     fn should_quit(&self, _context: &mut CommonState) -> bool {
