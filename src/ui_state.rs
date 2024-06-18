@@ -222,6 +222,14 @@ impl CommonState {
                 .expect("FIXME: handle error here");
         }
     }
+
+    pub(crate) fn undo(&mut self) {
+        let _ignored = self.store.undo();
+    }
+
+    pub(crate) fn redo(&mut self) {
+        let _ignored = self.store.redo();
+    }
 }
 
 pub(crate) struct State {

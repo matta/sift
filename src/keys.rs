@@ -15,6 +15,8 @@ pub(crate) enum Command {
     MoveDown,
     Add,
     Delete,
+    Undo,
+    Redo,
     Quit,
 }
 

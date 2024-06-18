@@ -93,6 +93,10 @@ impl State {
                 keys::Command::Delete => {
                     common_state.delete_selected();
                 }
+                keys::Command::Undo => {
+                    common_state.undo();
+                }
+                keys::Command::Redo => common_state.redo(),
             },
         }
         None
