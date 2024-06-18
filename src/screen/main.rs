@@ -62,7 +62,7 @@ impl screen::Screen for State {
         key_combination: crokey::KeyCombination,
     ) -> Box<dyn Screen> {
         {
-            let bindings = crate::keys::bindings();
+            let bindings = crate::keys::default_bindings();
             match bindings.get(&key_combination) {
                 None => {}
                 Some(action) => match action {

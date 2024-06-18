@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
-#[derive(Debug, Clone, Copy, PartialEq, serde::Deserialize)]
+use crokey::KeyCombination;
+use serde::Deserialize;
+
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
 pub(crate) enum Command {
     Edit,
     Toggle,
@@ -17,10 +20,10 @@ pub(crate) enum Command {
 
 #[derive(serde::Deserialize)]
 pub(crate) struct Config {
-    pub(crate) bindings: HashMap<crokey::KeyCombination, Command>,
+    pub(crate) bindings: HashMap<KeyCombination, Command>,
 }
 
-pub(crate) fn bindings() -> &'static HashMap<crokey::KeyCombination, Command> {
+pub(crate) fn default_bindings() -> &'static HashMap<KeyCombination, Command> {
     static CONFIG: OnceLock<Config> = OnceLock::new();
     &CONFIG
         .get_or_init(|| {
@@ -36,7 +39,7 @@ mod tests {
 
     #[test]
     fn test() {
-        let bindings = bindings();
+        let bindings = default_bindings();
         assert_eq!(bindings.len(), 14);
     }
 }
