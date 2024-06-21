@@ -66,34 +66,37 @@ impl CommonState {
 
     pub fn toggle(&mut self) {
         if let Some(id) = self.selected {
-            let mut task = self
-                .store
-                .get_task(&id)
-                .expect("FIXME: propagate errors; selected task must be in the store");
-            let completed = if task.completed().is_some() {
-                None
-            } else {
-                Some(chrono::Utc::now())
-            };
-            task.set_completed(completed);
-            self.store.put_task(&task).expect("FIXME: propagate errors");
+            self.store
+                .with_transaction(|txn| {
+                    let mut task = txn.get_task(&id)?;
+                    let completed = if task.completed().is_some() {
+                        None
+                    } else {
+                        Some(chrono::Utc::now())
+                    };
+                    task.set_completed(completed);
+                    txn.put_task(&task)?;
+                    Ok(())
+                })
+                .expect("FIXME: propagate errors");
         }
     }
 
     pub(crate) fn snooze(&mut self) {
         if let Some(id) = self.selected {
-            let mut task = self
-                .store
-                .get_task(&id)
-                .expect("FIXME: propagate errors; selected task must be in the store");
-            let snoozed = if task.snoozed().is_some() {
-                None
-            } else {
-                let next_week = next_week();
-                Some(next_week)
-            };
-            task.set_snoozed(snoozed);
-            self.store.put_task(&task).expect("FIXME: propagate errors");
+            self.store
+                .with_transaction(|txn| {
+                    let mut task = txn.get_task(&id)?;
+                    let snoozed = if task.snoozed().is_some() {
+                        None
+                    } else {
+                        let next_week = next_week();
+                        Some(next_week)
+                    };
+                    task.set_snoozed(snoozed);
+                    txn.put_task(&task)
+                })
+                .expect("FIXME: propagate errors");
         }
         // Order snoozed items after non-snoozed items.  Keep the current
         // selection.

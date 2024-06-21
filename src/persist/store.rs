@@ -1,6 +1,10 @@
 use super::{Task, TaskId};
 
 pub(crate) trait Transaction {
+    fn get_task(&mut self, id: &TaskId) -> anyhow::Result<Task>;
+
+    fn put_task(&mut self, task: &Task) -> anyhow::Result<()>;
+
     fn delete_task(&mut self, id: &TaskId) -> anyhow::Result<()>;
 
     fn insert_task(&mut self, previous: Option<&TaskId>, task: &Task) -> anyhow::Result<()>;
@@ -15,13 +19,8 @@ pub(crate) trait Transaction {
 }
 
 pub(crate) trait Store {
-    // TODO: copy to Transaction, above.
     fn get_task(&mut self, id: &TaskId) -> anyhow::Result<Task>;
 
-    // TODO: move to Transaction, above.
-    fn put_task(&mut self, task: &Task) -> anyhow::Result<()>;
-
-    // TODO: move to Transaction, above.
     fn list_tasks(&mut self) -> anyhow::Result<Vec<Task>>;
 
     fn undo(&mut self) -> anyhow::Result<()>;
@@ -144,13 +143,17 @@ pub(crate) mod memory {
     }
 
     impl Transaction for MemoryTransaction<'_> {
-        fn delete_task(&mut self, id: &TaskId) -> anyhow::Result<()> {
-            self.store.delete_task(id);
+        fn get_task(&mut self, id: &TaskId) -> anyhow::Result<Task> {
+            self.store.get_task_impl(id)
+        }
+
+        fn put_task(&mut self, task: &Task) -> anyhow::Result<()> {
+            self.store.put_task_impl(task);
             Ok(())
         }
 
-        fn commit(self: Box<Self>) -> anyhow::Result<()> {
-            self.store.undo_stack.push(self.start);
+        fn delete_task(&mut self, id: &TaskId) -> anyhow::Result<()> {
+            self.store.delete_task(id);
             Ok(())
         }
 
@@ -161,6 +164,11 @@ pub(crate) mod memory {
 
         fn move_task(&mut self, previous: Option<&TaskId>, task: &TaskId) -> anyhow::Result<()> {
             self.store.move_task(previous, task);
+            Ok(())
+        }
+
+        fn commit(self: Box<Self>) -> anyhow::Result<()> {
+            self.store.undo_stack.push(self.start);
             Ok(())
         }
     }
@@ -217,18 +225,19 @@ pub(crate) mod memory {
             self.current.move_task(previous, task);
             self.undo_stack.push(saved);
         }
+
+        fn get_task_impl(&mut self, id: &TaskId) -> anyhow::Result<Task> {
+            self.current.get_task(id)
+        }
+
+        fn put_task_impl(&mut self, task: &Task) {
+            self.current.put_task(task);
+        }
     }
 
     impl Store for MemoryStore {
         fn get_task(&mut self, id: &TaskId) -> anyhow::Result<Task> {
-            self.current.get_task(id)
-        }
-
-        fn put_task(&mut self, task: &Task) -> anyhow::Result<()> {
-            let saved = self.current.clone();
-            self.current.put_task(task);
-            self.undo_stack.push(saved);
-            Ok(())
+            self.get_task_impl(id)
         }
 
         fn list_tasks(&mut self) -> anyhow::Result<Vec<Task>> {

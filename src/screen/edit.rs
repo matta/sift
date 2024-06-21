@@ -3,7 +3,7 @@ use std::cell::RefCell;
 
 use tui_prompts::{State as _, TextPrompt};
 
-use crate::persist::{Store, TaskId};
+use crate::persist::{Store, TaskId, Transaction};
 use crate::screen;
 use crate::ui_state::CommonState;
 
@@ -36,13 +36,22 @@ impl State {
                 Some(Box::new(screen::main::State::new()))
             }
             tui_prompts::Status::Done => {
-                let mut task = context.store.get_task(&self.id).unwrap();
-                task.set_title(text_state.value().to_string());
-                context.store.put_task(&task).expect("TODO: handle error");
+                let title = text_state.value();
+                let id = &self.id;
+                context
+                    .store
+                    .with_transaction(|txn| set_title(txn, id, title))
+                    .expect("TODO: handle error");
                 Some(Box::new(screen::main::State::new()))
             }
         }
     }
+}
+
+fn set_title(txn: &mut dyn Transaction, id: &TaskId, title: &str) -> Result<(), anyhow::Error> {
+    let mut task = txn.get_task(id).unwrap();
+    task.set_title(title.to_string());
+    txn.put_task(&task)
 }
 
 impl screen::Screen for State {
