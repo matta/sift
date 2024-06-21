@@ -30,7 +30,7 @@ fn add(common_state: &mut CommonState) -> Option<Box<dyn Screen>> {
     let task = Task::new(Task::new_id(), String::new(), None, None, None);
     common_state
         .store
-        .insert_task(common_state.selected.as_ref(), &task)
+        .with_transaction(|txn| txn.insert_task(common_state.selected.as_ref(), &task))
         .expect("FIXME: handle error");
     common_state.selected = Some(task.id());
     edit(common_state)

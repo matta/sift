@@ -3,6 +3,10 @@ use super::{Task, TaskId};
 pub(crate) trait Transaction {
     fn delete_task(&mut self, id: &TaskId) -> anyhow::Result<()>;
 
+    fn insert_task(&mut self, previous: Option<&TaskId>, task: &Task) -> anyhow::Result<()>;
+
+    fn move_task(&mut self, previous: Option<&TaskId>, task: &TaskId) -> anyhow::Result<()>;
+
     // Commit and consume the transaction.
     //
     // See https://stackoverflow.com/q/46620790 for why this argument
@@ -16,13 +20,6 @@ pub(crate) trait Store {
 
     // TODO: move to Transaction, above.
     fn put_task(&mut self, task: &Task) -> anyhow::Result<()>;
-
-    // TODO: move to Transaction, above.
-    fn insert_task(&mut self, previous: Option<&TaskId>, task: &Task) -> anyhow::Result<()>;
-
-    // TODO: move to Transaction, above.
-    // If prevous is None moves to the front, otherwise moves after previous.
-    fn move_task(&mut self, previous: Option<&TaskId>, task: &TaskId) -> anyhow::Result<()>;
 
     // TODO: move to Transaction, above.
     fn list_tasks(&mut self) -> anyhow::Result<Vec<Task>>;
@@ -156,6 +153,16 @@ pub(crate) mod memory {
             self.store.undo_stack.push(self.start);
             Ok(())
         }
+
+        fn insert_task(&mut self, previous: Option<&TaskId>, task: &Task) -> anyhow::Result<()> {
+            self.store.insert_task(previous, task);
+            Ok(())
+        }
+
+        fn move_task(&mut self, previous: Option<&TaskId>, task: &TaskId) -> anyhow::Result<()> {
+            self.store.move_task(previous, task);
+            Ok(())
+        }
     }
 
     impl MemoryStore {
@@ -198,6 +205,18 @@ pub(crate) mod memory {
         fn delete_task(&mut self, id: &TaskId) {
             self.current.delete_task(id);
         }
+
+        fn insert_task(&mut self, previous: Option<&TaskId>, task: &Task) {
+            let saved = self.current.clone();
+            self.current.insert_task(previous, task);
+            self.undo_stack.push(saved);
+        }
+
+        fn move_task(&mut self, previous: Option<&TaskId>, task: &TaskId) {
+            let saved = self.current.clone();
+            self.current.move_task(previous, task);
+            self.undo_stack.push(saved);
+        }
     }
 
     impl Store for MemoryStore {
@@ -208,20 +227,6 @@ pub(crate) mod memory {
         fn put_task(&mut self, task: &Task) -> anyhow::Result<()> {
             let saved = self.current.clone();
             self.current.put_task(task);
-            self.undo_stack.push(saved);
-            Ok(())
-        }
-
-        fn insert_task(&mut self, previous: Option<&TaskId>, task: &Task) -> anyhow::Result<()> {
-            let saved = self.current.clone();
-            self.current.insert_task(previous, task);
-            self.undo_stack.push(saved);
-            Ok(())
-        }
-
-        fn move_task(&mut self, previous: Option<&TaskId>, task: &TaskId) -> anyhow::Result<()> {
-            let saved = self.current.clone();
-            self.current.move_task(previous, task);
             self.undo_stack.push(saved);
             Ok(())
         }

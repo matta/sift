@@ -158,7 +158,7 @@ impl CommonState {
             for (prev_prev_id, _, id) in ids.iter().circular_tuple_windows() {
                 if *id == Some(selected) {
                     self.store
-                        .move_task(prev_prev_id.as_ref(), &selected)
+                        .with_transaction(|txn| txn.move_task(prev_prev_id.as_ref(), &selected))
                         .expect("FIXME: handle this error");
                     break;
                 }
@@ -189,7 +189,7 @@ impl CommonState {
             for (id, successor_id) in ids.iter().circular_tuple_windows() {
                 if *id == Some(selected) {
                     self.store
-                        .move_task(successor_id.as_ref(), &selected)
+                        .with_transaction(|txn| txn.move_task(successor_id.as_ref(), &selected))
                         .expect("FIXME: handle this error");
                     break;
                 }
