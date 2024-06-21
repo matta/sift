@@ -216,11 +216,14 @@ impl CommonState {
         }
         self.selected = new_selected;
 
-        for id in &deletions {
-            self.store
-                .delete_task(id)
-                .expect("FIXME: handle error here");
-        }
+        self.store
+            .with_transaction(|txn| {
+                for id in &deletions {
+                    txn.delete_task(id).expect("FIXME: handle error here");
+                }
+                Ok(())
+            })
+            .expect("TODO: handle errors here");
     }
 
     pub(crate) fn undo(&mut self) {

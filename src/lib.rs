@@ -29,7 +29,7 @@ pub fn save_name() -> PathBuf {
 }
 
 fn handle_key_event(state: &mut ui_state::State, key_event: crossterm::event::KeyEvent) {
-    // TODO: do this combinding earlier, properly.
+    // TODO: do this combining earlier, properly.
     let key_combination: crokey::KeyCombination = key_event.into();
 
     if let Some(screen) = state.current_screen.take() {
