@@ -12,10 +12,10 @@ pub enum Event {
     /// Terminal tick.
     Tick,
     /// Key press.
-    Key(crossterm::event::KeyEvent),
+    Key(event::KeyEvent),
     /// Mouse click/scroll.
     #[allow(dead_code)]
-    Mouse(crossterm::event::MouseEvent),
+    Mouse(event::MouseEvent),
     /// Terminal resize.
     #[allow(dead_code)]
     Resize(u16, u16),
@@ -40,41 +40,7 @@ impl Reader {
     pub fn new(tick_rate: u64) -> Self {
         let tick_rate = Duration::from_millis(tick_rate);
         let (sender, receiver) = mpsc::channel();
-        let handler = {
-            thread::spawn(move || {
-                let mut last_tick = Instant::now();
-                loop {
-                    let timeout = tick_rate
-                        .checked_sub(last_tick.elapsed())
-                        .unwrap_or(tick_rate);
-
-                    if event::poll(timeout).expect("unable to poll for event") {
-                        match event::read().expect("unable to read event") {
-                            crossterm::event::Event::Key(e) => {
-                                if e.kind == event::KeyEventKind::Press {
-                                    sender.send(Event::Key(e))
-                                } else {
-                                    // ignore KeyEventKind::Release on
-                                    // windows
-                                    Ok(())
-                                }
-                            }
-                            crossterm::event::Event::Mouse(e) => sender.send(Event::Mouse(e)),
-                            crossterm::event::Event::Resize(w, h) => {
-                                sender.send(Event::Resize(w, h))
-                            }
-                            _ => unimplemented!(),
-                        }
-                        .expect("failed to send terminal event");
-                    }
-
-                    if last_tick.elapsed() >= tick_rate {
-                        sender.send(Event::Tick).expect("failed to send tick event");
-                        last_tick = Instant::now();
-                    }
-                }
-            })
-        };
+        let handler = { thread::spawn(move || read_loop(tick_rate, &sender)) };
         Self { receiver, handler }
     }
 
@@ -84,5 +50,37 @@ impl Reader {
     /// available and it's possible for more data to be sent.
     pub fn next(&self) -> Event {
         self.receiver.recv().unwrap()
+    }
+}
+
+fn read_loop(tick_rate: Duration, sender: &mpsc::Sender<Event>) {
+    let mut last_tick = Instant::now();
+    loop {
+        let timeout = tick_rate
+            .checked_sub(last_tick.elapsed())
+            .unwrap_or(tick_rate);
+
+        if event::poll(timeout).expect("unable to poll for event") {
+            match event::read().expect("unable to read event") {
+                event::Event::Key(e) => {
+                    if e.kind == event::KeyEventKind::Press {
+                        sender.send(Event::Key(e))
+                    } else {
+                        // ignore KeyEventKind::Release on
+                        // windows
+                        Ok(())
+                    }
+                }
+                event::Event::Mouse(e) => sender.send(Event::Mouse(e)),
+                event::Event::Resize(w, h) => sender.send(Event::Resize(w, h)),
+                _ => unimplemented!(),
+            }
+            .expect("failed to send terminal event");
+        }
+
+        if last_tick.elapsed() >= tick_rate {
+            sender.send(Event::Tick).expect("failed to send tick event");
+            last_tick = Instant::now();
+        }
     }
 }
