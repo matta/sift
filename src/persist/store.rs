@@ -65,7 +65,7 @@ pub(crate) mod memory {
                 .map_or_else(|| bail!("task not found"), |task| Ok(task.clone()))
         }
 
-        fn put_task(&mut self, task: &Task) -> anyhow::Result<()> {
+        fn put_task(&mut self, task: &Task) {
             use im::hashmap::Entry::{Occupied, Vacant};
             debug_assert!(
                 self.order.contains(&task.id()),
@@ -77,11 +77,9 @@ pub(crate) mod memory {
                     panic!("MemoryStore::put called with task not in the tasks map")
                 }
             }
-
-            Ok(())
         }
 
-        fn insert_task(&mut self, previous: Option<&TaskId>, task: &Task) -> anyhow::Result<()> {
+        fn insert_task(&mut self, previous: Option<&TaskId>, task: &Task) {
             let index = if let Some(previous) = previous {
                 self.order
                     .index_of(previous)
@@ -96,17 +94,14 @@ pub(crate) mod memory {
             );
             self.order.insert(index, task.id());
             self.tasks.entry(task.id()).or_insert(task.clone());
-
-            Ok(())
         }
 
-        fn delete_task(&mut self, id: &TaskId) -> anyhow::Result<()> {
+        fn delete_task(&mut self, id: &TaskId) {
             self.order.retain(|entry| entry != id);
             self.tasks.retain(|key, _| key != id);
-            Ok(())
         }
 
-        fn move_task(&mut self, previous: Option<&TaskId>, id: &TaskId) -> anyhow::Result<()> {
+        fn move_task(&mut self, previous: Option<&TaskId>, id: &TaskId) {
             self.order.retain(|other| other != id);
 
             let index = if let Some(previous_id) = previous {
@@ -117,13 +112,10 @@ pub(crate) mod memory {
             .unwrap_or(0);
 
             self.order.insert(index, *id);
-
-            Ok(())
         }
 
-        fn list_tasks(&mut self) -> anyhow::Result<Vec<Task>> {
-            Ok(self
-                .order
+        fn list_tasks(&mut self) -> Vec<Task> {
+            self.order
                 .iter()
                 .map(|id| {
                     self.tasks
@@ -131,7 +123,7 @@ pub(crate) mod memory {
                         .expect("all items in MemoryStore::order must be in MemoryStore::tasks")
                         .clone()
                 })
-                .collect())
+                .collect()
         }
     }
 
@@ -150,13 +142,14 @@ pub(crate) mod memory {
     impl<'a> MemoryTransaction<'a> {
         fn new(store: &'a mut MemoryStore) -> Self {
             let start = store.current.clone();
-            Self { start, store }
+            Self { store, start }
         }
     }
 
     impl Transaction for MemoryTransaction<'_> {
         fn delete_task(&mut self, id: &TaskId) -> anyhow::Result<()> {
-            self.store.delete_task(id)
+            self.store.delete_task(id);
+            Ok(())
         }
 
         fn commit(self: Box<Self>) -> anyhow::Result<()> {
@@ -202,8 +195,8 @@ pub(crate) mod memory {
             Ok(())
         }
 
-        fn delete_task(&mut self, id: &TaskId) -> Result<(), anyhow::Error> {
-            self.current.delete_task(id)
+        fn delete_task(&mut self, id: &TaskId) {
+            self.current.delete_task(id);
         }
     }
 
@@ -214,27 +207,28 @@ pub(crate) mod memory {
 
         fn put_task(&mut self, task: &Task) -> anyhow::Result<()> {
             let saved = self.current.clone();
-            self.current.put_task(task)?;
+            self.current.put_task(task);
             self.undo_stack.push(saved);
             Ok(())
         }
 
         fn insert_task(&mut self, previous: Option<&TaskId>, task: &Task) -> anyhow::Result<()> {
             let saved = self.current.clone();
-            self.current.insert_task(previous, task)?;
+            self.current.insert_task(previous, task);
             self.undo_stack.push(saved);
             Ok(())
         }
 
         fn move_task(&mut self, previous: Option<&TaskId>, task: &TaskId) -> anyhow::Result<()> {
             let saved = self.current.clone();
-            self.current.move_task(previous, task)?;
+            self.current.move_task(previous, task);
             self.undo_stack.push(saved);
             Ok(())
         }
 
         fn list_tasks(&mut self) -> anyhow::Result<Vec<Task>> {
-            self.current.list_tasks()
+            let tasks = self.current.list_tasks();
+            Ok(tasks)
         }
 
         fn undo(&mut self) -> anyhow::Result<()> {
@@ -256,7 +250,7 @@ pub(crate) mod memory {
             }
         }
 
-        fn transaction(&mut self) -> Box<dyn Transaction + '_> {
+        fn transaction<'a>(&'a mut self) -> Box<dyn Transaction + 'a> {
             let transaction = MemoryTransaction::new(self);
             Box::new(transaction)
         }

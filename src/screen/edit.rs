@@ -58,7 +58,7 @@ impl screen::Screen for State {
         }
     }
 
-    fn render(self: &Self, _conext: &mut CommonState, frame: &mut ratatui::Frame) {
+    fn render(&self, _conext: &mut CommonState, frame: &mut ratatui::Frame) {
         let prompt = TextPrompt::new(Cow::Borrowed("edit"));
         frame.render_stateful_widget(prompt, frame.size(), &mut self.text.borrow_mut());
         let (x, y) = self.text.borrow().cursor();

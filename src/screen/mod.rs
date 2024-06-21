@@ -13,7 +13,7 @@ pub trait Screen {
         key_combination: crokey::KeyCombination,
     ) -> Box<dyn Screen>;
 
-    fn render(self: &Self, conext: &mut CommonState, frame: &mut ratatui::Frame);
+    fn render(&self, conext: &mut CommonState, frame: &mut ratatui::Frame);
 
     // FIXME: replace this with a back channel to the event queue logic?
     // ...at which point should handle_key_event return a Box<dyn Screen>

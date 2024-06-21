@@ -14,7 +14,7 @@ impl Screen for State {
         self
     }
 
-    fn render(self: &Self, _conext: &mut CommonState, frame: &mut ratatui::Frame) {
+    fn render(&self, _conext: &mut CommonState, frame: &mut ratatui::Frame) {
         frame.render_widget(Line::from("quitting..."), frame.size());
     }
 
