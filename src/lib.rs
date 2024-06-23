@@ -73,9 +73,13 @@ pub fn run(save_name: &Path) -> Result<()> {
             terminal_input::Event::Key(key_event) => {
                 handle_key_event(&mut state, key_event);
             }
-            terminal_input::Event::Tick
-            | terminal_input::Event::Mouse(_)
-            | terminal_input::Event::Resize(_, _) => {}
+            terminal_input::Event::Mouse(event) => {
+                debug!("Mouse({:#?})", event);
+            }
+            terminal_input::Event::Tick => {}
+            terminal_input::Event::Resize(width, height) => {
+                debug!("Resize({}, {})", width, height);
+            }
         }
 
         match &state.current_screen {
