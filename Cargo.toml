@@ -25,8 +25,12 @@ tui-prompts = "0.3.12"
 [dependencies.uuid]
 version = "1.8.0"
 features = [
-    "v7",                # Lets you generate random UUIDs
+    "v7", # Lets you generate random UUIDs
 ]
 
 [dev-dependencies]
 automerge-test = "0.4.3"
+
+[lints.clippy]
+# TODO: work through uses of unwrap and turn this on.
+#unwrap_used = "deny"

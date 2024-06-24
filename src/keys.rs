@@ -30,7 +30,7 @@ pub(crate) fn default_bindings() -> &'static HashMap<KeyCombination, Command> {
     &CONFIG
         .get_or_init(|| {
             let toml = include_str!("keys.toml");
-            toml::from_str(toml).unwrap()
+            toml::from_str(toml).expect("failed to parse keys.toml")
         })
         .bindings
 }

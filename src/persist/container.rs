@@ -52,7 +52,7 @@ impl Chunk {
         }
         let mut chunk_type = [0; 4];
         reader.read_exact(&mut chunk_type).map_err(Error::Read)?;
-        let mut data = vec![0; usize::try_from(data_length).unwrap()];
+        let mut data = vec![0; usize::try_from(data_length).expect("u32 must fit in a usize")];
         reader.read_exact(&mut data).map_err(Error::Read)?;
 
         let chunk = Chunk { chunk_type, data };

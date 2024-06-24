@@ -101,18 +101,22 @@ mod tests {
 
     #[test]
     fn test() {
+        let new_date = |year, month, day| -> chrono::NaiveDate {
+            chrono::NaiveDate::from_ymd_opt(year, month, day).expect("date must parse")
+        };
+
         let tasks = vec![
             Task::new(
                 Task::new_id(),
                 "first title".to_string(),
                 None,
-                Some(chrono::NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
+                Some(new_date(2022, 1, 1)),
                 None,
             ),
             Task::new(
                 Task::new_id(),
                 "second title".to_string(),
-                Some(chrono::NaiveDate::from_ymd_opt(2022, 5, 7).unwrap()),
+                Some(new_date(2022, 5, 7)),
                 None,
                 "2024-07-03T13:01:42Z"
                     .parse::<chrono::DateTime<chrono::Utc>>()
@@ -126,7 +130,7 @@ mod tests {
         let mut doc = automerge::AutoCommit::new();
         {
             let value: serialization::SerializableTaskList = task_list.clone().into();
-            autosurgeon::reconcile(&mut doc, &value).unwrap();
+            autosurgeon::reconcile(&mut doc, &value).expect("reconcile must succeed");
         }
 
         assert_doc!(
@@ -161,7 +165,8 @@ mod tests {
             }
         );
 
-        let todo_list2: serialization::SerializableTaskList = autosurgeon::hydrate(&doc).unwrap();
+        let todo_list2: serialization::SerializableTaskList =
+            autosurgeon::hydrate(&doc).expect("hydrate must succeed");
         let todo_list2: TaskList = todo_list2.into();
         assert_eq!(task_list, todo_list2);
     }
