@@ -20,7 +20,7 @@ ratatui = "0.26.3"
 serde = "1.0.203"
 thiserror = "1.0.61"
 toml = "0.8.14"
-tui-prompts = "0.3.12"
+tui-prompts = "0.3.13"
 
 [dependencies.uuid]
 version = "1.9.1"
