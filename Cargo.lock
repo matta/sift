@@ -727,6 +727,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "ratatui"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d16546c5b5962abf8ce6e2881e722b4e0ae3b6f1a08a26ae3573c55853ca68d3"
+dependencies = [
+ "bitflags",
+ "cassowary",
+ "compact_str",
+ "crossterm",
+ "itertools 0.13.0",
+ "lru",
+ "paste",
+ "stability",
+ "strum",
+ "strum_macros",
+ "unicode-segmentation",
+ "unicode-truncate",
+ "unicode-width",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -836,7 +857,7 @@ dependencies = [
  "dirs",
  "im",
  "itertools 0.13.0",
- "ratatui",
+ "ratatui 0.27.0",
  "serde",
  "thiserror",
  "toml",
@@ -1083,7 +1104,7 @@ checksum = "122bb001608c2f058fb3fc729614220a392eef4f2268c520a33b5ea8b422ce54"
 dependencies = [
  "crossterm",
  "itertools 0.12.1",
- "ratatui",
+ "ratatui 0.26.3",
 ]
 
 [[package]]
