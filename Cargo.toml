@@ -16,11 +16,11 @@ crossterm = "0.27.0"
 dirs = "5.0.1"
 im = "15.1.0"
 itertools = "0.13.0"
-ratatui = "0.26.3"
+ratatui = "0.27.0"
 serde = "1.0.203"
 thiserror = "1.0.61"
 toml = "0.8.14"
-tui-prompts = "0.3.12"
+tui-prompts = "0.3.13"
 
 [dependencies.uuid]
 version = "1.9.1"
