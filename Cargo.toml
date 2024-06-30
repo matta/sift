@@ -23,7 +23,7 @@ toml = "0.8.14"
 tui-prompts = "0.3.12"
 
 [dependencies.uuid]
-version = "1.8.0"
+version = "1.9.1"
 features = [
     "v7", # Lets you generate random UUIDs
 ]
