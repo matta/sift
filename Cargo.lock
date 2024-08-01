@@ -1306,9 +1306,9 @@ dependencies = [
 
 [[package]]
 name = "tui-prompts"
-version = "0.3.13"
+version = "0.3.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73063147035c9c709b69325d40365024ae777ef2b04963f38a346f77c3a1393f"
+checksum = "caa46c1820e14572de685a7cbb26afd0e3d594b2e06f33dba7cf654dde722f1a"
 dependencies = [
  "itertools 0.13.0",
  "ratatui",
