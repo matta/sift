@@ -82,6 +82,22 @@ impl CommonState {
         }
     }
 
+    pub(crate) fn toggle2(&mut self, id: TaskId, checked: bool) {
+        self.store
+            .with_transaction(|txn| {
+                let mut task = txn.get_task(&id)?;
+                let completed = if checked {
+                    Some(chrono::Utc::now())
+                } else {
+                    None
+                };
+                task.set_completed(completed);
+                txn.put_task(&task)?;
+                Ok(())
+            })
+            .expect("FIXME: propagate errors");
+    }
+
     pub(crate) fn snooze(&mut self) {
         if let Some(id) = self.selected {
             self.store

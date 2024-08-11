@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 use std::cell::RefCell;
 
-use ratatui::widgets::{Block, Borders, List, ListItem, ListState, StatefulWidget};
 use xilem::view::{checkbox, flex};
 use xilem::{AnyWidgetView, WidgetView};
 
@@ -12,9 +11,14 @@ use crate::{keys, screen};
 
 fn render_task(s: &Task) -> impl WidgetView<ui_state::State> {
     let checked = s.completed().is_some();
-    let checkbox = checkbox(s.title().to_string(), checked, |_state, _checked| {
-        unimplemented!("checking checkboxes is not implemented")
-    });
+    let id = s.id();
+    let checkbox = checkbox(
+        s.title().to_string(),
+        checked,
+        move |state: &mut ui_state::State, checked| {
+            state.common_state.toggle2(id, checked);
+        },
+    );
     checkbox
 }
 
