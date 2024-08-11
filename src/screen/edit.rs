@@ -1,8 +1,7 @@
-use std::borrow::Cow;
 use std::cell::RefCell;
 
 use ratatui::crossterm;
-use tui_prompts::{State as _, TextPrompt};
+use tui_prompts::State as _;
 
 use crate::persist::{Store, TaskId, Transaction};
 use crate::screen;
@@ -56,22 +55,29 @@ fn set_title(txn: &mut dyn Transaction, id: &TaskId, title: &str) -> Result<(), 
 }
 
 impl screen::Screen for State {
-    fn handle_key_event(
-        mut self: Box<Self>,
-        context: &mut CommonState,
-        key_combination: crokey::KeyCombination,
-    ) -> Box<dyn screen::Screen> {
-        if let Some(screen) = self.do_handle_key_event(context, key_combination) {
-            screen
-        } else {
-            self
-        }
+    fn render(
+        &self,
+        _state: &mut CommonState,
+    ) -> Box<xilem::AnyWidgetView<crate::ui_state::State, ()>> {
+        todo!()
     }
 
-    fn render(&self, _conext: &mut CommonState, frame: &mut ratatui::Frame) {
-        let prompt = TextPrompt::new(Cow::Borrowed("edit"));
-        frame.render_stateful_widget(prompt, frame.size(), &mut self.text.borrow_mut());
-        let (x, y) = self.text.borrow().cursor();
-        frame.set_cursor(x, y);
-    }
+    // fn handle_key_event(
+    //     mut self: Box<Self>,
+    //     context: &mut CommonState,
+    //     key_combination: crokey::KeyCombination,
+    // ) -> Box<dyn screen::Screen> {
+    //     if let Some(screen) = self.do_handle_key_event(context, key_combination) {
+    //         screen
+    //     } else {
+    //         self
+    //     }
+    // }
+
+    // fn render(&self, _conext: &mut CommonState, frame: &mut ratatui::Frame) {
+    //     let prompt = TextPrompt::new(Cow::Borrowed("edit"));
+    //     frame.render_stateful_widget(prompt, frame.size(), &mut self.text.borrow_mut());
+    //     let (x, y) = self.text.borrow().cursor();
+    //     frame.set_cursor(x, y);
+    // }
 }

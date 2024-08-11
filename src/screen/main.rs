@@ -2,20 +2,25 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState, StatefulWidget};
+use xilem::view::{checkbox, flex};
+use xilem::{AnyWidgetView, WidgetView};
 
 use crate::persist::{Store, Task};
 use crate::screen::Screen;
-use crate::ui_state::CommonState;
+use crate::ui_state::{self, CommonState};
 use crate::{keys, screen};
 
-fn render_task(s: &Task) -> ListItem<'_> {
-    let check = if s.completed().is_some() { 'x' } else { ' ' };
-    ListItem::new(format!("[{}] {}", check, s.title()))
+fn render_task(s: &Task) -> impl WidgetView<ui_state::State> {
+    let checked = s.completed().is_some();
+    let checkbox = checkbox(s.title().to_string(), checked, |_state, _checked| {
+        unimplemented!("checking checkboxes is not implemented")
+    });
+    checkbox
 }
 
 #[derive(Default)]
 pub(crate) struct State {
-    list: RefCell<ratatui::widgets::ListState>,
+    // list: RefCell<ratatui::widgets::ListState>,
 }
 
 impl State {
@@ -103,29 +108,39 @@ fn do_handle_key_event(
 }
 
 impl screen::Screen for State {
-    fn handle_key_event(
-        self: Box<Self>,
-        common_state: &mut CommonState,
-        key_combination: crokey::KeyCombination,
-    ) -> Box<dyn Screen> {
-        if let Some(screen) = do_handle_key_event(common_state, key_combination) {
-            screen
-        } else {
-            self
-        }
-    }
-
-    fn render(&self, common_state: &mut CommonState, frame: &mut ratatui::Frame) {
+    fn render(&self, common_state: &mut CommonState) -> Box<AnyWidgetView<ui_state::State, ()>> {
         // Set the list widet's selected state based on the list state.
-        let state: &mut ListState = &mut self.list.borrow_mut();
-        state.select(common_state.index_of_id(common_state.selected));
+        // let state: &mut ListState = &mut self.list.borrow_mut();
+        // state.select(common_state.index_of_id(common_state.selected));
 
         let tasks = common_state.list_tasks_for_display();
         let items: Vec<_> = tasks.iter().map(render_task).collect();
-        let items = List::new(items)
-            .block(Block::default().borders(Borders::ALL).title("Tasks"))
-            .highlight_symbol("> ");
-
-        items.render(frame.size(), frame.buffer_mut(), state);
+        flex(items).boxed()
     }
+
+    // fn handle_key_event(
+    //     self: Box<Self>,
+    //     common_state: &mut CommonState,
+    //     key_combination: crokey::KeyCombination,
+    // ) -> Box<dyn Screen> {
+    //     if let Some(screen) = do_handle_key_event(common_state, key_combination) {
+    //         screen
+    //     } else {
+    //         self
+    //     }
+    // }
+
+    // fn render(&self, common_state: &mut CommonState, frame: &mut ratatui::Frame) {
+    //     // Set the list widet's selected state based on the list state.
+    //     let state: &mut ListState = &mut self.list.borrow_mut();
+    //     state.select(common_state.index_of_id(common_state.selected));
+
+    //     let tasks = common_state.list_tasks_for_display();
+    //     let items: Vec<_> = tasks.iter().map(render_task).collect();
+    //     let items = List::new(items)
+    //         .block(Block::default().borders(Borders::ALL).title("Tasks"))
+    //         .highlight_symbol("> ");
+
+    //     items.render(frame.size(), frame.buffer_mut(), state);
+    // }
 }

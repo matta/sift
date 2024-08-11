@@ -7,13 +7,8 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use cli_log::{debug, warn};
-use ratatui::backend::CrosstermBackend;
-use ratatui::crossterm;
-use ratatui::Terminal;
-use xilem::view::button;
-use xilem::view::flex;
+use xilem::AnyWidgetView;
 use xilem::EventLoop;
-use xilem::WidgetView;
 use xilem::Xilem;
 
 mod keys;
@@ -34,23 +29,23 @@ pub fn save_name() -> PathBuf {
     path
 }
 
-fn handle_key_event(state: &mut ui_state::State, key_event: crossterm::event::KeyEvent) {
-    // TODO: do this combining earlier, properly.
-    let key_combination: crokey::KeyCombination = key_event.into();
+// fn handle_key_event(state: &mut ui_state::State, key_event: crossterm::event::KeyEvent) {
+//     // TODO: do this combining earlier, properly.
+//     let key_combination: crokey::KeyCombination = key_event.into();
 
-    if let Some(screen) = state.current_screen.take() {
-        state.current_screen =
-            Some(screen.handle_key_event(&mut state.common_state, key_combination));
+//     if let Some(screen) = state.current_screen.take() {
+//         state.current_screen =
+//             Some(screen.handle_key_event(&mut state.common_state, key_combination));
+//     }
+// }
+
+fn app_logic(state: &mut ui_state::State) -> Box<AnyWidgetView<ui_state::State, ()>> {
+    if let Some(screen) = &state.current_screen {
+        screen.render(&mut state.common_state)
+    } else {
+        panic!("state has no screen")
     }
-}
-
-fn app_logic(_state: &mut ui_state::State) -> impl WidgetView<ui_state::State> {
-    let first_line = flex(
-        button("Add task".to_string(), |_state| {
-            todo!();
-        }),
-    );
-    first_line
+    // button("Add task".to_string(), |_| {}).boxed()
 }
 
 /// # Errors
@@ -58,7 +53,7 @@ fn app_logic(_state: &mut ui_state::State) -> impl WidgetView<ui_state::State> {
 /// TODO: write me
 pub fn run(save_name: &Path) -> Result<()> {
     // Create an application.
-    let mut state = match ui_state::State::load(save_name) {
+    let state = match ui_state::State::load(save_name) {
         Ok(app) => {
             debug!("loaded state from disk");
             app
@@ -71,13 +66,6 @@ pub fn run(save_name: &Path) -> Result<()> {
             ui_state::State::new()
         }
     };
-
-    // Initialize the terminal user interface.
-    let backend = CrosstermBackend::new(std::io::stderr());
-    let terminal = Terminal::new(backend)?;
-    let events = terminal_input::Reader::new(250);
-    let mut tui = tui::Tui::new(terminal, events);
-    tui.enter()?;
 
     let app = Xilem::new(state, app_logic);
     app.run_windowed(EventLoop::with_user_event(), "First Example".into())
@@ -114,9 +102,6 @@ pub fn run(save_name: &Path) -> Result<()> {
     //         }
     //     }
     // }
-
-    // Exit the user interface.
-    tui.exit()?;
 
     // TODO: how to save the state at the end of the program?
     // state.save(save_name)?;
