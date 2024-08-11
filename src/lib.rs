@@ -10,6 +10,11 @@ use cli_log::{debug, warn};
 use ratatui::backend::CrosstermBackend;
 use ratatui::crossterm;
 use ratatui::Terminal;
+use xilem::view::button;
+use xilem::view::flex;
+use xilem::EventLoop;
+use xilem::WidgetView;
+use xilem::Xilem;
 
 mod keys;
 mod persist;
@@ -39,6 +44,15 @@ fn handle_key_event(state: &mut ui_state::State, key_event: crossterm::event::Ke
     }
 }
 
+fn app_logic(_state: &mut ui_state::State) -> impl WidgetView<ui_state::State> {
+    let first_line = flex(
+        button("Add task".to_string(), |_state| {
+            todo!();
+        }),
+    );
+    first_line
+}
+
 /// # Errors
 ///
 /// TODO: write me
@@ -65,41 +79,47 @@ pub fn run(save_name: &Path) -> Result<()> {
     let mut tui = tui::Tui::new(terminal, events);
     tui.enter()?;
 
-    // Start the main loop.
-    loop {
-        // Render the user interface.
-        tui.draw(&mut state)?;
-        // Handle terminal events.
-        match tui.next_terminal_event() {
-            terminal_input::Event::Key(key_event) => {
-                handle_key_event(&mut state, key_event);
-            }
-            terminal_input::Event::Mouse(event) => {
-                debug!("Mouse({:#?})", event);
-            }
-            terminal_input::Event::Tick => {}
-            terminal_input::Event::Resize(width, height) => {
-                debug!("Resize({}, {})", width, height);
-            }
-        }
+    let app = Xilem::new(state, app_logic);
+    app.run_windowed(EventLoop::with_user_event(), "First Example".into())
+        .unwrap();
 
-        match &state.current_screen {
-            None => {
-                debug!("no current screen; exiting.");
-                break;
-            }
-            Some(screen) => {
-                if screen.should_quit(&mut state.common_state) {
-                    debug!("current screen says quit; exiting.");
-                    break;
-                }
-            }
-        }
-    }
+    // // Start the main loop.
+    // loop {
+    //   // Render the user interface.
+    //     tui.draw(&mut state)?;
+    //     // Handle terminal events.
+    //     match tui.next_terminal_event() {
+    //         terminal_input::Event::Key(key_event) => {
+    //             handle_key_event(&mut state, key_event);
+    //         }
+    //         terminal_input::Event::Mouse(event) => {
+    //             debug!("Mouse({:#?})", event);
+    //         }
+    //         terminal_input::Event::Tick => {}
+    //         terminal_input::Event::Resize(width, height) => {
+    //             debug!("Resize({}, {})", width, height);
+    //         }
+    //     }
+
+    //     match &state.current_screen {
+    //         None => {
+    //             debug!("no current screen; exiting.");
+    //             break;
+    //         }
+    //         Some(screen) => {
+    //             if screen.should_quit(&mut state.common_state) {
+    //                 debug!("current screen says quit; exiting.");
+    //                 break;
+    //             }
+    //         }
+    //     }
+    // }
 
     // Exit the user interface.
     tui.exit()?;
 
-    state.save(save_name)?;
+    // TODO: how to save the state at the end of the program?
+    // state.save(save_name)?;
+
     Ok(())
 }

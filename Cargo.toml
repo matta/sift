@@ -20,12 +20,16 @@ serde = "1.0.206"
 thiserror = "1.0.63"
 toml = "0.8.19"
 tui-prompts = "=0.3.20"
+xilem = "0.1.0"
 
 [dependencies.uuid]
 version = "1.10.0"
 features = [
     "v7", # Lets you generate random UUIDs
 ]
+
+[patch.crates-io]
+xilem.path = "../xilem/xilem"
 
 [dev-dependencies]
 automerge-test = "0.4.3"
