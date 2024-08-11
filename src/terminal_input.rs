@@ -5,6 +5,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use crossterm::event;
+use ratatui::crossterm;
 
 /// Terminal events.
 #[derive(Clone, Copy, Debug)]

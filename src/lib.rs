@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use anyhow::Result;
 use cli_log::{debug, warn};
 use ratatui::backend::CrosstermBackend;
+use ratatui::crossterm;
 use ratatui::Terminal;
 
 mod keys;

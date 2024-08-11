@@ -4,6 +4,7 @@ use std::{io, panic};
 
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
+use ratatui::crossterm;
 
 use crate::terminal_input;
 

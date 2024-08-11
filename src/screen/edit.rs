@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use std::cell::RefCell;
 
+use ratatui::crossterm;
 use tui_prompts::{State as _, TextPrompt};
 
 use crate::persist::{Store, TaskId, Transaction};
