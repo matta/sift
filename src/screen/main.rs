@@ -127,15 +127,15 @@ impl screen::Screen for State {
     //     common_state: &mut CommonState,
     //     key_combination: crokey::KeyCombination,
     // ) -> Box<dyn Screen> {
-    //     if let Some(screen) = do_handle_key_event(common_state, key_combination) {
-    //         screen
+    //     if let Some(screen) = do_handle_key_event(common_state, key_combination)
+    // {         screen
     //     } else {
     //         self
     //     }
     // }
 
-    // fn render(&self, common_state: &mut CommonState, frame: &mut ratatui::Frame) {
-    //     // Set the list widet's selected state based on the list state.
+    // fn render(&self, common_state: &mut CommonState, frame: &mut ratatui::Frame)
+    // {     // Set the list widet's selected state based on the list state.
     //     let state: &mut ListState = &mut self.list.borrow_mut();
     //     state.select(common_state.index_of_id(common_state.selected));
 

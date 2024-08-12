@@ -7,9 +7,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use cli_log::{debug, warn};
-use xilem::AnyWidgetView;
-use xilem::EventLoop;
-use xilem::Xilem;
+use xilem::{AnyWidgetView, EventLoop, Xilem};
 
 mod keys;
 mod persist;
@@ -29,14 +27,14 @@ pub fn save_name() -> PathBuf {
     path
 }
 
-// fn handle_key_event(state: &mut ui_state::State, key_event: crossterm::event::KeyEvent) {
-//     // TODO: do this combining earlier, properly.
-//     let key_combination: crokey::KeyCombination = key_event.into();
+// fn handle_key_event(state: &mut ui_state::State, key_event:
+// crossterm::event::KeyEvent) {     // TODO: do this combining earlier,
+// properly.     let key_combination: crokey::KeyCombination = key_event.into();
 
 //     if let Some(screen) = state.current_screen.take() {
 //         state.current_screen =
-//             Some(screen.handle_key_event(&mut state.common_state, key_combination));
-//     }
+//             Some(screen.handle_key_event(&mut state.common_state,
+// key_combination));     }
 // }
 
 fn app_logic(state: &mut ui_state::State) -> Box<AnyWidgetView<ui_state::State, ()>> {

@@ -67,8 +67,8 @@ impl screen::Screen for State {
     //     context: &mut CommonState,
     //     key_combination: crokey::KeyCombination,
     // ) -> Box<dyn screen::Screen> {
-    //     if let Some(screen) = self.do_handle_key_event(context, key_combination) {
-    //         screen
+    //     if let Some(screen) = self.do_handle_key_event(context, key_combination)
+    // {         screen
     //     } else {
     //         self
     //     }
@@ -76,8 +76,8 @@ impl screen::Screen for State {
 
     // fn render(&self, _conext: &mut CommonState, frame: &mut ratatui::Frame) {
     //     let prompt = TextPrompt::new(Cow::Borrowed("edit"));
-    //     frame.render_stateful_widget(prompt, frame.size(), &mut self.text.borrow_mut());
-    //     let (x, y) = self.text.borrow().cursor();
+    //     frame.render_stateful_widget(prompt, frame.size(), &mut
+    // self.text.borrow_mut());     let (x, y) = self.text.borrow().cursor();
     //     frame.set_cursor(x, y);
     // }
 }
