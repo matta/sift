@@ -1,5 +1,3 @@
-
-
 use super::Screen;
 use crate::ui_state::CommonState;
 
