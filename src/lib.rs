@@ -68,8 +68,8 @@ pub fn run(save_name: &Path) -> Result<()> {
     };
 
     let app = Xilem::new(state, app_logic);
-    app.run_windowed(EventLoop::with_user_event(), "First Example".into())
-        .unwrap();
+    app.run_windowed(EventLoop::with_user_event(), "Sift".into())
+        .expect("Failed to run the app");
 
     // // Start the main loop.
     // loop {
