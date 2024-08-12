@@ -1019,7 +1019,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b28bfe653d79bd16c77f659305b195b82bb5ce0c0eb2a4846b82ddbd77586813"
 dependencies = [
  "bitflags 2.6.0",
- "libloading 0.7.4",
+ "libloading 0.8.5",
  "winapi",
 ]
 
@@ -2088,6 +2088,7 @@ dependencies = [
 [[package]]
 name = "masonry"
 version = "0.2.0"
+source = "git+https://github.com/linebender/xilem?rev=b7f98ba#b7f98babd6c9770474dcf558a33da1356097072e"
 dependencies = [
  "accesskit",
  "accesskit_winit",
@@ -4234,7 +4235,7 @@ dependencies = [
  "js-sys",
  "khronos-egl",
  "libc",
- "libloading 0.7.4",
+ "libloading 0.8.5",
  "log",
  "metal",
  "naga",
@@ -4294,7 +4295,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4731,6 +4732,7 @@ checksum = "a67300977d3dc3f8034dae89778f502b6ba20b269527b3223ba59c0cf393bb8a"
 [[package]]
 name = "xilem"
 version = "0.1.0"
+source = "git+https://github.com/linebender/xilem?rev=b7f98ba#b7f98babd6c9770474dcf558a33da1356097072e"
 dependencies = [
  "accesskit",
  "masonry",
@@ -4745,6 +4747,7 @@ dependencies = [
 [[package]]
 name = "xilem_core"
 version = "0.1.0"
+source = "git+https://github.com/linebender/xilem?rev=b7f98ba#b7f98babd6c9770474dcf558a33da1356097072e"
 dependencies = [
  "tracing",
 ]
