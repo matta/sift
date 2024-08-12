@@ -20,7 +20,10 @@ serde = "1.0.206"
 thiserror = "1.0.63"
 toml = "0.8.19"
 tui-prompts = "=0.3.20"
-xilem = { git = "https://github.com/linebender/xilem", rev = "b7f98ba" }
+
+[dependencies.xilem]
+git = "https://github.com/linebender/xilem"
+rev = "b7f98ba"
 
 [dependencies.uuid]
 version = "1.10.0"
