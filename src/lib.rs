@@ -12,7 +12,6 @@ use xilem::{AnyWidgetView, EventLoop, Xilem};
 mod keys;
 mod persist;
 mod screen;
-mod terminal_input;
 mod tui;
 mod ui_state;
 

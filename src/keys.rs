@@ -22,9 +22,11 @@ pub(crate) enum Command {
 
 #[derive(serde::Deserialize)]
 pub(crate) struct Config {
+    #[allow(dead_code)]
     pub(crate) bindings: HashMap<KeyCombination, Command>,
 }
 
+#[allow(dead_code)]
 pub(crate) fn default_bindings() -> &'static HashMap<KeyCombination, Command> {
     static CONFIG: OnceLock<Config> = OnceLock::new();
     &CONFIG

@@ -1,4 +1,4 @@
-use ratatui::text::Line;
+
 
 use super::Screen;
 use crate::ui_state::CommonState;
@@ -8,7 +8,7 @@ pub(crate) struct State {}
 impl Screen for State {
     fn render(
         &self,
-        state: &mut CommonState,
+        _state: &mut CommonState,
     ) -> Box<xilem::AnyWidgetView<crate::ui_state::State, ()>> {
         todo!()
     }
