@@ -19,9 +19,6 @@ thiserror = "1.0.63"
 toml = "0.8.19"
 tui-prompts = "0.4.0"
 
-[dev-dependencies]
-automerge-test = "0.4.3"
-
 [lints.clippy]
 # TODO: work through uses of unwrap and turn this on.
 #unwrap_used = "deny"

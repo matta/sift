@@ -1095,7 +1095,6 @@ name = "sift-tui"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "automerge-test",
  "chrono",
  "cli-log",
  "crokey",
