@@ -5,9 +5,7 @@ use cli_log::{debug, warn};
 use ratatui::backend::CrosstermBackend;
 use ratatui::{crossterm, Terminal};
 
-use crate::terminal_input;
-use crate::tui;
-use crate::ui_state;
+use crate::{terminal_input, tui, ui_state};
 
 fn handle_key_event(state: &mut ui_state::State, key_event: crossterm::event::KeyEvent) {
     // TODO: do this combining earlier, properly.
