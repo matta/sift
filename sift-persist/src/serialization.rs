@@ -6,7 +6,7 @@ use chrono::NaiveDate;
 use uuid::Uuid;
 
 use super::Task;
-use crate::persist::document::TaskList;
+use crate::document::TaskList;
 
 pub fn to_option<T>(from: MaybeMissing<T>) -> Option<T> {
     match from {

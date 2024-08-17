@@ -7,11 +7,11 @@ edition = "2021"
 
 [dependencies]
 sift-core = { path = "../sift-core" }
+sift-persist = { path = "../sift-persist" }
 anyhow = "1.0.86"
 chrono = "0.4.38"
 cli-log = "2.0.0"
 crokey = "1.1.0"
-dirs = "5.0.1"
 itertools = "0.13.0"
 ratatui = "0.28.0"
 serde = "1.0.206"

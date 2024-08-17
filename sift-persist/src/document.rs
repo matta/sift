@@ -6,7 +6,7 @@ use automerge::Automerge;
 
 use super::container::{self, read_chunk, read_header, write_chunk, write_header, Chunk};
 use super::Task;
-use crate::persist::serialization::SerializableTaskList;
+use crate::serialization::SerializableTaskList;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {

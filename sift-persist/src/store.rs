@@ -46,7 +46,7 @@ pub(crate) mod memory {
     use anyhow::bail;
 
     use super::{Store, Transaction};
-    use crate::persist::{load_tasks, save_tasks, Task, TaskId, TaskList};
+    use crate::{load_tasks, save_tasks, Task, TaskId, TaskList};
 
     #[derive(Default, Clone)]
     struct Record {

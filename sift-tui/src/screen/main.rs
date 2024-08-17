@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState, StatefulWidget};
-use sift_core::persist::{Store, Task};
+use sift_persist::{Store, Task};
 
 use crate::screen::Screen;
 use crate::ui_state::CommonState;

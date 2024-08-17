@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 
 use ratatui::crossterm;
-use sift_core::persist::{Store, TaskId, Transaction};
+use sift_persist::{Store, TaskId, Transaction};
 use tui_prompts::{State as _, TextPrompt};
 
 use crate::screen;

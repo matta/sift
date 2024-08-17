@@ -6,19 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.86"
-automerge = "0.5.11"
-autosurgeon = "0.8.5"
-chrono = "0.4.38"
 dirs = "5.0.1"
-im = "15.1.0"
-thiserror = "1.0.63"
-
-[dependencies.uuid]
-version = "1.10.0"
-features = [
-    "v7", # Lets you generate random UUIDs
-]
 
 [dev-dependencies]
 automerge-test = "0.4.3"

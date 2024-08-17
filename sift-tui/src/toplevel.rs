@@ -1,31 +1,13 @@
-#![warn(clippy::all, clippy::pedantic)]
-#![allow(clippy::uninlined_format_args)]
-#![deny(unused_crate_dependencies)]
-#![deny(unused_extern_crates)]
-
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use anyhow::Result;
 use cli_log::{debug, warn};
 use ratatui::backend::CrosstermBackend;
 use ratatui::{crossterm, Terminal};
 
-mod keys;
-mod screen;
-mod terminal_input;
-mod tui;
-mod ui_state;
-
-#[must_use]
-pub fn save_name() -> PathBuf {
-    let mut path = if let Some(home) = dirs::home_dir() {
-        home
-    } else {
-        PathBuf::new()
-    };
-    path.push(".sift.sift");
-    path
-}
+use crate::terminal_input;
+use crate::tui;
+use crate::ui_state;
 
 fn handle_key_event(state: &mut ui_state::State, key_event: crossterm::event::KeyEvent) {
     // TODO: do this combining earlier, properly.

@@ -1079,6 +1079,14 @@ checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 name = "sift-core"
 version = "0.1.0"
 dependencies = [
+ "automerge-test",
+ "dirs",
+]
+
+[[package]]
+name = "sift-persist"
+version = "0.1.0"
+dependencies = [
  "anyhow",
  "automerge",
  "automerge-test",
@@ -1098,11 +1106,11 @@ dependencies = [
  "chrono",
  "cli-log",
  "crokey",
- "dirs",
  "itertools 0.13.0",
  "ratatui",
  "serde",
  "sift-core",
+ "sift-persist",
  "thiserror",
  "toml",
  "tui-prompts",

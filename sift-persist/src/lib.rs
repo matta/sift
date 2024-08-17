@@ -1,5 +1,3 @@
-//! Persistence layer
-
 pub use document::{load_tasks, save_tasks, TaskList};
 pub use task::{Task, TaskId};
 

@@ -77,7 +77,7 @@ impl Chunk {
     }
 
     fn compute_crc(&self) -> u32 {
-        let mut digest = crate::persist::crc::Digest::new();
+        let mut digest = crate::crc::Digest::new();
         digest.update(&self.chunk_type);
         digest.update(self.data.as_slice());
         digest.finalize()
