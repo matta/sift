@@ -7,13 +7,15 @@ This is a toy todo list application I have written to explore Rust.
 
 use anyhow::Result;
 use cli_log::{debug, init_cli_log, warn};
+use sift_core::save_name;
+use sift_tui::run;
 
 fn main() -> Result<()> {
     init_cli_log!();
-    let save_name = sift::save_name();
+    let save_name = save_name();
     debug!("save name {}", save_name.display());
 
-    sift::run(&save_name)?;
+    run(&save_name)?;
 
     Ok(())
 }

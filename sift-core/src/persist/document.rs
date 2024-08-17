@@ -29,7 +29,7 @@ pub enum Error {
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
-pub(crate) struct TaskList {
+pub struct TaskList {
     pub tasks: Vec<Task>,
 }
 

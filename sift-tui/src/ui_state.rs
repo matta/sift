@@ -10,8 +10,8 @@ use std::path::Path;
 use anyhow::Result;
 use chrono::Datelike;
 use itertools::Itertools;
+use sift_core::persist::{MemoryStore, Store, Task, TaskId};
 
-use crate::persist::{MemoryStore, Store, Task, TaskId};
 use crate::screen::{self, Screen};
 
 fn today() -> chrono::NaiveDate {

@@ -2,9 +2,9 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 
 use ratatui::crossterm;
+use sift_core::persist::{Store, TaskId, Transaction};
 use tui_prompts::{State as _, TextPrompt};
 
-use crate::persist::{Store, TaskId, Transaction};
 use crate::screen;
 use crate::ui_state::CommonState;
 
@@ -70,7 +70,7 @@ impl screen::Screen for State {
 
     fn render(&self, _conext: &mut CommonState, frame: &mut ratatui::Frame) {
         let prompt = TextPrompt::new(Cow::Borrowed("edit"));
-        frame.render_stateful_widget(prompt, frame.size(), &mut self.text.borrow_mut());
+        frame.render_stateful_widget(prompt, frame.area(), &mut self.text.borrow_mut());
         let (x, y) = self.text.borrow().cursor();
         frame.set_cursor(x, y);
     }

@@ -11,7 +11,6 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::{crossterm, Terminal};
 
 mod keys;
-mod persist;
 mod screen;
 mod terminal_input;
 mod tui;

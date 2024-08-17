@@ -1,6 +1,6 @@
 use super::{Task, TaskId};
 
-pub(crate) trait Transaction {
+pub trait Transaction {
     fn get_task(&mut self, id: &TaskId) -> anyhow::Result<Task>;
 
     fn put_task(&mut self, task: &Task) -> anyhow::Result<()>;
@@ -18,7 +18,7 @@ pub(crate) trait Transaction {
     fn commit(self: Box<Self>) -> anyhow::Result<()>;
 }
 
-pub(crate) trait Store {
+pub trait Store {
     fn get_task(&mut self, id: &TaskId) -> anyhow::Result<Task>;
 
     fn list_tasks(&mut self) -> anyhow::Result<Vec<Task>>;
@@ -124,7 +124,7 @@ pub(crate) mod memory {
     }
 
     #[derive(Default)]
-    pub(crate) struct MemoryStore {
+    pub struct MemoryStore {
         current: Record,
         undo_stack: Vec<Record>,
         redo_stack: Vec<Record>,
@@ -179,7 +179,7 @@ pub(crate) mod memory {
             Self::default()
         }
 
-        pub(crate) fn load(path: &Path) -> Result<MemoryStore, anyhow::Error> {
+        pub fn load(path: &Path) -> Result<MemoryStore, anyhow::Error> {
             let tasks = load_tasks(path)?;
 
             let order: im::Vector<TaskId> = tasks.tasks.iter().map(Task::id).collect();
@@ -196,7 +196,7 @@ pub(crate) mod memory {
             })
         }
 
-        pub(crate) fn save(&self, path: &Path) -> Result<(), anyhow::Error> {
+        pub fn save(&self, path: &Path) -> Result<(), anyhow::Error> {
             let tasks = TaskList {
                 tasks: self
                     .current

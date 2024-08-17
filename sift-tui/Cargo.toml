@@ -1,0 +1,27 @@
+[package]
+name = "sift-tui"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sift-core = { path = "../sift-core" }
+anyhow = "1.0.86"
+chrono = "0.4.38"
+cli-log = "2.0.0"
+crokey = "1.1.0"
+dirs = "5.0.1"
+itertools = "0.13.0"
+ratatui = "0.28.0"
+serde = "1.0.206"
+thiserror = "1.0.63"
+toml = "0.8.19"
+tui-prompts = "0.4.0"
+
+[dev-dependencies]
+automerge-test = "0.4.3"
+
+[lints.clippy]
+# TODO: work through uses of unwrap and turn this on.
+#unwrap_used = "deny"
