@@ -96,8 +96,8 @@ pub fn load_tasks(filename: &Path) -> Result<TaskList, Error> {
 mod tests {
     use automerge_test::{assert_doc, list, map};
 
-    use crate::persist::document::{Task, TaskList};
-    use crate::persist::*;
+    use crate::document::{Task, TaskList};
+    use crate::serialization::SerializableTaskList;
 
     #[test]
     fn test() {
@@ -129,7 +129,7 @@ mod tests {
 
         let mut doc = automerge::AutoCommit::new();
         {
-            let value: serialization::SerializableTaskList = task_list.clone().into();
+            let value: SerializableTaskList = task_list.clone().into();
             autosurgeon::reconcile(&mut doc, &value).expect("reconcile must succeed");
         }
 
@@ -165,7 +165,7 @@ mod tests {
             }
         );
 
-        let todo_list2: serialization::SerializableTaskList =
+        let todo_list2: SerializableTaskList =
             autosurgeon::hydrate(&doc).expect("hydrate must succeed");
         let todo_list2: TaskList = todo_list2.into();
         assert_eq!(task_list, todo_list2);

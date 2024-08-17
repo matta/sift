@@ -8,9 +8,6 @@ edition = "2021"
 [dependencies]
 dirs = "5.0.1"
 
-[dev-dependencies]
-automerge-test = "0.4.3"
-
 [lints.clippy]
 # TODO: work through uses of unwrap and turn this on.
 #unwrap_used = "deny"
