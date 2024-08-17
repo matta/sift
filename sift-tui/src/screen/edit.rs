@@ -72,6 +72,6 @@ impl screen::Screen for State {
         let prompt = TextPrompt::new(Cow::Borrowed("edit"));
         frame.render_stateful_widget(prompt, frame.area(), &mut self.text.borrow_mut());
         let (x, y) = self.text.borrow().cursor();
-        frame.set_cursor(x, y);
+        frame.set_cursor_position((x, y));
     }
 }

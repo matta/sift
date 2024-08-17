@@ -126,6 +126,6 @@ impl screen::Screen for State {
             .block(Block::default().borders(Borders::ALL).title("Tasks"))
             .highlight_symbol("> ");
 
-        items.render(frame.size(), frame.buffer_mut(), state);
+        items.render(frame.area(), frame.buffer_mut(), state);
     }
 }
