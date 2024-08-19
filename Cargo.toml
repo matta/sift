@@ -1,3 +1,5 @@
 [workspace]
 resolver = "2"
-members = ["sift-core", "sift-persist", "sift-tui"]
+members = ["sift-core", "sift-egui", "sift-persist", "sift-tui"]
+
+[workspace.lints]
