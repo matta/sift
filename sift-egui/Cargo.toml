@@ -7,6 +7,9 @@ edition = "2021"
 workspace = true
 
 [dependencies]
+sift-core = { path = "../sift-core" }
+sift-persist = { path = "../sift-persist" }
 eframe = "0.28.1"
 egui_extras = { version = "0.28.1", features = [ "image" ] }
 env_logger = "0.11.5"
+anyhow = "1.0.86"
