@@ -59,21 +59,25 @@ impl State {
         tasks
     }
 
+    pub fn toggle_id(&mut self, id: TaskId) {
+        self.store
+            .with_transaction(|txn| {
+                let mut task = txn.get_task(&id)?;
+                let completed = if task.completed().is_some() {
+                    None
+                } else {
+                    Some(chrono::Utc::now())
+                };
+                task.set_completed(completed);
+                txn.put_task(&task)?;
+                Ok(())
+            })
+            .expect("FIXME: propagate errors");
+    }
+
     pub fn toggle(&mut self) {
         if let Some(id) = self.selected {
-            self.store
-                .with_transaction(|txn| {
-                    let mut task = txn.get_task(&id)?;
-                    let completed = if task.completed().is_some() {
-                        None
-                    } else {
-                        Some(chrono::Utc::now())
-                    };
-                    task.set_completed(completed);
-                    txn.put_task(&task)?;
-                    Ok(())
-                })
-                .expect("FIXME: propagate errors");
+            self.toggle_id(id);
         }
     }
 

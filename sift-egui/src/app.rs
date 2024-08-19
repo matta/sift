@@ -1,7 +1,8 @@
-use std::path::Path;
+use std::{iter, path::Path};
 
 use eframe::egui::{self, vec2, ScrollArea, TextStyle};
 
+use itertools::Itertools as _;
 use sift_persist::MemoryStore;
 
 use crate::state::State;
@@ -24,32 +25,26 @@ impl eframe::App for App {
             ui.heading("Todos");
 
             let tasks = self.state.list_tasks_for_display();
+            let mut checked = tasks
+                .iter()
+                .map(|task| task.completed().is_some())
+                .collect_vec();
             let height = TextStyle::Body.resolve(ui.style()).size;
             ScrollArea::vertical().show_rows(ui, height, tasks.len(), |ui, row_range| {
                 ui.allocate_space(vec2(ui.available_width(), 0.0));
-                for i in row_range {
-                    if let Some(value) = tasks.get(i) {
-                        ui.label(value.title());
+                for (index, (task, checked)) in
+                    iter::zip(tasks.iter(), checked.iter_mut()).enumerate()
+                {
+                    if !row_range.contains(&index) {
+                        continue;
+                    }
+                    if ui.checkbox(checked, task.title()).changed()
+                        && *checked != task.completed().is_some()
+                    {
+                        self.state.toggle_id(task.id());
                     }
                 }
             });
-
-            // ui.horizontal(|ui| {
-            //     let name_label = ui.label("Your name: ");
-            //     ui.text_edit_singleline(&mut name)
-            //         .labelled_by(name_label.id);
-            // });
-            // let mut age = 42;
-            // ui.add(egui::Slider::new(&mut age, 0..=120).text("age"));
-            // if ui.button("Increment").clicked() {
-            //     age += 1;
-            // }
-            // ui.label(format!("Hello '{}', age {}", name, age));
-            // if age != 42 {
-            //     println!("age now {age}");
-            // }
-
-            // ui.image(egui::include_image!("ferris.png"));
         });
     }
 }
