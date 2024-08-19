@@ -3170,9 +3170,11 @@ name = "sift-egui"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "eframe",
  "egui_extras",
  "env_logger",
+ "itertools 0.13.0",
  "sift-core",
  "sift-persist",
 ]
