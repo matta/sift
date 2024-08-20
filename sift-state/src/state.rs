@@ -19,13 +19,13 @@ fn next_week() -> chrono::NaiveDate {
 }
 
 #[derive(Default)]
-pub(crate) struct State {
+pub struct State {
     pub store: MemoryStore,
     pub selected: Option<TaskId>,
 }
 
 impl State {
-    pub(crate) fn new(store: MemoryStore) -> Self {
+    pub fn new(store: MemoryStore) -> Self {
         let mut state = State {
             store,
             selected: None,

@@ -1,0 +1,12 @@
+[package]
+name = "sift-state"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sift-persist = { path = "../sift-persist" }
+chrono = "0.4.38"
+itertools = "0.13.0"
+
+[lints]
+workspace = true

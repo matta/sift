@@ -3,8 +3,7 @@ use std::path::Path;
 use eframe::egui::{self, vec2, ScrollArea, TextStyle};
 
 use sift_persist::MemoryStore;
-
-use crate::state::State;
+use sift_state::State;
 
 pub struct App {
     state: State,

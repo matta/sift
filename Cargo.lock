@@ -3177,6 +3177,7 @@ dependencies = [
  "itertools 0.13.0",
  "sift-core",
  "sift-persist",
+ "sift-state",
 ]
 
 [[package]]
@@ -3192,6 +3193,15 @@ dependencies = [
  "im",
  "thiserror",
  "uuid",
+]
+
+[[package]]
+name = "sift-state"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "itertools 0.13.0",
+ "sift-persist",
 ]
 
 [[package]]
