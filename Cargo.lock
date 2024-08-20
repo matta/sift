@@ -4242,7 +4242,11 @@ dependencies = [
 name = "sift-iced"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "iced",
+ "sift-core",
+ "sift-persist",
+ "sift-state",
 ]
 
 [[package]]

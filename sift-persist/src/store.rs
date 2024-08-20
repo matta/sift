@@ -21,7 +21,7 @@ pub trait Transaction {
 pub trait Store {
     fn get_task(&mut self, id: &TaskId) -> anyhow::Result<Task>;
 
-    fn list_tasks(&mut self) -> anyhow::Result<Vec<Task>>;
+    fn list_tasks(&self) -> anyhow::Result<Vec<Task>>;
 
     fn undo(&mut self) -> anyhow::Result<()>;
 
@@ -41,7 +41,7 @@ pub trait Store {
 }
 
 pub(crate) mod memory {
-    use std::path::Path;
+    use std::{fmt, path::Path};
 
     use anyhow::bail;
 
@@ -110,7 +110,7 @@ pub(crate) mod memory {
             self.order.insert(index, *id);
         }
 
-        fn list_tasks(&mut self) -> Vec<Task> {
+        fn list_tasks(&self) -> Vec<Task> {
             self.order
                 .iter()
                 .map(|id| {
@@ -128,6 +128,16 @@ pub(crate) mod memory {
         current: Record,
         undo_stack: Vec<Record>,
         redo_stack: Vec<Record>,
+    }
+
+    impl fmt::Debug for MemoryStore {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            f.debug_struct("MemoryStore")
+                .field("current", &"Record")
+                .field("undo_stack", &format_args!("Vec<Record>"))
+                .field("redo_stack", &format_args!("Vec<Record>"))
+                .finish()
+        }
     }
 
     struct MemoryTransaction<'a> {
@@ -240,7 +250,7 @@ pub(crate) mod memory {
             self.get_task_impl(id)
         }
 
-        fn list_tasks(&mut self) -> anyhow::Result<Vec<Task>> {
+        fn list_tasks(&self) -> anyhow::Result<Vec<Task>> {
             let tasks = self.current.list_tasks();
             Ok(tasks)
         }

@@ -49,7 +49,7 @@ impl State {
             )
     }
 
-    pub fn list_tasks_for_display(&mut self) -> Vec<Task> {
+    pub fn list_tasks_for_display(&self) -> Vec<Task> {
         let today = today();
         let mut tasks = self.store.list_tasks().expect("XXX: handle error");
         tasks.retain(|task| {
