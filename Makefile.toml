@@ -1,12 +1,14 @@
 [tasks.format-check]
 description = "Fix code formatting"
 toolchain = "nightly"
+workspace = false
 command = "cargo"
 args = ["fmt", "--all", "--check"]
 
 [tasks.format]
 description = "Fix code formatting"
 toolchain = "nightly"
+workspace = false
 command = "cargo"
 args = ["fmt", "--all"]
 
