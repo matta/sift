@@ -6,7 +6,6 @@ use sift_persist::{Store, TaskId, Transaction};
 use tui_prompts::{State as _, TextPrompt};
 
 use crate::screen;
-use crate::ui_state::CommonState;
 
 pub(crate) struct State {
     id: TaskId,
@@ -23,7 +22,7 @@ impl State {
 
     fn do_handle_key_event(
         &mut self,
-        context: &mut CommonState,
+        context: &mut sift_state::State,
         key_combination: crokey::KeyCombination,
     ) -> Option<Box<dyn screen::Screen>> {
         let mut text_state = self.text.borrow_mut();
@@ -58,7 +57,7 @@ fn set_title(txn: &mut dyn Transaction, id: &TaskId, title: &str) -> Result<(), 
 impl screen::Screen for State {
     fn handle_key_event(
         mut self: Box<Self>,
-        context: &mut CommonState,
+        context: &mut sift_state::State,
         key_combination: crokey::KeyCombination,
     ) -> Box<dyn screen::Screen> {
         if let Some(screen) = self.do_handle_key_event(context, key_combination) {
@@ -68,7 +67,7 @@ impl screen::Screen for State {
         }
     }
 
-    fn render(&self, _conext: &mut CommonState, frame: &mut ratatui::Frame) {
+    fn render(&self, _conext: &mut sift_state::State, frame: &mut ratatui::Frame) {
         let prompt = TextPrompt::new(Cow::Borrowed("edit"));
         frame.render_stateful_widget(prompt, frame.area(), &mut self.text.borrow_mut());
         let (x, y) = self.text.borrow().cursor();

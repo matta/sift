@@ -3209,14 +3209,13 @@ name = "sift-tui"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "chrono",
  "cli-log",
  "crokey",
- "itertools 0.13.0",
  "ratatui",
  "serde",
  "sift-core",
  "sift-persist",
+ "sift-state",
  "thiserror",
  "toml",
  "tui-prompts",

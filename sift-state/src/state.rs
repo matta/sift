@@ -34,7 +34,7 @@ impl State {
         state
     }
 
-    pub(crate) fn index_of_id(&mut self, id: Option<TaskId>) -> Option<usize> {
+    pub fn index_of_id(&mut self, id: Option<TaskId>) -> Option<usize> {
         self.list_tasks_for_display()
             .into_iter()
             .enumerate()
@@ -81,7 +81,7 @@ impl State {
         }
     }
 
-    pub(crate) fn snooze(&mut self) {
+    pub fn snooze(&mut self) {
         if let Some(id) = self.selected {
             self.store
                 .with_transaction(|txn| {
@@ -146,15 +146,15 @@ impl State {
         last
     }
 
-    pub(crate) fn next(&mut self) {
+    pub fn next(&mut self) {
         self.selected = self.next_id();
     }
 
-    pub(crate) fn previous(&mut self) {
+    pub fn previous(&mut self) {
         self.selected = self.previous_id();
     }
 
-    pub(crate) fn move_up(&mut self) {
+    pub fn move_up(&mut self) {
         if let Some(selected) = self.selected {
             let ids = self.task_ids_for_move();
             for (prev_prev_id, _, id) in ids.iter().circular_tuple_windows() {
@@ -185,7 +185,7 @@ impl State {
             .collect()
     }
 
-    pub(crate) fn move_down(&mut self) {
+    pub fn move_down(&mut self) {
         if let Some(selected) = self.selected {
             let ids = self.task_ids_for_move();
             for (id, successor_id) in ids.iter().circular_tuple_windows() {
@@ -199,7 +199,7 @@ impl State {
         }
     }
 
-    pub(crate) fn delete_selected(&mut self) {
+    pub fn delete_selected(&mut self) {
         let mut deletions = Vec::new();
         let mut new_selected = None;
         let mut saw_selected = false;
@@ -228,11 +228,11 @@ impl State {
             .expect("TODO: handle errors here");
     }
 
-    pub(crate) fn undo(&mut self) {
+    pub fn undo(&mut self) {
         let _ignored = self.store.undo();
     }
 
-    pub(crate) fn redo(&mut self) {
+    pub fn redo(&mut self) {
         let _ignored = self.store.redo();
     }
 }
