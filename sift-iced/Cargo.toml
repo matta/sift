@@ -1,0 +1,13 @@
+[package]
+name = "sift-iced"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[dependencies.iced]
+git = "https://github.com/iced-rs/iced.git"
+rev = "9b99b93"
+
+[lints]
+workspace = true
