@@ -1,8 +1,7 @@
-use std::{iter, path::Path};
+use std::path::Path;
 
 use eframe::egui::{self, vec2, ScrollArea, TextStyle};
 
-use itertools::Itertools as _;
 use sift_persist::MemoryStore;
 
 use crate::state::State;
@@ -25,22 +24,17 @@ impl eframe::App for App {
             ui.heading("Todos");
 
             let tasks = self.state.list_tasks_for_display();
-            let mut checked = tasks
-                .iter()
-                .map(|task| task.completed().is_some())
-                .collect_vec();
             let height = TextStyle::Body.resolve(ui.style()).size;
             ScrollArea::vertical().show_rows(ui, height, tasks.len(), |ui, row_range| {
                 ui.allocate_space(vec2(ui.available_width(), 0.0));
-                for (index, (task, checked)) in
-                    iter::zip(tasks.iter(), checked.iter_mut()).enumerate()
-                {
+                for (index, task) in tasks.iter().enumerate() {
                     if !row_range.contains(&index) {
                         continue;
                     }
-                    if ui.checkbox(checked, task.title()).changed()
-                        && *checked != task.completed().is_some()
-                    {
+                    let checked = task.completed().is_some();
+                    let mut checkbox_checked = checked;
+                    ui.checkbox(&mut checkbox_checked, task.title());
+                    if checkbox_checked != checked {
                         self.state.toggle_id(task.id());
                     }
                 }
