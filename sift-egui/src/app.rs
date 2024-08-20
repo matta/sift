@@ -1,7 +1,6 @@
 use std::path::Path;
 
 use eframe::egui::{self, vec2, ScrollArea, TextStyle};
-
 use sift_persist::MemoryStore;
 use sift_state::State;
 
