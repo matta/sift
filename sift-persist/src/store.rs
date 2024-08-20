@@ -41,7 +41,8 @@ pub trait Store {
 }
 
 pub(crate) mod memory {
-    use std::{fmt, path::Path};
+    use std::fmt;
+    use std::path::Path;
 
     use anyhow::bail;
 

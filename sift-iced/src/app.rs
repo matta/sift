@@ -1,10 +1,7 @@
-use iced::{
-    widget::{center, column, container, keyed_column, row, scrollable, text},
-    Alignment::Center,
-    Element,
-    Length::Fill,
-};
-
+use iced::widget::{center, column, container, keyed_column, row, scrollable, text};
+use iced::Alignment::Center;
+use iced::Element;
+use iced::Length::Fill;
 use sift_persist::MemoryStore;
 use sift_state::State;
 
@@ -101,9 +98,9 @@ impl App {
 
 //             let tasks = self.state.list_tasks_for_display();
 //             let height = TextStyle::Body.resolve(ui.style()).size;
-//             ScrollArea::vertical().show_rows(ui, height, tasks.len(), |ui, row_range| {
-//                 ui.allocate_space(vec2(ui.available_width(), 0.0));
-//                 for (index, task) in tasks.iter().enumerate() {
+//             ScrollArea::vertical().show_rows(ui, height, tasks.len(), |ui,
+// row_range| {                 ui.allocate_space(vec2(ui.available_width(),
+// 0.0));                 for (index, task) in tasks.iter().enumerate() {
 //                     if !row_range.contains(&index) {
 //                         continue;
 //                     }
