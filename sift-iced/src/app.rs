@@ -87,7 +87,7 @@ impl App {
         };
 
         let content = column![title, tasks];
-        scrollable(container(content).center_x(Fill)).into()
+        scrollable(container(content).center_x(Fill).padding(20)).into()
     }
 }
 
