@@ -5,7 +5,7 @@
 #![windows_subsystem = "windows"]
 
 use sift_core::save_name;
-use sift_persist::MemoryStore;
+use sift_persist::{MemoryStore, Store as _, Task};
 use sift_state::State;
 use xilem::view::{button, checkbox, flex, textbox, Axis};
 use xilem::{EventLoop, WidgetView, Xilem};
@@ -20,7 +20,16 @@ impl App {
         if self.next_task.is_empty() {
             return;
         }
-        unimplemented!();
+        // FIXME: make generating new tasks less cumbersome
+        // FIXME: handle errors
+        let task = Task::new(Task::new_id(), self.next_task.clone(), None, None, None);
+        let previous = None;
+        self.state
+            .store
+            .with_transaction(|txn| txn.insert_task(previous, &task))
+            .expect("FIXME: handle error");
+        self.next_task.clear();
+        self.save();
     }
 
     fn save(&self) {
