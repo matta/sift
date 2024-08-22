@@ -2,12 +2,12 @@ use iced::widget::{center, checkbox, column, container, keyed_column, row, scrol
 use iced::Alignment::Center;
 use iced::Element;
 use iced::Length::Fill;
+use sift_core::save_name;
 use sift_persist::{MemoryStore, TaskId};
 use sift_state::State;
 
-pub enum App {
-    Loading,
-    Loaded(LoadedApp),
+pub struct App {
+    loaded: Option<LoadedApp>,
 }
 
 #[derive(Debug)]
@@ -20,22 +20,19 @@ pub enum Message {
 impl App {
     pub fn new() -> (Self, iced::Task<Message>) {
         (
-            App::Loading,
+            Self { loaded: None },
             iced::Task::perform(App::load(), Message::Loaded),
         )
     }
 
     async fn load() -> anyhow::Result<MemoryStore> {
-        let path = sift_core::save_name();
-        MemoryStore::load(&path)
+        MemoryStore::load(&save_name())
     }
 
     pub fn update(&mut self, message: Message) {
-        match self {
-            App::Loading => {
-                self.update_loading(message);
-            }
-            App::Loaded(loaded) => loaded.update(message),
+        match &mut self.loaded {
+            None => self.update_loading(message),
+            Some(loaded) => loaded.update(message),
         }
     }
 
@@ -43,7 +40,7 @@ impl App {
         match message {
             Message::Loaded(result) => match result {
                 Ok(store) => {
-                    *self = App::Loaded(LoadedApp {
+                    self.loaded = Some(LoadedApp {
                         state: State::new(store),
                     })
                 }
@@ -56,9 +53,9 @@ impl App {
     }
 
     pub fn view(&self) -> Element<Message> {
-        match self {
-            App::Loading => self.view_loading(),
-            App::Loaded(loaded) => loaded.view(),
+        match &self.loaded {
+            None => self.view_loading(),
+            Some(loaded) => loaded.view(),
         }
     }
 
@@ -104,10 +101,16 @@ impl LoadedApp {
                 // TODO: add a method to state that sets completion given a bool.
                 if let Some(task) = self.state.get_task(&id) {
                     if task.completed().is_some() != checked {
-                        self.state.toggle_id(id)
+                        self.state.toggle_id(id);
+                        self.save();
                     }
                 }
             }
         }
+    }
+
+    fn save(&self) {
+        // TODO: don't use unwrap() below.
+        self.state.store.save(&save_name()).unwrap();
     }
 }
