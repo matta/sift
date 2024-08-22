@@ -4224,6 +4224,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "sift-cursive"
+version = "0.1.0"
+
+[[package]]
 name = "sift-egui"
 version = "0.1.0"
 dependencies = [
