@@ -1,0 +1,13 @@
+[package]
+name = "sift-xilem"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sift-core = { path = "../sift-core" }
+sift-persist = { path = "../sift-persist" }
+sift-state= { path = "../sift-state" }
+xilem = { rev = "bd83ed2", git = "https://github.com/linebender/xilem.git" }
+
+[lints]
+workspace = true

@@ -66,10 +66,10 @@ impl State {
         tasks
     }
 
-    pub fn toggle_id(&mut self, id: TaskId) {
+    pub fn toggle_id(&mut self, id: &TaskId) {
         self.store
             .with_transaction(|txn| {
-                let mut task = txn.get_task(&id)?;
+                let mut task = txn.get_task(id)?;
                 let completed = if task.completed().is_some() {
                     None
                 } else {
@@ -84,7 +84,7 @@ impl State {
 
     pub fn toggle(&mut self) {
         if let Some(id) = self.selected {
-            self.toggle_id(id);
+            self.toggle_id(&id);
         }
     }
 

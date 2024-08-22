@@ -101,7 +101,7 @@ impl LoadedApp {
                 // TODO: add a method to state that sets completion given a bool.
                 if let Some(task) = self.state.get_task(&id) {
                     if task.completed().is_some() != checked {
-                        self.state.toggle_id(id);
+                        self.state.toggle_id(&id);
                         self.save();
                     }
                 }

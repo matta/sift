@@ -33,7 +33,7 @@ impl eframe::App for App {
                     let mut checkbox_checked = checked;
                     ui.checkbox(&mut checkbox_checked, task.title());
                     if checkbox_checked != checked {
-                        self.state.toggle_id(task.id());
+                        self.state.toggle_id(&task.id());
                     }
                 }
             });

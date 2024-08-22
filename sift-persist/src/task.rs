@@ -88,6 +88,11 @@ impl Task {
         self.completed
     }
 
+    #[must_use]
+    pub fn is_completed(&self) -> bool {
+        self.completed.is_some()
+    }
+
     pub fn set_title(&mut self, title: String) {
         self.title = title;
     }
