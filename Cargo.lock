@@ -3198,7 +3198,7 @@ dependencies = [
 [[package]]
 name = "masonry"
 version = "0.2.0"
-source = "git+https://github.com/linebender/xilem.git?rev=bd83ed2#bd83ed25b8b7b329b6c9b3852fcd59026006e3a4"
+source = "git+https://github.com/linebender/xilem.git#bd83ed25b8b7b329b6c9b3852fcd59026006e3a4"
 dependencies = [
  "accesskit 0.16.0",
  "accesskit_winit 0.22.0",
@@ -6818,7 +6818,7 @@ checksum = "a67300977d3dc3f8034dae89778f502b6ba20b269527b3223ba59c0cf393bb8a"
 [[package]]
 name = "xilem"
 version = "0.1.0"
-source = "git+https://github.com/linebender/xilem.git?rev=bd83ed2#bd83ed25b8b7b329b6c9b3852fcd59026006e3a4"
+source = "git+https://github.com/linebender/xilem.git#bd83ed25b8b7b329b6c9b3852fcd59026006e3a4"
 dependencies = [
  "accesskit 0.16.0",
  "masonry",
@@ -6833,7 +6833,7 @@ dependencies = [
 [[package]]
 name = "xilem_core"
 version = "0.1.0"
-source = "git+https://github.com/linebender/xilem.git?rev=bd83ed2#bd83ed25b8b7b329b6c9b3852fcd59026006e3a4"
+source = "git+https://github.com/linebender/xilem.git#bd83ed25b8b7b329b6c9b3852fcd59026006e3a4"
 dependencies = [
  "tracing",
 ]
