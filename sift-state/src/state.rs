@@ -34,6 +34,13 @@ impl State {
         state
     }
 
+    pub fn get_task(&self, id: &TaskId) -> Option<Task> {
+        match self.store.get_task(id) {
+            Ok(task) => Some(task),
+            Err(_e) => None,
+        }
+    }
+
     pub fn index_of_id(&mut self, id: Option<TaskId>) -> Option<usize> {
         self.list_tasks_for_display()
             .into_iter()

@@ -1,7 +1,7 @@
 use super::{Task, TaskId};
 
 pub trait Transaction {
-    fn get_task(&mut self, id: &TaskId) -> anyhow::Result<Task>;
+    fn get_task(&self, id: &TaskId) -> anyhow::Result<Task>;
 
     fn put_task(&mut self, task: &Task) -> anyhow::Result<()>;
 
@@ -19,7 +19,7 @@ pub trait Transaction {
 }
 
 pub trait Store {
-    fn get_task(&mut self, id: &TaskId) -> anyhow::Result<Task>;
+    fn get_task(&self, id: &TaskId) -> anyhow::Result<Task>;
 
     fn list_tasks(&self) -> anyhow::Result<Vec<Task>>;
 
@@ -56,7 +56,7 @@ pub(crate) mod memory {
     }
 
     impl Record {
-        fn get_task(&mut self, id: &TaskId) -> Result<Task, anyhow::Error> {
+        fn get_task(&self, id: &TaskId) -> Result<Task, anyhow::Error> {
             self.tasks
                 .get(id)
                 .map_or_else(|| bail!("task not found"), |task| Ok(task.clone()))
@@ -154,7 +154,7 @@ pub(crate) mod memory {
     }
 
     impl Transaction for MemoryTransaction<'_> {
-        fn get_task(&mut self, id: &TaskId) -> anyhow::Result<Task> {
+        fn get_task(&self, id: &TaskId) -> anyhow::Result<Task> {
             self.store.get_task_impl(id)
         }
 
@@ -237,7 +237,7 @@ pub(crate) mod memory {
             self.undo_stack.push(saved);
         }
 
-        fn get_task_impl(&mut self, id: &TaskId) -> anyhow::Result<Task> {
+        fn get_task_impl(&self, id: &TaskId) -> anyhow::Result<Task> {
             self.current.get_task(id)
         }
 
@@ -247,7 +247,7 @@ pub(crate) mod memory {
     }
 
     impl Store for MemoryStore {
-        fn get_task(&mut self, id: &TaskId) -> anyhow::Result<Task> {
+        fn get_task(&self, id: &TaskId) -> anyhow::Result<Task> {
             self.get_task_impl(id)
         }
 
