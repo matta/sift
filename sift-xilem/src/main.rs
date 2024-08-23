@@ -73,8 +73,9 @@ fn app_logic(app: &mut App) -> impl WidgetView<App> {
                     }
                 },
             );
-            let delete_button = button("Delete", move |_: &mut App| {
-                unimplemented!();
+            let delete_button = button("Delete", move |app: &mut App| {
+                app.state.delete_task(&id);
+                app.save();
             });
             flex((checkbox, delete_button)).direction(Axis::Horizontal)
         })

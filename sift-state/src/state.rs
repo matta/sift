@@ -5,6 +5,8 @@ The `State` struct contains the application's state.  It is the
 central data structure for the application.
 */
 
+use std::collections::HashSet;
+
 use chrono::Datelike;
 use itertools::Itertools;
 use sift_persist::{MemoryStore, Store, Task, TaskId};
@@ -206,15 +208,13 @@ impl State {
         }
     }
 
-    pub fn delete_selected(&mut self) {
-        let mut deletions = Vec::new();
+    fn delete_tasks(&mut self, ids_to_delete: &[TaskId]) {
+        let id_set: HashSet<_> = ids_to_delete.iter().collect();
         let mut new_selected = None;
         let mut saw_selected = false;
 
         for task in self.list_tasks_for_display() {
-            if task.completed().is_some() {
-                deletions.push(task.id());
-            } else if !saw_selected {
+            if !id_set.contains(&task.id()) && !saw_selected {
                 new_selected = Some(task.id());
             }
             if let Some(selected) = self.selected {
@@ -227,7 +227,7 @@ impl State {
 
         self.store
             .with_transaction(|txn| {
-                for id in &deletions {
+                for id in ids_to_delete {
                     txn.delete_task(id).expect("FIXME: handle error here");
                 }
                 Ok(())
@@ -235,8 +235,27 @@ impl State {
             .expect("TODO: handle errors here");
     }
 
+    pub fn delete_completed(&mut self) {
+        let deletions: Vec<_> = self
+            .list_tasks_for_display()
+            .into_iter()
+            .filter_map(|task| {
+                if task.is_completed() {
+                    Some(task.id())
+                } else {
+                    None
+                }
+            })
+            .collect();
+        self.delete_tasks(&deletions);
+    }
+
+    pub fn delete_task(&mut self, id: &TaskId) {
+        self.delete_tasks(&[*id]);
+    }
+
     pub fn undo(&mut self) {
-        let _ignored = self.store.undo();
+        let _ignored_result = self.store.undo();
     }
 
     pub fn redo(&mut self) {

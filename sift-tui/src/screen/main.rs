@@ -90,7 +90,7 @@ fn do_handle_key_event(
                 return add(common_state);
             }
             keys::Command::Delete => {
-                common_state.delete_selected();
+                common_state.delete_completed();
             }
             keys::Command::Undo => {
                 common_state.undo();
