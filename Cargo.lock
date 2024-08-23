@@ -307,6 +307,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "android_trace"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0d564b0f7a9c9e272c7e43c59f1f09ba04d060774ba7c5fa14c2f966bbd6c4e"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "anstream"
 version = "0.6.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3198,7 +3207,7 @@ dependencies = [
 [[package]]
 name = "masonry"
 version = "0.2.0"
-source = "git+https://github.com/linebender/xilem.git#bd83ed25b8b7b329b6c9b3852fcd59026006e3a4"
+source = "git+https://github.com/linebender/xilem.git#455b6147691b28296b05319c5784de17c81ec48b"
 dependencies = [
  "accesskit 0.16.0",
  "accesskit_winit 0.22.0",
@@ -3217,6 +3226,7 @@ dependencies = [
  "time",
  "tracing",
  "tracing-subscriber",
+ "tracing_android_trace",
  "unicode-segmentation",
  "vello",
  "web-time 1.1.0",
@@ -4223,9 +4233,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.36"
+version = "1.0.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fa76aaf39101c457836aec0ce2316dbdc3ab723cdda1c6bd4e6ad4208acaca7"
+checksum = "b5b9d34b8991d19d98081b46eacdd8eb58c6f2b201139f7c5f643cc155a633af"
 dependencies = [
  "proc-macro2",
 ]
@@ -5452,6 +5462,20 @@ dependencies = [
  "tracing",
  "tracing-core",
  "tracing-log",
+]
+
+[[package]]
+name = "tracing_android_trace"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "84fae205f9c07bfae3d36d199ab985118c90d225ff70a38e7ff3ecbdb4ef61bc"
+dependencies = [
+ "android_trace",
+ "smallvec",
+ "thread_local",
+ "tracing",
+ "tracing-core",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -6818,7 +6842,7 @@ checksum = "a67300977d3dc3f8034dae89778f502b6ba20b269527b3223ba59c0cf393bb8a"
 [[package]]
 name = "xilem"
 version = "0.1.0"
-source = "git+https://github.com/linebender/xilem.git#bd83ed25b8b7b329b6c9b3852fcd59026006e3a4"
+source = "git+https://github.com/linebender/xilem.git#455b6147691b28296b05319c5784de17c81ec48b"
 dependencies = [
  "accesskit 0.16.0",
  "masonry",
@@ -6833,7 +6857,7 @@ dependencies = [
 [[package]]
 name = "xilem_core"
 version = "0.1.0"
-source = "git+https://github.com/linebender/xilem.git#bd83ed25b8b7b329b6c9b3852fcd59026006e3a4"
+source = "git+https://github.com/linebender/xilem.git#455b6147691b28296b05319c5784de17c81ec48b"
 dependencies = [
  "tracing",
 ]
