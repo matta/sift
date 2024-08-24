@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use eframe::egui::{self, vec2, ScrollArea, TextStyle};
+use eframe::egui::{self, ScrollArea};
 use sift_persist::MemoryStore;
 use sift_state::State;
 
@@ -33,13 +33,8 @@ impl eframe::App for App {
             ui.heading("Todos");
 
             let tasks = self.state.list_tasks_for_display();
-            let height = TextStyle::Body.resolve(ui.style()).size;
-            ScrollArea::vertical().show_rows(ui, height, tasks.len(), |ui, row_range| {
-                ui.allocate_space(vec2(ui.available_width(), 0.0));
-                for (index, task) in tasks.iter().enumerate() {
-                    if !row_range.contains(&index) {
-                        continue;
-                    }
+            ScrollArea::vertical().show(ui, |ui| {
+                for task in tasks.iter() {
                     let checked = task.completed().is_some();
                     let mut checkbox_checked = checked;
                     ui.checkbox(&mut checkbox_checked, task.title());
