@@ -22,7 +22,8 @@ impl App {
         }
         // FIXME: make generating new tasks less cumbersome
         // FIXME: handle errors
-        let task = Task::new(Task::new_id(), self.next_task.clone(), None, None, None);
+        let title = self.next_task.clone();
+        let task = Task::new(Task::new_id(), title, None, None, None);
         let previous = None;
         self.state
             .store

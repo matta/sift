@@ -1,12 +1,13 @@
 use std::path::{Path, PathBuf};
 
-use eframe::egui::{self, ScrollArea};
-use sift_persist::MemoryStore;
+use eframe::egui::{self, Button, ScrollArea};
+use sift_persist::{MemoryStore, Store as _, Task, TaskId};
 use sift_state::State;
 
 pub struct App {
     state: State,
     save_path: PathBuf,
+    editing_task: Option<TaskId>,
 }
 
 impl App {
@@ -14,6 +15,7 @@ impl App {
         Ok(Self {
             state: State::new(MemoryStore::load(path)?),
             save_path: path.to_path_buf(),
+            editing_task: None,
         })
     }
 
@@ -34,13 +36,39 @@ impl eframe::App for App {
 
             let tasks = self.state.list_tasks_for_display();
             ScrollArea::vertical().show(ui, |ui| {
+                if ui.add(Button::new("Add a task")).clicked() {
+                    let task = Task::new(Task::new_id(), String::new(), None, None, None);
+                    self.editing_task = Some(task.id());
+                    let previous = None;
+                    self.state
+                        .store
+                        .with_transaction(|txn| txn.insert_task(previous, &task))
+                        .expect("FIXME: handle error");
+                }
                 for task in tasks.iter() {
-                    let checked = task.completed().is_some();
-                    let mut checkbox_checked = checked;
-                    ui.checkbox(&mut checkbox_checked, task.title());
-                    if checkbox_checked != checked {
-                        self.state.toggle_id(&task.id());
-                        self.sift_save();
+                    if self.editing_task == Some(task.id()) {
+                        let mut title = task.title().to_string();
+                        let response = ui.text_edit_singleline(&mut title);
+                        if response.changed() {
+                            let mut task = task.clone();
+                            task.set_title(title);
+                            self.state
+                                .store
+                                .with_transaction(|txn| txn.put_task(&task))
+                                .expect("FIXME: handle error");
+                        }
+                        if response.lost_focus() {
+                            self.editing_task = None;
+                            self.sift_save();
+                        }
+                    } else {
+                        let checked = task.completed().is_some();
+                        let mut checkbox_checked = checked;
+                        ui.checkbox(&mut checkbox_checked, task.title());
+                        if checkbox_checked != checked {
+                            self.state.toggle_id(&task.id());
+                            self.sift_save();
+                        }
                     }
                 }
             });
