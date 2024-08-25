@@ -34,9 +34,9 @@ impl eframe::App for App {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Todos");
 
-            let tasks = self.state.list_tasks_for_display();
             ScrollArea::vertical().show(ui, |ui| {
-                if ui.add(Button::new("Add a task")).clicked() {
+                let add_task_clicked = ui.add(Button::new("Add a task")).clicked();
+                if add_task_clicked {
                     let task = Task::new(Task::new_id(), String::new(), None, None, None);
                     self.editing_task = Some(task.id());
                     let previous = None;
@@ -45,10 +45,14 @@ impl eframe::App for App {
                         .with_transaction(|txn| txn.insert_task(previous, &task))
                         .expect("FIXME: handle error");
                 }
-                for task in tasks.iter() {
+                for task in self.state.list_tasks_for_display().iter() {
                     if self.editing_task == Some(task.id()) {
                         let mut title = task.title().to_string();
                         let response = ui.text_edit_singleline(&mut title);
+                        if add_task_clicked {
+                            // Focus the edited task's title when shown for the first time.
+                            response.request_focus();
+                        }
                         if response.changed() {
                             let mut task = task.clone();
                             task.set_title(title);
