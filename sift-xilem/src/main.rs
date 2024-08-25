@@ -20,17 +20,18 @@ impl App {
         if self.next_task.is_empty() {
             return;
         }
-        // FIXME: make generating new tasks less cumbersome
-        // FIXME: handle errors
-        let title = self.next_task.clone();
+        let title = std::mem::take(&mut self.next_task);
+        self.store_new_task(title);
+        self.save();
+    }
+
+    fn store_new_task(&mut self, title: String) {
         let task = Task::new(Task::new_id(), title, None, None, None);
         let previous = None;
         self.state
             .store
             .with_transaction(|txn| txn.insert_task(previous, &task))
             .expect("FIXME: handle error");
-        self.next_task.clear();
-        self.save();
     }
 
     fn save(&self) {
