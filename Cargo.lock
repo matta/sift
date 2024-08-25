@@ -2022,12 +2022,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fnv"
-version = "1.0.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
-
-[[package]]
 name = "font-types"
 version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3207,13 +3201,12 @@ dependencies = [
 [[package]]
 name = "masonry"
 version = "0.2.0"
-source = "git+https://github.com/linebender/xilem.git#c77c6ecb685ad13698de047e080107a48e52ab97"
+source = "git+https://github.com/linebender/xilem.git#4cddfc5157c8eabb26974c6234a29d45ad52a92f"
 dependencies = [
  "accesskit 0.16.0",
  "accesskit_winit 0.22.0",
  "cursor-icon",
  "dpi 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "fnv",
  "futures-intrusive",
  "image",
  "nv-flip",
@@ -4293,9 +4286,9 @@ checksum = "f60fcc7d6849342eff22c4350c8b9a989ee8ceabc4b481253e8946b9fe83d684"
 
 [[package]]
 name = "ratatui"
-version = "0.28.0"
+version = "0.28.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ba6a365afbe5615999275bea2446b970b10a41102500e27ce7678d50d978303"
+checksum = "fdef7f9be5c0122f890d58bdf4d964349ba6a6161f705907526d891efabba57d"
 dependencies = [
  "bitflags 2.6.0",
  "cassowary",
@@ -6842,7 +6835,7 @@ checksum = "a67300977d3dc3f8034dae89778f502b6ba20b269527b3223ba59c0cf393bb8a"
 [[package]]
 name = "xilem"
 version = "0.1.0"
-source = "git+https://github.com/linebender/xilem.git#c77c6ecb685ad13698de047e080107a48e52ab97"
+source = "git+https://github.com/linebender/xilem.git#4cddfc5157c8eabb26974c6234a29d45ad52a92f"
 dependencies = [
  "accesskit 0.16.0",
  "masonry",
@@ -6857,7 +6850,7 @@ dependencies = [
 [[package]]
 name = "xilem_core"
 version = "0.1.0"
-source = "git+https://github.com/linebender/xilem.git#c77c6ecb685ad13698de047e080107a48e52ab97"
+source = "git+https://github.com/linebender/xilem.git#4cddfc5157c8eabb26974c6234a29d45ad52a92f"
 dependencies = [
  "tracing",
 ]
