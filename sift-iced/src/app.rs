@@ -101,8 +101,8 @@ impl LoadedApp {
                 .on_input(CreateMessage::InputChanged)
                 .on_submit(CreateMessage::CreateTask)
                 .padding(15)
-                .size(30),
-            //.align_x(Center);
+                .size(30)
+                .align_x(Center),
         )
         .map(Message::CreateTask);
 
