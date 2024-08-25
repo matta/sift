@@ -39,10 +39,12 @@ impl eframe::App for App {
                 if add_task_clicked {
                     let task = Task::new(Task::new_id(), String::new(), None, None, None);
                     self.editing_task = Some(task.id());
-                    let previous = None;
                     self.state
                         .store
-                        .with_transaction(|txn| txn.insert_task(previous, &task))
+                        .with_transaction(|txn| {
+                            let previous = None;
+                            txn.insert_task(previous, &task)
+                        })
                         .expect("FIXME: handle error");
                 }
                 for task in self.state.list_tasks_for_display().iter() {
