@@ -1,13 +1,26 @@
-use iced::widget::{center, checkbox, column, container, keyed_column, row, scrollable, text};
+use std::sync::LazyLock;
+
+use iced::widget::{
+    center, checkbox, column, container, keyed_column, row, scrollable, text, text_input,
+};
 use iced::Alignment::Center;
 use iced::Element;
 use iced::Length::Fill;
 use sift_core::save_name;
-use sift_persist::{MemoryStore, TaskId};
+use sift_persist::{MemoryStore, Store as _, Task, TaskId};
 use sift_state::State;
 
 pub struct App {
     loaded: Option<LoadedApp>,
+}
+
+// Note: this message is Clone because text_input requires it. The top level
+// Message enum is not clone because it contains a MemoryStore, which is
+// not clone. Another way to go would be to use Arc, somehow.
+#[derive(Debug, Clone)]
+pub enum CreateMessage {
+    InputChanged(String),
+    CreateTask,
 }
 
 #[derive(Debug)]
@@ -15,6 +28,7 @@ pub enum Message {
     Loaded(anyhow::Result<MemoryStore>),
     // TODO: make this message specific to LoadedApp.
     CompleteToggled(TaskId, bool),
+    CreateTask(CreateMessage),
 }
 
 impl App {
@@ -41,6 +55,7 @@ impl App {
             Message::Loaded(result) => match result {
                 Ok(store) => {
                     self.loaded = Some(LoadedApp {
+                        create_name: String::new(),
                         state: State::new(store),
                     })
                 }
@@ -49,6 +64,7 @@ impl App {
             Message::CompleteToggled(_, _) => {
                 unreachable!()
             }
+            Message::CreateTask(_) => todo!(),
         }
     }
 
@@ -65,8 +81,11 @@ impl App {
 }
 
 pub struct LoadedApp {
+    create_name: String,
     state: State,
 }
+
+static INPUT_ID: LazyLock<text_input::Id> = LazyLock::new(text_input::Id::unique);
 
 impl LoadedApp {
     fn view(&self) -> Element<Message> {
@@ -75,6 +94,18 @@ impl LoadedApp {
             .size(100)
             .color([0.5, 0.5, 0.5])
             .align_x(Center);
+
+        let input = Element::from(
+            text_input("What needs to be done?", &self.create_name)
+                .id(INPUT_ID.clone())
+                .on_input(CreateMessage::InputChanged)
+                .on_submit(CreateMessage::CreateTask)
+                .padding(15)
+                .size(30),
+            //.align_x(Center);
+        )
+        .map(Message::CreateTask);
+
         let tasks = self.state.list_tasks_for_display();
         let tasks: Element<_> = if tasks.is_empty() {
             unimplemented!("implement display of zero tasks; see https://github.com/iced-rs/iced/blob/9b99b932bced46047ec2e18c2b6ec5a6c5b3636f/examples/todos/src/main.rs#L229");
@@ -90,7 +121,7 @@ impl LoadedApp {
             .into()
         };
 
-        let content = column![title, tasks];
+        let content = column![title, input, tasks];
         scrollable(container(content).center_x(Fill).padding(20)).into()
     }
 
@@ -106,6 +137,27 @@ impl LoadedApp {
                     }
                 }
             }
+            Message::CreateTask(msg) => match msg {
+                CreateMessage::InputChanged(s) => {
+                    self.create_name = s;
+                }
+                CreateMessage::CreateTask => {
+                    let task = Task::new(
+                        Task::new_id(),
+                        std::mem::take(&mut self.create_name),
+                        None,
+                        None,
+                        None,
+                    );
+                    self.state
+                        .store
+                        .with_transaction(|txn| {
+                            let previous = None;
+                            txn.insert_task(previous, &task)
+                        })
+                        .expect("FIXME: handle error");
+                }
+            },
         }
     }
 
