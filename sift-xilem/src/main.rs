@@ -49,7 +49,7 @@ fn app_logic(app: &mut App) -> impl WidgetView<App> {
     .on_enter(|app: &mut App, _| {
         app.add_task();
     });
-    let first_line = flex((
+    let add_task = flex((
         input_box,
         button("Add task".to_string(), |app: &mut App| {
             app.add_task();
@@ -83,9 +83,12 @@ fn app_logic(app: &mut App) -> impl WidgetView<App> {
         })
         .collect::<Vec<_>>();
 
-    flex((first_line, tasks))
-        //  Align rows to the left
-        .cross_axis_alignment(CrossAxisAlignment::Start)
+    flex((
+        add_task,
+        flex(tasks)
+            //  Align rows to the left
+            .cross_axis_alignment(CrossAxisAlignment::Start),
+    ))
 }
 
 fn main() {
