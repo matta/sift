@@ -5,33 +5,32 @@
 #![windows_subsystem = "windows"]
 
 use sift_core::save_name;
-use sift_persist::{MemoryStore, Store as _, Task};
+use sift_persist::{MemoryStore, Store, Task, TaskId};
 use sift_state::State;
-use xilem::view::{button, checkbox, flex, textbox, Axis, CrossAxisAlignment};
+use xilem::view::{button, checkbox, flex, label, textbox, Axis, CrossAxisAlignment};
 use xilem::{EventLoop, WidgetView, Xilem};
 
+enum Screen {
+    Main,
+    Edit { id: TaskId },
+}
+
 struct App {
-    next_task: String,
+    screen: Screen,
     state: State,
 }
 
 impl App {
     fn add_task(&mut self) {
-        if self.next_task.is_empty() {
-            return;
-        }
-        let title = std::mem::take(&mut self.next_task);
-        self.store_new_task(title);
-        self.save();
-    }
-
-    fn store_new_task(&mut self, title: String) {
-        let task = Task::new(Task::new_id(), title, None, None, None);
+        let title = String::default();
+        let id = Task::new_id();
+        let task = Task::new(id, title, None, None, None);
         let previous = None;
         self.state
             .store
             .with_transaction(|txn| txn.insert_task(previous, &task))
             .expect("FIXME: handle error");
+        self.screen = Screen::Edit { id };
     }
 
     fn save(&self) {
@@ -43,19 +42,16 @@ impl App {
 }
 
 fn app_logic(app: &mut App) -> impl WidgetView<App> {
-    let input_box = textbox(app.next_task.clone(), |app: &mut App, new_value| {
-        app.next_task = new_value;
-    })
-    .on_enter(|app: &mut App, _| {
+    match &app.screen {
+        Screen::Main => main_app_logic(app).boxed(),
+        Screen::Edit { id } => edit_app_logic(*id, app).boxed(),
+    }
+}
+
+fn main_app_logic(app: &mut App) -> impl WidgetView<App> {
+    let add_task = button("Add task", |app: &mut App| {
         app.add_task();
     });
-    let add_task = flex((
-        input_box,
-        button("Add task".to_string(), |app: &mut App| {
-            app.add_task();
-        }),
-    ))
-    .direction(Axis::Vertical);
 
     let tasks = app
         .state
@@ -91,9 +87,34 @@ fn app_logic(app: &mut App) -> impl WidgetView<App> {
     ))
 }
 
+fn edit_app_logic(id: TaskId, app: &mut App) -> impl WidgetView<App> {
+    let task = app
+        .state
+        .store
+        .get_task(&id)
+        .expect("FIXME: task must exist");
+    let title = task.title().to_string();
+    let label = label("Edit task");
+    let input_box = textbox(title, move |app: &mut App, new_value| {
+        let mut task = app.state.store.get_task(&id).expect("task exists");
+        app.state
+            .store
+            .with_transaction(move |txn| {
+                task.set_title(new_value);
+                txn.put_task(&task)
+            })
+            .expect("FIXME: handle error");
+    })
+    .on_enter(|app: &mut App, _| {
+        app.save();
+        app.screen = Screen::Main;
+    });
+    flex((label, input_box)).direction(Axis::Vertical)
+}
+
 fn main() {
     let app = App {
-        next_task: String::default(),
+        screen: Screen::Main,
         state: State::new(MemoryStore::load(&save_name()).unwrap()),
     };
 
