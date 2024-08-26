@@ -7,7 +7,7 @@
 use sift_core::save_name;
 use sift_persist::{MemoryStore, Store as _, Task};
 use sift_state::State;
-use xilem::view::{button, checkbox, flex, textbox, Axis};
+use xilem::view::{button, checkbox, flex, textbox, Axis, CrossAxisAlignment};
 use xilem::{EventLoop, WidgetView, Xilem};
 
 struct App {
@@ -84,6 +84,8 @@ fn app_logic(app: &mut App) -> impl WidgetView<App> {
         .collect::<Vec<_>>();
 
     flex((first_line, tasks))
+        //  Align rows to the left
+        .cross_axis_alignment(CrossAxisAlignment::Start)
 }
 
 fn main() {
