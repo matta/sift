@@ -3201,7 +3201,7 @@ dependencies = [
 [[package]]
 name = "masonry"
 version = "0.2.0"
-source = "git+https://github.com/linebender/xilem.git#4cddfc5157c8eabb26974c6234a29d45ad52a92f"
+source = "git+https://github.com/linebender/xilem.git#a1c7d74257d4222a3516db28fcc6a8d263233a51"
 dependencies = [
  "accesskit 0.16.0",
  "accesskit_winit 0.22.0",
@@ -6010,7 +6010,7 @@ dependencies = [
  "js-sys",
  "log",
  "naga 0.19.2",
- "parking_lot 0.12.3",
+ "parking_lot 0.11.2",
  "profiling",
  "raw-window-handle 0.6.2",
  "smallvec",
@@ -6036,7 +6036,7 @@ dependencies = [
  "js-sys",
  "log",
  "naga 0.20.0",
- "parking_lot 0.12.3",
+ "parking_lot 0.11.2",
  "profiling",
  "raw-window-handle 0.6.2",
  "smallvec",
@@ -6064,7 +6064,7 @@ dependencies = [
  "log",
  "naga 0.19.2",
  "once_cell",
- "parking_lot 0.12.3",
+ "parking_lot 0.11.2",
  "profiling",
  "raw-window-handle 0.6.2",
  "rustc-hash 1.1.0",
@@ -6091,7 +6091,7 @@ dependencies = [
  "log",
  "naga 0.20.0",
  "once_cell",
- "parking_lot 0.12.3",
+ "parking_lot 0.11.2",
  "profiling",
  "raw-window-handle 0.6.2",
  "rustc-hash 1.1.0",
@@ -6133,7 +6133,7 @@ dependencies = [
  "ndk-sys 0.5.0+25.2.9519653",
  "objc",
  "once_cell",
- "parking_lot 0.12.3",
+ "parking_lot 0.11.2",
  "profiling",
  "range-alloc",
  "raw-window-handle 0.6.2",
@@ -6178,7 +6178,7 @@ dependencies = [
  "ndk-sys 0.5.0+25.2.9519653",
  "objc",
  "once_cell",
- "parking_lot 0.12.3",
+ "parking_lot 0.11.2",
  "profiling",
  "range-alloc",
  "raw-window-handle 0.6.2",
@@ -6835,7 +6835,7 @@ checksum = "a67300977d3dc3f8034dae89778f502b6ba20b269527b3223ba59c0cf393bb8a"
 [[package]]
 name = "xilem"
 version = "0.1.0"
-source = "git+https://github.com/linebender/xilem.git#4cddfc5157c8eabb26974c6234a29d45ad52a92f"
+source = "git+https://github.com/linebender/xilem.git#a1c7d74257d4222a3516db28fcc6a8d263233a51"
 dependencies = [
  "accesskit 0.16.0",
  "masonry",
@@ -6850,7 +6850,7 @@ dependencies = [
 [[package]]
 name = "xilem_core"
 version = "0.1.0"
-source = "git+https://github.com/linebender/xilem.git#4cddfc5157c8eabb26974c6234a29d45ad52a92f"
+source = "git+https://github.com/linebender/xilem.git#a1c7d74257d4222a3516db28fcc6a8d263233a51"
 dependencies = [
  "tracing",
 ]

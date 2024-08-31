@@ -7,7 +7,7 @@
 use sift_core::save_name;
 use sift_persist::{MemoryStore, Store, Task, TaskId};
 use sift_state::State;
-use xilem::view::{button, checkbox, flex, label, textbox, Axis, CrossAxisAlignment};
+use xilem::view::{button, checkbox, flex, label, portal, textbox, Axis, CrossAxisAlignment};
 use xilem::{EventLoop, WidgetView, Xilem};
 
 enum Screen {
@@ -81,9 +81,11 @@ fn main_app_logic(app: &mut App) -> impl WidgetView<App> {
 
     flex((
         add_task,
-        flex(tasks)
-            //  Align rows to the left
-            .cross_axis_alignment(CrossAxisAlignment::Start),
+        portal(
+            flex(tasks)
+                //  Align rows to the left
+                .cross_axis_alignment(CrossAxisAlignment::Start),
+        ),
     ))
 }
 
