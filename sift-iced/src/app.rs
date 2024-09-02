@@ -1,7 +1,7 @@
 use std::sync::LazyLock;
 
 use iced::widget::{
-    center, checkbox, column, container, keyed_column, row, scrollable, text, text_input,
+    button, center, checkbox, column, container, keyed_column, row, scrollable, text, text_input,
 };
 use iced::Alignment::Center;
 use iced::Element;
@@ -23,12 +23,21 @@ pub enum CreateMessage {
     CreateTask,
 }
 
+// Note: this message is Clone because button requires it. The top level
+// Message enum is not clone because it contains a MemoryStore, which is
+// not clone. Another way to go would be to use Arc, somehow.
+#[derive(Debug, Clone)]
+pub enum DeleteMessage {
+    Delete(TaskId),
+}
+
 #[derive(Debug)]
 pub enum Message {
     Loaded(anyhow::Result<MemoryStore>),
     // TODO: make this message specific to LoadedApp.
     CompleteToggled(TaskId, bool),
     CreateTask(CreateMessage),
+    Delete(DeleteMessage),
 }
 
 impl App {
@@ -65,6 +74,7 @@ impl App {
                 unreachable!()
             }
             Message::CreateTask(_) => todo!(),
+            Message::Delete(_) => todo!(),
         }
     }
 
@@ -114,7 +124,11 @@ impl LoadedApp {
                 let id = task.id();
                 let checkbox = checkbox(task.title().to_string(), task.completed().is_some())
                     .on_toggle(move |complete| Message::CompleteToggled(id, complete));
-                let row = row![checkbox];
+                let delete = Element::from(
+                    button("Deleet").on_press_with(move || DeleteMessage::Delete(id)),
+                )
+                .map(Message::Delete);
+                let row = row![checkbox, delete];
 
                 (task.id(), row.into())
             }))
@@ -158,6 +172,9 @@ impl LoadedApp {
                         .expect("FIXME: handle error");
                 }
             },
+            Message::Delete(DeleteMessage::Delete(id)) => {
+                self.state.delete_task(&id);
+            }
         }
     }
 
