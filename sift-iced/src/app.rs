@@ -1,11 +1,13 @@
 use std::sync::LazyLock;
 
+use chrono::NaiveDate;
 use iced::widget::{
     button, center, checkbox, column, container, keyed_column, row, scrollable, text, text_input,
 };
 use iced::Alignment::Center;
 use iced::Element;
 use iced::Length::Fill;
+use iced_aw::date_picker;
 use sift_core::save_name;
 use sift_persist::{MemoryStore, Store as _, Task, TaskId};
 use sift_state::State;
@@ -27,6 +29,9 @@ pub enum LoadedMessage {
     CreateTaskInputChanged(String),
     CreateTask,
     Delete(TaskId),
+    EditDueDate(TaskId),
+    EditDueSubmit(date_picker::Date),
+    EditDueCancel,
 }
 
 impl App {
@@ -47,6 +52,7 @@ impl App {
                 Ok(store) => {
                     self.loaded = Some(LoadedApp {
                         create_task_name: String::new(),
+                        editing_due_date: None,
                         state: State::new(store),
                     })
                 }
@@ -72,6 +78,7 @@ impl App {
 
 pub struct LoadedApp {
     create_task_name: String,
+    editing_due_date: Option<TaskId>,
     state: State,
 }
 
@@ -101,9 +108,23 @@ impl LoadedApp {
                 let id = task.id();
                 let checkbox = checkbox(task.title().to_string(), task.completed().is_some())
                     .on_toggle(move |complete| LoadedMessage::CompleteToggled(id, complete));
-                let delete = button("Delete").on_press_with(move || LoadedMessage::Delete(id));
-                let row = row![checkbox, delete];
 
+                let picker = {
+                    let editing = self.editing_due_date == Some(id);
+                    let button =
+                        button("Due").on_press_with(move || LoadedMessage::EditDueDate(id));
+                    date_picker(
+                        editing,
+                        date_picker::Date::default(),
+                        button,
+                        LoadedMessage::EditDueCancel,
+                        LoadedMessage::EditDueSubmit,
+                    )
+                };
+
+                let delete = button("Delete").on_press_with(move || LoadedMessage::Delete(id));
+
+                let row = row![checkbox, picker, delete];
                 (task.id(), row.into())
             }))
             .into()
@@ -146,6 +167,22 @@ impl LoadedApp {
             LoadedMessage::Delete(id) => {
                 self.state.delete_task(&id);
             }
+            LoadedMessage::EditDueDate(id) => {
+                self.editing_due_date = Some(id);
+            }
+            LoadedMessage::EditDueSubmit(date) => {
+                if let Some(id) = self.editing_due_date {
+                    let date: NaiveDate = date.into();
+                    let mut task = self.state.store.get_task(&id).expect("FIXME: handle error");
+                    task.set_due(Some(date));
+                    self.state
+                        .store
+                        .with_transaction(|txn| txn.put_task(&task))
+                        .expect("FIXME: handle error");
+                }
+                self.editing_due_date = None;
+            }
+            LoadedMessage::EditDueCancel => self.editing_due_date = None,
         }
     }
 

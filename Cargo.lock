@@ -2631,6 +2631,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "iced_aw"
+version = "0.9.4"
+source = "git+https://github.com/iced-rs/iced_aw#5482588a8eb4dfdbf1fb8af81d5ab278e8f34915"
+dependencies = [
+ "cfg-if",
+ "chrono",
+ "iced",
+ "once_cell",
+]
+
+[[package]]
 name = "iced_core"
 version = "0.13.0-dev"
 source = "git+https://github.com/iced-rs/iced.git#0dcec519be23da6d3bc409dbf7ac65407d59dc12"
@@ -4792,7 +4803,9 @@ name = "sift-iced"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "iced",
+ "iced_aw",
  "sift-core",
  "sift-persist",
  "sift-state",

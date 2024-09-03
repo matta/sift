@@ -104,4 +104,8 @@ impl Task {
     pub fn set_completed(&mut self, completed: Option<DateTime<Utc>>) {
         self.completed = completed;
     }
+
+    pub fn set_due(&mut self, date: Option<NaiveDate>) {
+        self.due = date;
+    }
 }
