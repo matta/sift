@@ -14,37 +14,26 @@ pub struct App {
     loaded: Option<LoadedApp>,
 }
 
-// Note: this message is Clone because text_input requires it. The top level
-// Message enum is not clone because it contains a MemoryStore, which is
-// not clone. Another way to go would be to use Arc, somehow.
-#[derive(Debug, Clone)]
-pub enum CreateMessage {
-    InputChanged(String),
-    CreateTask,
+#[derive(Debug)]
+pub enum AppMessage {
+    SwitchToLoaded(anyhow::Result<MemoryStore>),
+    Loaded(LoadedMessage),
 }
 
-// Note: this message is Clone because button requires it. The top level
-// Message enum is not clone because it contains a MemoryStore, which is
-// not clone. Another way to go would be to use Arc, somehow.
 #[derive(Debug, Clone)]
-pub enum DeleteMessage {
+pub enum LoadedMessage {
+    // TODO: make this message specific to LoadedApp.
+    CompleteToggled(TaskId, bool),
+    CreateTaskInputChanged(String),
+    CreateTask,
     Delete(TaskId),
 }
 
-#[derive(Debug)]
-pub enum Message {
-    Loaded(anyhow::Result<MemoryStore>),
-    // TODO: make this message specific to LoadedApp.
-    CompleteToggled(TaskId, bool),
-    CreateTask(CreateMessage),
-    Delete(DeleteMessage),
-}
-
 impl App {
-    pub fn new() -> (Self, iced::Task<Message>) {
+    pub fn new() -> (Self, iced::Task<AppMessage>) {
         (
             Self { loaded: None },
-            iced::Task::perform(App::load(), Message::Loaded),
+            iced::Task::perform(App::load(), AppMessage::SwitchToLoaded),
         )
     }
 
@@ -52,69 +41,57 @@ impl App {
         MemoryStore::load(&save_name())
     }
 
-    pub fn update(&mut self, message: Message) {
-        match &mut self.loaded {
-            None => self.update_loading(message),
-            Some(loaded) => loaded.update(message),
-        }
-    }
-
-    fn update_loading(&mut self, message: Message) {
-        match message {
-            Message::Loaded(result) => match result {
+    pub fn update(&mut self, message: AppMessage) {
+        match (&mut self.loaded, message) {
+            (None, AppMessage::SwitchToLoaded(result)) => match result {
                 Ok(store) => {
                     self.loaded = Some(LoadedApp {
-                        create_name: String::new(),
+                        create_task_name: String::new(),
                         state: State::new(store),
                     })
                 }
                 Err(_) => unimplemented!("report error and/or implement default state"),
             },
-            Message::CompleteToggled(_, _) => {
-                unreachable!()
-            }
-            Message::CreateTask(_) => todo!(),
-            Message::Delete(_) => todo!(),
+            (Some(loaded), AppMessage::Loaded(message)) => loaded.update(message),
+            (None, AppMessage::Loaded(_)) => unreachable!(),
+            (Some(_), AppMessage::SwitchToLoaded(_)) => unreachable!(),
         }
     }
 
-    pub fn view(&self) -> Element<Message> {
+    pub fn view(&self) -> Element<AppMessage> {
         match &self.loaded {
             None => self.view_loading(),
-            Some(loaded) => loaded.view(),
+            Some(loaded) => Element::from(loaded.view()).map(AppMessage::Loaded),
         }
     }
 
-    fn view_loading(&self) -> Element<Message> {
+    fn view_loading(&self) -> Element<AppMessage> {
         center(text("Loading...").width(Fill).align_x(Center).size(50)).into()
     }
 }
 
 pub struct LoadedApp {
-    create_name: String,
+    create_task_name: String,
     state: State,
 }
 
 static INPUT_ID: LazyLock<text_input::Id> = LazyLock::new(text_input::Id::unique);
 
 impl LoadedApp {
-    fn view(&self) -> Element<Message> {
+    fn view(&self) -> Element<LoadedMessage> {
         let title = text("todos")
             .width(Fill)
             .size(100)
             .color([0.5, 0.5, 0.5])
             .align_x(Center);
 
-        let input = Element::from(
-            text_input("What needs to be done?", &self.create_name)
-                .id(INPUT_ID.clone())
-                .on_input(CreateMessage::InputChanged)
-                .on_submit(CreateMessage::CreateTask)
-                .padding(15)
-                .size(30)
-                .align_x(Center),
-        )
-        .map(Message::CreateTask);
+        let input = text_input("What needs to be done?", &self.create_task_name)
+            .id(INPUT_ID.clone())
+            .on_input(LoadedMessage::CreateTaskInputChanged)
+            .on_submit(LoadedMessage::CreateTask)
+            .padding(15)
+            .size(30)
+            .align_x(Center);
 
         let tasks = self.state.list_tasks_for_display();
         let tasks: Element<_> = if tasks.is_empty() {
@@ -123,11 +100,8 @@ impl LoadedApp {
             keyed_column(tasks.iter().map(|task| {
                 let id = task.id();
                 let checkbox = checkbox(task.title().to_string(), task.completed().is_some())
-                    .on_toggle(move |complete| Message::CompleteToggled(id, complete));
-                let delete = Element::from(
-                    button("Deleet").on_press_with(move || DeleteMessage::Delete(id)),
-                )
-                .map(Message::Delete);
+                    .on_toggle(move |complete| LoadedMessage::CompleteToggled(id, complete));
+                let delete = button("Delete").on_press_with(move || LoadedMessage::Delete(id));
                 let row = row![checkbox, delete];
 
                 (task.id(), row.into())
@@ -139,10 +113,9 @@ impl LoadedApp {
         scrollable(container(content).center_x(Fill).padding(20)).into()
     }
 
-    fn update(&mut self, message: Message) {
+    fn update(&mut self, message: LoadedMessage) {
         match message {
-            Message::Loaded(_) => unreachable!(),
-            Message::CompleteToggled(id, checked) => {
+            LoadedMessage::CompleteToggled(id, checked) => {
                 // TODO: add a method to state that sets completion given a bool.
                 if let Some(task) = self.state.get_task(&id) {
                     if task.completed().is_some() != checked {
@@ -151,28 +124,26 @@ impl LoadedApp {
                     }
                 }
             }
-            Message::CreateTask(msg) => match msg {
-                CreateMessage::InputChanged(s) => {
-                    self.create_name = s;
-                }
-                CreateMessage::CreateTask => {
-                    let task = Task::new(
-                        Task::new_id(),
-                        std::mem::take(&mut self.create_name),
-                        None,
-                        None,
-                        None,
-                    );
-                    self.state
-                        .store
-                        .with_transaction(|txn| {
-                            let previous = None;
-                            txn.insert_task(previous, &task)
-                        })
-                        .expect("FIXME: handle error");
-                }
-            },
-            Message::Delete(DeleteMessage::Delete(id)) => {
+            LoadedMessage::CreateTaskInputChanged(s) => {
+                self.create_task_name = s;
+            }
+            LoadedMessage::CreateTask => {
+                let task = Task::new(
+                    Task::new_id(),
+                    std::mem::take(&mut self.create_task_name),
+                    None,
+                    None,
+                    None,
+                );
+                self.state
+                    .store
+                    .with_transaction(|txn| {
+                        let previous_task = None;
+                        txn.insert_task(previous_task, &task)
+                    })
+                    .expect("FIXME: handle error");
+            }
+            LoadedMessage::Delete(id) => {
                 self.state.delete_task(&id);
             }
         }
