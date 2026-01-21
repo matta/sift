@@ -64,14 +64,14 @@ impl App {
         }
     }
 
-    pub fn view(&self) -> Element<AppMessage> {
+    pub fn view(&self) -> Element<'_, AppMessage> {
         match &self.loaded {
             None => self.view_loading(),
             Some(loaded) => Element::from(loaded.view()).map(AppMessage::Loaded),
         }
     }
 
-    fn view_loading(&self) -> Element<AppMessage> {
+    fn view_loading(&self) -> Element<'_, AppMessage> {
         center(text("Loading...").width(Fill).align_x(Center).size(50)).into()
     }
 }
@@ -85,7 +85,7 @@ pub struct LoadedApp {
 static INPUT_ID: LazyLock<text_input::Id> = LazyLock::new(text_input::Id::unique);
 
 impl LoadedApp {
-    fn view(&self) -> Element<LoadedMessage> {
+    fn view(&self) -> Element<'_, LoadedMessage> {
         let title = text("todos")
             .width(Fill)
             .size(100)
