@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 sift-persist = { path = "../sift-persist" }
 chrono = "0.4.38"
-itertools = "0.13.0"
+itertools = "0.14.0"
 
 [lints]
 workspace = true

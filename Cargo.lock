@@ -2998,6 +2998,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4803,7 +4812,7 @@ dependencies = [
  "eframe",
  "egui_extras",
  "env_logger",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "sift-core",
  "sift-persist",
  "sift-state",
@@ -4842,7 +4851,7 @@ name = "sift-state"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "sift-persist",
 ]
 
