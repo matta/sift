@@ -37,10 +37,7 @@ impl State {
     }
 
     pub fn get_task(&self, id: &TaskId) -> Option<Task> {
-        match self.store.get_task(id) {
-            Ok(task) => Some(task),
-            Err(_e) => None,
-        }
+        self.store.get_task(id).ok()
     }
 
     pub fn index_of_id(&mut self, id: Option<TaskId>) -> Option<usize> {
