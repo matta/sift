@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.86"
+anyhow = "1.0.100"
 automerge = "0.5.11"
 autosurgeon = "0.8.5"
 chrono = "0.4.43"
