@@ -11,7 +11,7 @@ sift-core = { path = "../sift-core" }
 sift-persist = { path = "../sift-persist" }
 sift-state= { path = "../sift-state" }
 eframe = "0.30.0"
-egui_extras = { version = "0.30.0", features = [ "image" ] }
+egui_extras = { version = "0.31.1", features = [ "image" ] }
 env_logger = "0.11.6"
 anyhow = "1.0.100"
 chrono = "0.4.43"
