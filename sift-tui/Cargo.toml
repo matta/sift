@@ -16,7 +16,7 @@ ratatui = "0.28.0"
 serde = "1.0.228"
 thiserror = "2.0.17"
 toml = "0.8.19"
-tui-prompts = "0.4.0"
+tui-prompts = "0.5.2"
 
 [lints.clippy]
 # TODO: work through uses of unwrap and turn this on.
