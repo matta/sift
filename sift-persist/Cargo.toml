@@ -10,7 +10,7 @@ autosurgeon = "0.8.5"
 chrono = "0.4.43"
 dirs = "6.0.0"
 im = "15.1.0"
-thiserror = "2.0.17"
+thiserror = "2.0.18"
 
 [dependencies.uuid]
 version = "1.10.0"
